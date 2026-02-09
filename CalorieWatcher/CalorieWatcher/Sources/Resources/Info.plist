@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>CalorieWatcher</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.example.Calorie-Watcher</string>
+	<key>CFBundleName</key>
+	<string>CalorieWatcher</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>NSCameraUsageDescription</key>
+	<string>CalorieWatcher needs access to your camera to scan food items for calorie estimation.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>We use your health data to track active energy burned and adjust your daily calorie recommendations.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>We may write dietary energy data to your Health app to keep your records in sync.</string>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIImageName</key>
+		<string></string>
+	</dict>
+</dict>
+</plist>
