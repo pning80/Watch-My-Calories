@@ -2,6 +2,7 @@
 
 Calorie Watcher is an iPhone app that can help the user estimate the calories of the food they eat and track their daily consumption.
 
+
 ## Development Note
 - Used XCode to create a project named CalorieWatcher, which is placed under the top level CalorieWatcher folder. 
 - Copied the Ideation.md, Notes.md, and README.md into the CalorieWatcher sub-folder under the top level CalorieWatcher folder.
