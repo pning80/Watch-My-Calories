@@ -29,8 +29,10 @@ Send the pictures to Gemini, get the possible food in the picture and ask the us
 - Be creative when using the camera. You can ask the user to point to the food from different angles, and you can take pictures multiple times without asking the user to click the shutter button.
 - Use the content of `ui_mockup.html` as the initial UI design for the app. Refine it to make it more user-friendly and visually appealing. 
 - **Working with XCode**
-  - Provide clear instructions on how to import the code into XCode and run the app. Assume the user has a Mac with XCode installed and can run the app on a simulator or a physical device. Assume the user has no prior experience with XCode.
+  - Provide clear instructions on how to import the code into XCode and run the app. Assume the developer has a Mac with XCode installed and can run the app on a simulator or a physical device. Assume the developer has no prior experience with XCode, and provide detailed instructions on how to import the code into XCode and run the app.
   - Since the iPhone app needs to be built with XCode, please package the code in a way that can be easily imported into XCode. Use Swift Package Manager to manage dependencies.
+- **Working with Gemini**
+  - The app will need to call Gemini API to estimate the calories of the food. Since this app is a free app, we will need the user to provide a Gemini API key. Provide an easy way for the user to get a Gemini API Key from their own Gemini account and move it to the app. When the app is first opened, it will ask the user to provide a Gemini API key, and direct the user to Google AI Studio to get the API key. Please be creative if there are other ways for the user to get the API key.
 
 
 
