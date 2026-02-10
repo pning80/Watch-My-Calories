@@ -22,7 +22,10 @@ struct CaptureView: View {
                 Button {
                     captureCount = min(captureCount + 1, 3)
                 } label: {
-                    Label("Take Photo (") + Text("\(captureCount)") + Label(")", systemImage: "camera")
+                    HStack(spacing: 4) {
+                        Image(systemName: "camera")
+                        Text("Take Photo (\(captureCount))")
+                    }
                 }
                 .buttonStyle(.borderedProminent)
 

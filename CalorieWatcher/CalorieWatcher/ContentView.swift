@@ -1,86 +1,86 @@
-//
-//  ContentView.swift
-//  CalorieWatcher
-//
-//  Created by pning80.git on 2/9/26.
-//
-
 import SwiftUI
-import CoreData
+import SwiftData
 
 struct ContentView: View {
-    @Environment(\.managedObjectContext) private var viewContext
-
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
-        animation: .default)
-    private var items: FetchedResults<Item>
-
+    @State private var selectedTab: Tab = .dashboard
+    
+    enum Tab: Hashable {
+        case dashboard, camera, history, settings
+    }
+    
+    // Customizing Tab Bar Appearance
+    init() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(Color.cwSurface)
+        
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
+    
     var body: some View {
-        NavigationView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp!, formatter: itemFormatter)")
-                    } label: {
-                        Text(item.timestamp!, formatter: itemFormatter)
-                    }
+        TabView(selection: $selectedTab) {
+            DashboardView()
+                .tabItem {
+                    Label("Today", systemImage: "flame.fill")
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                .tag(Tab.dashboard)
+            
+            CameraRootView()
+                .tabItem {
+                    Label("Scan", systemImage: "camera.fill")
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+                .tag(Tab.camera)
+            
+            HistoryView()
+                .tabItem {
+                    Label("History", systemImage: "calendar")
                 }
-            }
-            Text("Select an item")
+                .tag(Tab.history)
+            
+            SettingsView(selectedTab: $selectedTab)
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape.fill")
+                }
+                .tag(Tab.settings)
         }
+        .tint(Color.cwPrimary) // Apply primary brand color to active tab
     }
+}
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+// Wrapper for Camera to handle navigation to review
+struct CameraRootView: View {
+    @State private var capturedImages: [UIImage] = []
+    @State private var reviewData: [Data]?
+    
+    // Unique ID to force view recreation on tab switch if needed, 
+    // or we can use onAppear to clear state.
+    @State private var resetID = UUID()
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                CameraView { images in
+                    self.capturedImages = images
+                    self.reviewData = images.compactMap { $0.jpegData(compressionQuality: 0.8) }
+                }
+                .id(resetID) // Force recreation if ID changes
+            }
+            .navigationDestination(isPresented: Binding(
+                get: { reviewData != nil },
+                set: { if !$0 { reviewData = nil; capturedImages.removeAll() } }
+            )) {
+                if let data = reviewData {
+                    EstimationReviewView(images: data)
+                }
             }
         }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { items[$0] }.forEach(viewContext.delete)
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+        .onAppear {
+            // clear state when tab is selected
+            capturedImages.removeAll()
+            reviewData = nil
+            resetID = UUID() // This forces the CameraView (and its internal CameraManager) to re-init
         }
     }
 }
 
-private let itemFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .short
-    formatter.timeStyle = .medium
-    return formatter
-}()
-
-#Preview {
-    ContentView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
-}

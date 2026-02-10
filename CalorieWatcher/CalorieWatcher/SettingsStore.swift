@@ -1,10 +1,11 @@
 import Foundation
+import Combine
 
 final class SettingsStore: ObservableObject {
     static let shared = SettingsStore()
 
     @Published var apiKey: String = ""
-    @Published var selectedModel: String = "gemini-1.5-flash"
+    @Published var selectedModel: String = "gemini-2.0-flash-exp" // Default updated
 
     private let defaults = UserDefaults.standard
 

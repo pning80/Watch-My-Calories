@@ -6,16 +6,15 @@
 //
 
 import SwiftUI
-import CoreData
+import SwiftData
 
 @main
 struct CalorieWatcherApp: App {
-    let persistenceController = PersistenceController.shared
-
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .environmentObject(AppEnvironment.shared)
         }
+        .modelContainer(for: [UserProfile.self, FoodEntry.self])
     }
 }
