@@ -1,7 +1,9 @@
 import SwiftUI
+import SwiftData
 
 struct EstimationReviewView: View {
     @EnvironmentObject private var env: AppEnvironment
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     let images: [Data]
@@ -9,62 +11,93 @@ struct EstimationReviewView: View {
     @State private var result: EstimationResult? = nil
     @State private var isLoading: Bool = true
     @State private var errorMessage: String? = nil
+    
+    // Auto-save state
+    @State private var isSaved: Bool = false
 
     var body: some View {
         Group {
             if isLoading {
-                ProgressView("Estimating…")
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .controlSize(.large)
+                        .tint(Color.cwPrimary)
+                    Text("Analyzing Food...")
+                        .font(.headline)
+                        .foregroundStyle(Color.gray)
+                }
             } else if let errorMessage {
                 VStack(spacing: 12) {
                     Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundStyle(.orange)
+                        .font(.system(size: 50))
+                        .foregroundStyle(Color.orange)
+                    Text("Analysis Failed")
+                        .font(.headline)
+                        .foregroundStyle(Color.cwTextPrimary)
                     Text(errorMessage)
                         .multilineTextAlignment(.center)
+                        .foregroundStyle(Color.gray)
+                        .padding()
                     Button("Try Again") { Task { await estimate() } }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Color.cwPrimary)
                 }
             } else if let result {
-                List {
-                    Section("Detected Items") {
+                VStack(spacing: 24) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 64))
+                        .foregroundStyle(Color.cwPrimary)
+                        .transition(.scale.combined(with: .opacity))
+                    
+                    Text("Logged Successfully!")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.cwTextPrimary)
+                    
+                    VStack(spacing: 16) {
                         ForEach(result.items.indices, id: \.self) { idx in
                             HStack {
-                                VStack(alignment: .leading) {
-                                    TextField("Name", text: binding(for: idx, keyPath: \.name))
-                                        .font(.headline)
-                                    TextField("Quantity", text: binding(for: idx, keyPath: \.quantity))
-                                        .foregroundStyle(.secondary)
-                                }
+                                Text(result.items[idx].name)
+                                    .font(.headline)
                                 Spacer()
-                                Stepper(value: bindingDouble(for: idx, keyPath: \.calories), in: 0...2000, step: 10) {
-                                    Text("\(Int(result.items[idx].calories)) kcal")
-                                }
+                                Text("\(Int(result.items[idx].calories)) kcal")
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(Color.cwPrimary)
                             }
+                            .padding()
+                            .background(Color.cwSurface)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                         }
-                    }
-
-                    Section {
+                        
+                        Divider()
+                        
                         HStack {
-                            Text("Total")
+                            Text("Total Added")
+                                .font(.headline)
                             Spacer()
                             Text("\(Int(result.totalCalories)) kcal")
-                                .bold()
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Color.cwAccent)
                         }
+                        .padding(.top, 8)
                     }
-                }
-                .listStyle(.insetGrouped)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Save") {
-                            // TODO: Persist to Core Data when entities exist
-                            dismiss()
-                        }
+                    .padding(.horizontal)
+                    
+                    Button("Done") {
+                        dismiss()
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color.cwPrimary)
+                    .padding(.top)
                 }
-            } else {
-                Text("No result")
+                .padding()
+                .transition(.opacity)
             }
         }
         .navigationTitle("Review")
+        .navigationBarBackButtonHidden(true) // Prevent going back during auto-process
         .task { await estimate() }
     }
 
@@ -74,9 +107,20 @@ struct EstimationReviewView: View {
         do {
             let store = SettingsStore.shared
             let estimation = try await env.estimationService.estimateCalories(images: images, model: store.selectedModel, apiKey: store.apiKey)
+            
+            // Artificial delay for smooth UX transition if API is too fast
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            
             await MainActor.run {
                 self.result = estimation
                 self.isLoading = false
+                
+                // Auto-save immediately
+                saveToHistory(estimation)
+                self.isSaved = true
+                
+                // Optional: Auto-dismiss after a few seconds?
+                // For now, let user click "Done" to acknowledge the result.
             }
         } catch {
             await MainActor.run {
@@ -85,35 +129,20 @@ struct EstimationReviewView: View {
             }
         }
     }
-
-    private func binding(for index: Int, keyPath: WritableKeyPath<EstimationItem, String>) -> Binding<String> {
-        Binding<String>(
-            get: { result?.items[index][keyPath: keyPath] ?? "" },
-            set: { newValue in
-                if var r = result {
-                    r.items[index][keyPath: keyPath] = newValue
-                    result = r
-                }
-            }
-        )
-    }
-
-    private func bindingDouble(for index: Int, keyPath: WritableKeyPath<EstimationItem, Double>) -> Binding<Double> {
-        Binding<Double>(
-            get: { result?.items[index][keyPath: keyPath] ?? 0 },
-            set: { newValue in
-                if var r = result {
-                    r.items[index][keyPath: keyPath] = newValue
-                    result = r
-                }
-            }
-        )
+    
+    private func saveToHistory(_ result: EstimationResult) {
+        for item in result.items {
+            let entry = FoodEntry(
+                name: item.name,
+                calories: item.calories,
+                quantity: item.quantity,
+                timestamp: Date(),
+                protein: item.protein,
+                carbs: item.carbs,
+                fat: item.fat
+            )
+            modelContext.insert(entry)
+        }
     }
 }
 
-#Preview {
-    NavigationStack {
-        EstimationReviewView(images: [])
-            .environmentObject(AppEnvironment.shared)
-    }
-}
