@@ -36,8 +36,8 @@ We plan to support the following use cases:
 
 - Keep all data on the device. Do not send any user data to the cloud. 
 - **Working with Gemini**
-  - The app will need to call Gemini API to estimate the calories of the food. Since this app is a free app, we will need the user to provide a Gemini API key. Provide an easy way for the user to get a Gemini API Key from their own Gemini account and move it to the app. When the app is first opened, it will ask the user to provide a Gemini API key, and direct the user to Google AI Studio to get the API key. Please be creative if there are other ways for the user to get the API key.
-  - Make sure you first check what models are available, and show the available models in the app. The user should be able to pick any model. When the user doesn't pick, you should choose a flash model or lite model to save the cost. 
+  - The app will need to call Gemini API to estimate the calories of the food. Since this app is a free app, we will need the user to provide a Gemini API key. Provide an easy way for the user to get a Gemini API Key from their own Gemini account and move it to the app. When the app is first opened, it will ask the user to provide a Gemini API key, and direct the user to Google AI Studio to get the API key. Please be creative if there are other ways for the user to get the API key. Afer the user saves the API key, the app should have a way to leave the screen and go back to the main screen.
+  - **Important**: Make sure you first check what models are available, and show the available models in the app. The user should be able to pick any model. When the user doesn't pick, you should choose a flash model or lite model to save the cost. 
 
 
 
