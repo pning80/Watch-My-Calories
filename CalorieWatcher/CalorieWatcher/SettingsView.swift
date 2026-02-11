@@ -46,7 +46,7 @@ struct SettingsView: View {
                     SecureField("API Key", text: $apiKey)
                         .textContentType(.password)
                         .focused($focusedField, equals: .apiKey)
-                        .onChange(of: apiKey) { newValue in
+                        .onChange(of: apiKey) { oldValue, newValue in
                             if newValue.count > 10 {
                                 Task { await fetchModels() }
                             }
@@ -74,7 +74,6 @@ struct SettingsView: View {
                 }
                 
                 Section(header: Text("Profile")) {
-                    // Height (Compact Inline)
                     HStack {
                         Text("Height")
                         Spacer()
@@ -97,7 +96,6 @@ struct SettingsView: View {
                         .clipped()
                     }
                     
-                    // Weight (Expandable Inline Picker)
                     DisclosureGroup(isExpanded: $isEditingWeight) {
                         Picker("Weight", selection: $weightLbs) {
                             ForEach(50...400, id: \.self) { lbs in
@@ -118,13 +116,12 @@ struct SettingsView: View {
                         .onTapGesture {
                             withAnimation {
                                 isEditingWeight.toggle()
-                                isEditingAge = false // Close others
+                                isEditingAge = false
                                 focusedField = nil
                             }
                         }
                     }
                     
-                    // Age (Expandable Inline Picker)
                     DisclosureGroup(isExpanded: $isEditingAge) {
                         Picker("Age", selection: $age) {
                             ForEach(1...100, id: \.self) { y in
@@ -209,11 +206,9 @@ struct SettingsView: View {
                 focusedField = nil
                 Task { await fetchModels() }
             }
-            // Removed global .onTapGesture to fix responsiveness issues
         }
     }
     
-    // ... helper methods same as before ...
     private func fetchModels() async {
         guard !apiKey.isEmpty else { return }
         isLoadingModels = true
@@ -245,14 +240,18 @@ struct SettingsView: View {
         selectedModel = store.selectedModel
         
         if let profile = userProfiles.first {
-            let heightCm = profile.height
+            // Metric (Stored) -> Imperial (UI)
+            let heightCm = profile.height // Assuming 'height' exists based on error
             let heightInchesTotal = heightCm / 2.54
+            
             if heightInchesTotal > 0 {
                 heightFeet = Int(heightInchesTotal) / 12
                 heightInchesPart = Int(heightInchesTotal) % 12
             }
-            let weightKg = profile.weight
+            
+            let weightKg = profile.weight // Assuming 'weight' exists
             weightLbs = Int((weightKg * 2.20462).rounded())
+            
             age = profile.age
             gender = profile.gender
             activityLevel = profile.activityLevel
@@ -265,9 +264,11 @@ struct SettingsView: View {
         store.selectedModel = selectedModel
         store.save()
         
+        // Imperial (UI) -> Metric (Storage)
         let totalInches = Double(heightFeet * 12 + heightInchesPart)
         let heightCm = totalInches * 2.54
         let weightKg = Double(weightLbs) / 2.20462
+        
         let userAge = age
         let target = targetCalories ?? 2000
         
@@ -295,8 +296,15 @@ struct SettingsView: View {
         let totalInches = Double(heightFeet * 12 + heightInchesPart)
         let heightCm = totalInches * 2.54
         let weightKg = Double(weightLbs) * 0.453592
+        
         var bmr: Double = (10 * weightKg) + (6.25 * heightCm) - (5 * Double(age))
-        if gender == .male { bmr += 5 } else { bmr -= 161 }
+        
+        if gender == .male {
+            bmr += 5
+        } else {
+            bmr -= 161
+        }
+        
         let multiplier: Double
         switch activityLevel {
         case .sedentary: multiplier = 1.2
@@ -304,6 +312,7 @@ struct SettingsView: View {
         case .moderatelyActive: multiplier = 1.55
         case .veryActive: multiplier = 1.725
         }
+        
         targetCalories = (bmr * multiplier).rounded()
     }
 }
