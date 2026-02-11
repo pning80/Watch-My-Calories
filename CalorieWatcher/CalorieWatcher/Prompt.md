@@ -1,88 +1,94 @@
 # Calorie-Watcher App Development Prompts
 
-This document contains a sequence of prompts designed to recreate the **Calorie-Watcher** iPhone app, based on the `Ideation.md` requirements and the iterative refinement process used during development.
+This document contains a sequence of prompts designed to recreate the **Calorie-Watcher** iPhone app from scratch, incorporating all iterative refinements and design decisions made during development.
 
 ## Phase 1: Foundation & Data Layer
 
 **Prompt 1: Project Setup & Data Models**
-> Create a new iOS app using SwiftUI and SwiftData. Based on the requirements in `Ideation.md`, define the data models needed for the app.
+> Create a new iOS app using SwiftUI and SwiftData. Define the following data models:
 > 
-> **Requirements:**
-> - **UserProfile**: Stores height, weight, age, gender, activity level, and calculated target calories.
-> - **FoodEntry**: Stores individual meal logs with name, calories, quantity, timestamp, macros (protein, carbs, fat), and an image reference.
-> - **Persistence**: Use SwiftData (`@Model`) for local-only storage.
-> - **Container**: Configure the `ModelContainer` in the main App file.
+> **UserProfile**:
+> - Properties: `height` (Double, cm), `weight` (Double, kg), `age` (Int), `gender` (Enum), `activityLevel` (Enum), `targetCalories` (Double).
+> - **Unit Strategy**: Store strictly in metric internally (kg/cm) but design the UI to accept Imperial units (lbs/in).
+> 
+> **FoodEntry**:
+> - Properties: `id` (UUID), `name` (String), `calories` (Double), `quantity` (String), `timestamp` (Date), `imageID` (UUID?), macros (optional).
+> - **MealType Logic**: Add a `MealType` enum (Breakfast, Lunch, Dinner, Snack). Implement a static `from(date:)` method to determine the meal type based on specific hour windows:
+>   - Breakfast: 7:00 AM – 9:00 AM
+>   - Lunch: 11:00 AM – 2:00 PM
+>   - Dinner: 5:00 PM – 8:00 PM
+>   - Snack: All other times.
+> - Automatically set `mealType` in the `init` based on the timestamp.
 
-**Prompt 2: Settings & Onboarding**
-> Build a `SettingsView` to manage the user's profile and API configuration.
-> 
-> **Requirements:**
-> - **Profile Form**: Input fields for height (cm), weight (kg), age, gender, and activity level.
-> - **Calorie Calculation**: Implement the Mifflin-St Jeor equation to automatically calculate `targetCalories` based on the profile data.
-> - **API Key Management**: Add a secure text field for the Google Gemini API Key. Store this key securely using the Keychain (create a helper if needed), NOT UserDefaults.
-> - **Model Selection**: Add a picker to select the Gemini model (default to `gemini-1.5-flash`), saving the selection to UserDefaults.
+**Prompt 2: Shared Components & Design System**
+> Create a `Components.swift` file for shared UI elements:
+> - **Design System**: Define a `Color` extension with a "Organic Modern" palette (Deep Green `cwPrimary`, Pale Mint `cwSecondary`, Orange `cwAccent`).
+> - **FoodEntryCard**: A stylish row displaying food name, time, quantity, and calories. It should show a thumbnail image (circle inside a rounded square) if an `imageID` exists.
+> - **HeroSummaryCard**: A dashboard card showing a circular progress ring for daily calorie consumption vs. goal.
+> - **ImageStorage**: A helper to save/load images to the Documents directory using UUIDs.
 
 ---
 
 ## Phase 2: Core Feature - AI Food Scanner
 
 **Prompt 3: Custom Camera Interface**
-> Create a custom camera view (`CameraView`) using `AVFoundation`.
-> 
-> **Requirements:**
-> - **Custom UI**: Do not use `UIImagePickerController`. Build a full-screen camera interface.
-> - **Multi-shot**: Allow the user to take up to 3 photos of the food from different angles.
-> - **Visual Feedback**: Show a counter (e.g., "1/3") and thumbnails of captured images.
-> - **Controls**: Include a large shutter button, a reset button, and a "Done" button to proceed.
+> Build a custom `CameraView` using `AVFoundation`.
+> - **UI**: Full-screen camera with a large shutter button.
+> - **Multi-shot**: Allow taking up to 3 photos.
+> - **Feedback**: Display a horizontal scroll view of thumbnails for captured images at the bottom.
+> - **Controls**: "Reset" button to clear images, "Done" button to proceed to analysis.
 
 **Prompt 4: Gemini AI Integration**
-> Implement the `GeminiService` to analyze food images.
-> 
-> **Requirements:**
-> - **API Call**: Create a function `estimateCalories(images: [Data], apiKey: String)` that sends the images to the Google Gemini API.
-> - **Prompt Engineering**: Use a system prompt that instructs Gemini to identify food items and return a strict JSON structure containing: `name`, `calories`, `quantity`, `protein`, `carbs`, `fat`.
-> - **Model Fetching**: Add a method to fetch available models from the API to populate the settings picker dynamically.
+> Implement `GeminiService` to analyze food images via Google's Gemini API.
+> - **Function**: `estimateCalories(images: [Data], apiKey: String)`.
+> - **Output**: Expect a strict JSON response with food name, estimated calories, quantity, and macros.
+> - **Model Fetching**: Add a method `fetchAvailableModels(apiKey: String)` that queries the Gemini API to retrieve a list of supported models.
+> - **Error Handling**: Log detailed errors to the console but throw clean error types for the UI.
 
-**Prompt 5: Analysis Review & Auto-Save**
-> Build the `EstimationReviewView` to display the AI analysis results.
-> 
-> **Requirements:**
-> - **Loading State**: Show a progress indicator while analyzing.
-> - **Result Display**: Show the detected food items and total calories in a clean list.
-> - **Auto-Save**: Automatically save the results to SwiftData upon successful analysis without requiring an extra "Save" click.
-> - **Feedback**: specific visual confirmation (e.g., "Logged Successfully") before dismissing the view.
+**Prompt 5: Analysis Review & Graceful Error Handling**
+> Create `EstimationReviewView` to handle the analysis flow.
+> - **Process**: Show a loading indicator while calling the API.
+> - **Success**: Automatically save the `FoodEntry` items to SwiftData and save the image to disk. Show a "Logged Successfully" success state with a "Done" button.
+> - **Failure**: If the API fails, show a friendly "Analysis Failed" screen. Include a "Show Details" toggle to reveal the technical error message for debugging.
 
 ---
 
 ## Phase 3: Dashboard & Visualization
 
 **Prompt 6: Dashboard (Today's View)**
-> Design the `DashboardView` as the main landing screen.
-> 
-> **Requirements:**
-> - **Design Aesthetic**: Use a "Organic Modern" style with deep greens and card-based layouts.
-> - **Summary Card**: Create a `HeroSummaryCard` showing a circular progress ring for daily calorie consumption vs. goal.
-> - **Recent Meals**: Display a list of today's `FoodEntry` items using custom cards.
-> - **Empty State**: Show a "No meals tracked yet" card with a call-to-action to open the camera if the list is empty.
+> Build the `DashboardView` as the main landing screen.
+> - **Header**: Display the date and "Calorie Watcher".
+> - **Summary**: Show the `HeroSummaryCard`. If no profile exists, default to a 2000 kcal goal (do not block the user with a setup screen).
+> - **Meal Grouping**: Group today's entries by `MealType` (Breakfast, Lunch, Dinner, Snack). Display them in sections.
+> - **Scrolling**: When a new scan is added via the camera, automatically scroll the view to the current meal time section.
+> - **Thumbnails**: Use the `FoodEntryCard` to show thumbnails of scanned food. Tapping a thumbnail should open the original image in full screen.
 
-**Prompt 7: History View**
+**Prompt 7: History View & Compact Layout**
 > Create the `HistoryView` to browse past logs.
-> 
-> **Requirements:**
-> - **Grouping**: Group `FoodEntry` items by date (descending).
-> - **Expandable Cards**: Use an accordion-style card for each day (`HistoryDayCard`) that shows the total calories for that day in the header.
-> - **Deletion**: Allow users to delete individual food items from the history (e.g., via swipe-to-delete or context menu).
+> - **Layout**: Display a list of collapsible daily cards (`HistoryDayCard`).
+> - **Compact Rows**: Inside the day card, list food items using a compact version of the `FoodEntryCard` (smaller fonts/thumbnails) to fit more items.
+> - **Sorting**: Ensure items are sorted chronologically (Breakfast to Dinner).
+> - **Visual Polish**: Ensure there is adequate spacing between items and cards for a clean look.
 
 ---
 
-## Phase 4: Polish & Refinement
+## Phase 4: Settings & Polish
 
-**Prompt 8: Navigation & Polish**
-> Integrate all views into a main `ContentView` using a `TabView`.
-> 
-> **Requirements:**
+**Prompt 8: Settings Screen & Refined Inputs**
+> Implement a comprehensive `SettingsView`.
+> - **API Key**: Secure text field for the Gemini API key.
+> - **Model Selection**: Add a Picker to select the Gemini model. Populate this picker dynamically by calling `fetchAvailableModels` when the view appears or the API key changes. Default to a "flash" model if available.
+> - **Profile Inputs**:
+>   - **Height**: Use a side-by-side picker for Feet (4-8) and Inches (0-11).
+>   - **Weight**: Use an expandable inline wheel picker (Range: 50-400 lbs) triggered by tapping the row.
+>   - **Age**: Use an expandable inline wheel picker triggered by tapping the row.
+> - **Unit Conversion**: The UI must display/edit in Imperial units (lbs/in) but convert to/from Metric (kg/cm) for the `UserProfile` storage.
+> - **Calorie Calculator**: Add a "Calculate Recommended Goal" button using the Mifflin-St Jeor equation.
+> - **Responsiveness**: Ensure the keyboard dismisses correctly when tapping outside fields or pressing done.
+
+**Prompt 9: Navigation & Final Assembly**
+> Assemble the app in `ContentView` using a `TabView`.
 > - **Tabs**: Dashboard ("Today"), Camera ("Scan"), History, Settings.
-> - **Camera Reset**: Ensure the camera state (captured images) resets automatically every time the user switches to the Camera tab.
-> - **Readability**: Ensure all text, especially secondary labels like dates and metadata, has sufficient contrast (dark gray instead of light gray).
-> - **Transitions**: Add smooth animations for state changes (e.g., expanding history cards).
+> - **Navigation State**: Pass a binding `selectedTab` to `CameraRootView` and `SettingsView` to allow programmatic navigation.
+> - **Camera Reset**: Ensure the camera state clears every time the tab is opened.
 

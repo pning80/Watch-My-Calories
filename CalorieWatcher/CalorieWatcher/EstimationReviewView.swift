@@ -7,10 +7,12 @@ struct EstimationReviewView: View {
     @Environment(\.dismiss) private var dismiss
 
     let images: [Data]
+    var onDone: () -> Void = {}
 
     @State private var result: EstimationResult? = nil
     @State private var isLoading: Bool = true
     @State private var errorMessage: String? = nil
+    @State private var showDetails: Bool = false // State for error details
     
     // Auto-save state
     @State private var isSaved: Bool = false
@@ -27,21 +29,55 @@ struct EstimationReviewView: View {
                         .foregroundStyle(Color.gray)
                 }
             } else if let errorMessage {
-                VStack(spacing: 12) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 50))
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 60))
                         .foregroundStyle(Color.orange)
+                        .padding()
+                    
                     Text("Analysis Failed")
-                        .font(.headline)
+                        .font(.title2)
+                        .fontWeight(.bold)
                         .foregroundStyle(Color.cwTextPrimary)
-                    Text(errorMessage)
+                    
+                    Text("We couldn't analyze the image. Please try again.")
                         .multilineTextAlignment(.center)
                         .foregroundStyle(Color.gray)
-                        .padding()
-                    Button("Try Again") { Task { await estimate() } }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Color.cwPrimary)
+                    
+                    if showDetails {
+                        ScrollView {
+                            Text(errorMessage)
+                                .font(.caption)
+                                .fontDesign(.monospaced)
+                                .foregroundStyle(Color.red)
+                                .padding()
+                                .background(Color.red.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                        .frame(maxHeight: 150)
+                    }
+                    
+                    Button(showDetails ? "Hide Details" : "Show Details") {
+                        withAnimation {
+                            showDetails.toggle()
+                        }
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(Color.blue)
+                    .padding(.bottom, 8)
+                    
+                    VStack(spacing: 12) {
+                        Button("Try Again") { Task { await estimate() } }
+                            .buttonStyle(.borderedProminent)
+                            .tint(Color.cwPrimary)
+                        
+                        Button("Cancel") {
+                            dismiss()
+                        }
+                        .foregroundStyle(Color.gray)
+                    }
                 }
+                .padding()
             } else if let result {
                 VStack(spacing: 24) {
                     Image(systemName: "checkmark.circle.fill")
@@ -59,6 +95,7 @@ struct EstimationReviewView: View {
                             HStack {
                                 Text(result.items[idx].name)
                                     .font(.headline)
+                                    .foregroundStyle(Color.cwTextPrimary)
                                 Spacer()
                                 Text("\(Int(result.items[idx].calories)) kcal")
                                     .fontWeight(.bold)
@@ -75,6 +112,7 @@ struct EstimationReviewView: View {
                         HStack {
                             Text("Total Added")
                                 .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
                             Spacer()
                             Text("\(Int(result.totalCalories)) kcal")
                                 .font(.title3)
@@ -86,6 +124,7 @@ struct EstimationReviewView: View {
                     .padding(.horizontal)
                     
                     Button("Done") {
+                        onDone()
                         dismiss()
                     }
                     .buttonStyle(.borderedProminent)
@@ -97,30 +136,25 @@ struct EstimationReviewView: View {
             }
         }
         .navigationTitle("Review")
-        .navigationBarBackButtonHidden(true) // Prevent going back during auto-process
+        .navigationBarBackButtonHidden(true)
         .task { await estimate() }
     }
 
     private func estimate() async {
         isLoading = true
         errorMessage = nil
+        showDetails = false
         do {
             let store = SettingsStore.shared
             let estimation = try await env.estimationService.estimateCalories(images: images, model: store.selectedModel, apiKey: store.apiKey)
             
-            // Artificial delay for smooth UX transition if API is too fast
             try? await Task.sleep(nanoseconds: 500_000_000)
             
             await MainActor.run {
                 self.result = estimation
                 self.isLoading = false
-                
-                // Auto-save immediately
                 saveToHistory(estimation)
                 self.isSaved = true
-                
-                // Optional: Auto-dismiss after a few seconds?
-                // For now, let user click "Done" to acknowledge the result.
             }
         } catch {
             await MainActor.run {
@@ -131,6 +165,13 @@ struct EstimationReviewView: View {
     }
     
     private func saveToHistory(_ result: EstimationResult) {
+        var savedImageID: UUID? = nil
+        if let firstImageData = images.first {
+            let id = UUID()
+            ImageStorage.shared.save(firstImageData, id: id)
+            savedImageID = id
+        }
+        
         for item in result.items {
             let entry = FoodEntry(
                 name: item.name,
@@ -139,7 +180,8 @@ struct EstimationReviewView: View {
                 timestamp: Date(),
                 protein: item.protein,
                 carbs: item.carbs,
-                fat: item.fat
+                fat: item.fat,
+                imageID: savedImageID
             )
             modelContext.insert(entry)
         }

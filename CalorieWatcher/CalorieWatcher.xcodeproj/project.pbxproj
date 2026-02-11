@@ -6,7 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		67D661CA2F3C48FE002A0CF7 /* ImageStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67D661C92F3C48FE002A0CF7 /* ImageStorage.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		67D661C92F3C48FE002A0CF7 /* ImageStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageStorage.swift; sourceTree = "<group>"; };
 		67F5936D2F3B06B700AEEB9E /* CalorieWatcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CalorieWatcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -34,6 +39,7 @@
 			children = (
 				67F5936F2F3B06B700AEEB9E /* CalorieWatcher */,
 				67F5936E2F3B06B700AEEB9E /* Products */,
+				67D661C92F3C48FE002A0CF7 /* ImageStorage.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -119,6 +125,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				67D661CA2F3C48FE002A0CF7 /* ImageStorage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

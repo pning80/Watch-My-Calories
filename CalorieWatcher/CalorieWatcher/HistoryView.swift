@@ -2,10 +2,11 @@ import SwiftUI
 import SwiftData
 
 struct HistoryView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query(sort: \FoodEntry.timestamp, order: .reverse) private var foodEntries: [FoodEntry]
+    // Changed order to .forward so items inside the day card are chronological
+    @Query(sort: \FoodEntry.timestamp, order: .forward) private var foodEntries: [FoodEntry]
     
-    // Group entries by date
+    @State private var selectedImage: UIImage?
+    
     var groupedEntries: [Date: [FoodEntry]] {
         let calendar = Calendar.current
         return Dictionary(grouping: foodEntries) { entry in
@@ -13,6 +14,7 @@ struct HistoryView: View {
         }
     }
     
+    // Sort dates descending (Newest day at top), but items inside will be .forward (chronological)
     var sortedDates: [Date] {
         groupedEntries.keys.sorted(by: >)
     }
@@ -23,7 +25,7 @@ struct HistoryView: View {
                 Color.cwBackground.ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 20) {
+                    VStack(spacing: 16) {
                         HStack {
                             Text("History")
                                 .cwTitle()
@@ -33,11 +35,13 @@ struct HistoryView: View {
                         .padding(.top)
                         
                         if sortedDates.isEmpty {
-                            EmptyStateCard() // Replaced ContentUnavailableView
+                            EmptyStateCard()
                                 .padding(.top, 40)
                         } else {
                             ForEach(sortedDates, id: \.self) { date in
-                                HistoryDayCard(date: date, entries: groupedEntries[date] ?? [])
+                                HistoryDayCard(date: date, entries: groupedEntries[date] ?? [], onImageTap: { image in
+                                    self.selectedImage = image
+                                })
                             }
                         }
                     }
@@ -45,12 +49,20 @@ struct HistoryView: View {
                 }
             }
         }
+        .fullScreenCover(item: Binding<ImageWrapper?>(
+            get: { selectedImage.map { ImageWrapper(image: $0) } },
+            set: { selectedImage = $0?.image }
+        )) { wrapper in
+            FullScreenImageView(image: wrapper.image)
+        }
     }
 }
 
+// HistoryDayCard remains unchanged (it just displays the entries array it is given)
 struct HistoryDayCard: View {
     let date: Date
     let entries: [FoodEntry]
+    var onImageTap: (UIImage) -> Void
     
     @Environment(\.modelContext) private var modelContext
     
@@ -60,24 +72,31 @@ struct HistoryDayCard: View {
     
     @State private var isExpanded = false
     
+    var mealGroupedEntries: [MealType: [FoodEntry]] {
+        Dictionary(grouping: entries) { entry in
+            MealType.from(date: entry.timestamp)
+        }
+    }
+    
+    let mealOrder: [MealType] = [.breakfast, .lunch, .dinner, .snack]
+    
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             Button(action: { withAnimation(.snappy) { isExpanded.toggle() } }) {
                 HStack {
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(date, format: .dateTime.day().month(.wide))
                             .font(.headline)
                             .foregroundStyle(Color.cwTextPrimary)
                         Text(date, format: .dateTime.weekday(.wide))
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundStyle(Color.cwTextPrimary.opacity(0.7))
+                            .foregroundStyle(Color.gray)
                     }
                     
                     Spacer()
                     
-                    VStack(alignment: .trailing) {
+                    VStack(alignment: .trailing, spacing: 0) {
                         Text("\(Int(totalCalories))")
                             .font(.system(.title3, design: .rounded))
                             .fontWeight(.bold)
@@ -98,43 +117,50 @@ struct HistoryDayCard: View {
                 .background(Color.cwSurface)
             }
             
-            // Expanded List
             if isExpanded {
                 Divider()
                 VStack(spacing: 0) {
-                    ForEach(entries) { entry in
-                        HStack {
-                            Text(entry.name)
-                                .font(.subheadline)
-                                .foregroundStyle(Color.cwTextPrimary)
-                            Spacer()
-                            Text("\(Int(entry.calories))")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundStyle(Color.cwTextPrimary.opacity(0.8))
-                        }
-                        .padding()
-                        .background(Color.cwSurface.opacity(0.95))
-                        .contextMenu { // Context menu for deletion
-                            Button(role: .destructive) {
-                                withAnimation {
-                                    modelContext.delete(entry)
-                                }
-                            } label: {
-                                Label("Delete", systemImage: "trash")
+                    ForEach(mealOrder, id: \.self) { mealType in
+                        if let mealEntries = mealGroupedEntries[mealType], !mealEntries.isEmpty {
+                            HStack {
+                                Text(mealType.rawValue)
+                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(Color.cwPrimary)
+                                    .textCase(.uppercase)
+                                    .padding(.vertical, 4)
+                                Spacer()
                             }
-                        }
-                        
-                        if entry.id != entries.last?.id {
-                            Divider().padding(.leading)
+                            .padding(.horizontal)
+                            .background(Color.cwBackground)
+                            
+                            ForEach(mealEntries) { entry in
+                                // Assumes FoodEntryCard is defined in Components.swift or locally
+                                FoodEntryCard(entry: entry, onThumbnailTap: onImageTap)
+                                    .contextMenu {
+                                        Button(role: .destructive) {
+                                            withAnimation {
+                                                modelContext.delete(entry)
+                                            }
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
+                                
+                                if entry.id != mealEntries.last?.id {
+                                    Divider()
+                                        .padding(.leading, 56)
+                                }
+                            }
                         }
                     }
                 }
-                .transition(.move(edge: .top).combined(with: .opacity))
+                .background(Color.cwSurface)
+                .transition(.opacity)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
         .padding(.horizontal)
     }
 }

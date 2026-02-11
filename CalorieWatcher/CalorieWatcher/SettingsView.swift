@@ -7,26 +7,34 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var env: AppEnvironment
     
-    // Binding to control Tab selection
     @Binding var selectedTab: ContentView.Tab
 
-    // API Key State
     @StateObject private var store = SettingsStore.shared
     @State private var apiKey: String = ""
     @State private var selectedModel: String = ""
     @State private var availableModels: [GeminiModel] = []
     @State private var isLoadingModels: Bool = false
     
-    // Profile State
-    @State private var height: Double = 170
-    @State private var weight: Double = 70
-    @State private var age: Double = 30
+    // UI State (Imperial)
+    @State private var heightFeet: Int = 5
+    @State private var heightInchesPart: Int = 8
+    @State private var weightLbs: Int = 150
+    @State private var age: Int = 30
+    
     @State private var gender: Gender = .male
     @State private var activityLevel: ActivityLevel = .sedentary
-    @State private var targetCalories: Double = 2000
+    @State private var targetCalories: Double? = nil
     
-    // Add an init to provide default binding for preview/compatibility if needed, 
-    // though usually strictly required is better.
+    // Toggle state for inline pickers
+    @State private var isEditingWeight = false
+    @State private var isEditingAge = false
+    
+    @FocusState private var focusedField: Field?
+    
+    enum Field {
+        case apiKey, calories
+    }
+    
     init(selectedTab: Binding<ContentView.Tab> = .constant(.settings)) {
         self._selectedTab = selectedTab
     }
@@ -37,8 +45,8 @@ struct SettingsView: View {
                 Section(header: Text("Gemini API")) {
                     SecureField("API Key", text: $apiKey)
                         .textContentType(.password)
+                        .focused($focusedField, equals: .apiKey)
                         .onChange(of: apiKey) { newValue in
-                            // Refresh models when API key changes if valid length
                             if newValue.count > 10 {
                                 Task { await fetchModels() }
                             }
@@ -57,39 +65,92 @@ struct SettingsView: View {
                                 Text("Gemini 1.5 Flash").tag("gemini-1.5-flash")
                             } else {
                                 ForEach(availableModels, id: \.name) { model in
-                                    // Remove "models/" prefix for cleaner display if desired, or keep as is.
-                                    // Tag should match what we save.
                                     Text(model.displayName).tag(model.name.replacingOccurrences(of: "models/", with: ""))
                                 }
                             }
                         }
                     }
-                    
                     Link("Get an API key", destination: URL(string: "https://aistudio.google.com/app/apikey")!)
                 }
                 
                 Section(header: Text("Profile")) {
+                    // Height (Compact Inline)
                     HStack {
-                        Text("Height (cm)")
+                        Text("Height")
                         Spacer()
-                        TextField("Height", value: $height, format: .number)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
+                        Picker("Feet", selection: $heightFeet) {
+                            ForEach(4...8, id: \.self) { ft in
+                                Text("\(ft)'").tag(ft)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 60)
+                        .clipped()
+                        
+                        Picker("Inches", selection: $heightInchesPart) {
+                            ForEach(0...11, id: \.self) { inch in
+                                Text("\(inch)\"").tag(inch)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 60)
+                        .clipped()
                     }
-                    HStack {
-                        Text("Weight (kg)")
-                        Spacer()
-                        TextField("Weight", value: $weight, format: .number)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
+                    
+                    // Weight (Expandable Inline Picker)
+                    DisclosureGroup(isExpanded: $isEditingWeight) {
+                        Picker("Weight", selection: $weightLbs) {
+                            ForEach(50...400, id: \.self) { lbs in
+                                Text("\(lbs) lbs").tag(lbs)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(height: 150)
+                    } label: {
+                        HStack {
+                            Text("Weight")
+                                .foregroundStyle(Color.primary)
+                            Spacer()
+                            Text("\(weightLbs) lbs")
+                                .foregroundStyle(isEditingWeight ? Color.accentColor : Color.secondary)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation {
+                                isEditingWeight.toggle()
+                                isEditingAge = false // Close others
+                                focusedField = nil
+                            }
+                        }
                     }
-                    HStack {
-                        Text("Age")
-                        Spacer()
-                        TextField("Age", value: $age, format: .number)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
+                    
+                    // Age (Expandable Inline Picker)
+                    DisclosureGroup(isExpanded: $isEditingAge) {
+                        Picker("Age", selection: $age) {
+                            ForEach(1...100, id: \.self) { y in
+                                Text("\(y)").tag(y)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(height: 150)
+                    } label: {
+                        HStack {
+                            Text("Age")
+                                .foregroundStyle(Color.primary)
+                            Spacer()
+                            Text("\(age)")
+                                .foregroundStyle(isEditingAge ? Color.accentColor : Color.secondary)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation {
+                                isEditingAge.toggle()
+                                isEditingWeight = false
+                                focusedField = nil
+                            }
+                        }
                     }
+                    
                     Picker("Gender", selection: $gender) {
                         ForEach(Gender.allCases) { gender in
                             Text(gender.rawValue).tag(gender)
@@ -106,12 +167,17 @@ struct SettingsView: View {
                     HStack {
                         Text("Target Calories")
                         Spacer()
-                        TextField("Calories", value: $targetCalories, format: .number)
+                        TextField("Not Set", value: $targetCalories, format: .number)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
+                            .focused($focusedField, equals: .calories)
                     }
+                    
                     Button("Calculate Recommended Goal") {
                         calculateCalories()
+                        focusedField = nil
+                        isEditingWeight = false
+                        isEditingAge = false
                     }
                 }
 
@@ -126,18 +192,28 @@ struct SettingsView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         saveSettings()
-                        // Navigate to Dashboard
+                        focusedField = nil
                         selectedTab = .dashboard
+                    }
+                    .disabled(targetCalories == nil)
+                }
+                
+                ToolbarItem(placement: .keyboard) {
+                    Button("Done") {
+                        focusedField = nil
                     }
                 }
             }
             .onAppear {
                 loadSettings()
+                focusedField = nil
                 Task { await fetchModels() }
             }
+            // Removed global .onTapGesture to fix responsiveness issues
         }
     }
     
+    // ... helper methods same as before ...
     private func fetchModels() async {
         guard !apiKey.isEmpty else { return }
         isLoadingModels = true
@@ -147,10 +223,7 @@ struct SettingsView: View {
                 self.availableModels = models.sorted { $0.displayName < $1.displayName }
                 self.isLoadingModels = false
                 
-                // If current selection is not in list, update it
-                // Prefer 2.0 Flash if available
                 let currentModelExists = availableModels.contains { $0.name.contains(selectedModel) }
-                
                 if !currentModelExists {
                     if let flash2 = availableModels.first(where: { $0.name.contains("gemini-2.0-flash") }) {
                         self.selectedModel = flash2.name.replacingOccurrences(of: "models/", with: "")
@@ -168,58 +241,62 @@ struct SettingsView: View {
     }
     
     private func loadSettings() {
-        // Load API settings
         apiKey = store.apiKey
         selectedModel = store.selectedModel
         
-        // Load Profile
         if let profile = userProfiles.first {
-            height = profile.height
-            weight = profile.weight
-            age = Double(profile.age)
+            let heightCm = profile.height
+            let heightInchesTotal = heightCm / 2.54
+            if heightInchesTotal > 0 {
+                heightFeet = Int(heightInchesTotal) / 12
+                heightInchesPart = Int(heightInchesTotal) % 12
+            }
+            let weightKg = profile.weight
+            weightLbs = Int((weightKg * 2.20462).rounded())
+            age = profile.age
             gender = profile.gender
             activityLevel = profile.activityLevel
-            targetCalories = profile.targetCalories
+            targetCalories = profile.targetCalories > 0 ? profile.targetCalories : nil
         }
     }
     
     private func saveSettings() {
-        // Save API settings
         store.apiKey = apiKey
         store.selectedModel = selectedModel
         store.save()
         
-        // Save Profile
+        let totalInches = Double(heightFeet * 12 + heightInchesPart)
+        let heightCm = totalInches * 2.54
+        let weightKg = Double(weightLbs) / 2.20462
+        let userAge = age
+        let target = targetCalories ?? 2000
+        
         if let profile = userProfiles.first {
-            profile.height = height
-            profile.weight = weight
-            profile.age = Int(age)
+            profile.height = heightCm
+            profile.weight = weightKg
+            profile.age = userAge
             profile.gender = gender
             profile.activityLevel = activityLevel
-            profile.targetCalories = targetCalories
+            profile.targetCalories = target
         } else {
             let newProfile = UserProfile(
-                height: height,
-                weight: weight,
-                age: Int(age),
+                height: heightCm,
+                weight: weightKg,
+                age: userAge,
                 gender: gender,
                 activityLevel: activityLevel,
-                targetCalories: targetCalories
+                targetCalories: target
             )
             modelContext.insert(newProfile)
         }
     }
     
     private func calculateCalories() {
-        // Mifflin-St Jeor Equation
-        var bmr: Double = (10 * weight) + (6.25 * height) - (5 * age)
-        
-        if gender == .male {
-            bmr += 5
-        } else {
-            bmr -= 161
-        }
-        
+        let totalInches = Double(heightFeet * 12 + heightInchesPart)
+        let heightCm = totalInches * 2.54
+        let weightKg = Double(weightLbs) * 0.453592
+        var bmr: Double = (10 * weightKg) + (6.25 * heightCm) - (5 * Double(age))
+        if gender == .male { bmr += 5 } else { bmr -= 161 }
         let multiplier: Double
         switch activityLevel {
         case .sedentary: multiplier = 1.2
@@ -227,7 +304,6 @@ struct SettingsView: View {
         case .moderatelyActive: multiplier = 1.55
         case .veryActive: multiplier = 1.725
         }
-        
         targetCalories = (bmr * multiplier).rounded()
     }
 }
