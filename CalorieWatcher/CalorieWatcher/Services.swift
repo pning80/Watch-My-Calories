@@ -14,7 +14,6 @@ struct EstimationItem: Identifiable, Codable {
     var carbs: Double?
     var fat: Double?
     
-    // Explicit init for manual creation / mocks
     init(id: UUID = UUID(), name: String, quantity: String, calories: Double, confidence: Double, protein: Double? = nil, carbs: Double? = nil, fat: Double? = nil) {
         self.id = id
         self.name = name
@@ -26,14 +25,12 @@ struct EstimationItem: Identifiable, Codable {
         self.fat = fat
     }
     
-    // Custom decoding to generate UUID locally since API doesn't provide it
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = UUID() // Generate local ID
+        self.id = UUID()
         self.name = try container.decode(String.self, forKey: .name)
         self.quantity = try container.decode(String.self, forKey: .quantity)
         self.calories = try container.decode(Double.self, forKey: .calories)
-        // Handle optional confidence, default to 0 if missing
         self.confidence = try container.decodeIfPresent(Double.self, forKey: .confidence) ?? 0.0
         self.protein = try container.decodeIfPresent(Double.self, forKey: .protein)
         self.carbs = try container.decodeIfPresent(Double.self, forKey: .carbs)
@@ -53,7 +50,7 @@ struct EstimationResult: Codable {
 }
 
 struct GeminiModel: Identifiable, Codable, Hashable {
-    var id: String { name } // The API returns "models/gemini-1.5-flash" as name
+    var id: String { name }
     let name: String
     let displayName: String
     let description: String?
@@ -75,12 +72,14 @@ protocol EstimationService {
 enum GeminiError: Error, LocalizedError {
     case invalidAPIKey
     case invalidResponse
+    case apiError(String)
     case networkError(Error)
     
     var errorDescription: String? {
         switch self {
         case .invalidAPIKey: return "Invalid API Key. Please check settings."
         case .invalidResponse: return "Failed to parse response from Gemini."
+        case .apiError(let msg): return "Gemini API Error: \(msg)"
         case .networkError(let error): return "Network error: \(error.localizedDescription)"
         }
     }
@@ -97,23 +96,23 @@ final class GeminiService: EstimationService {
         let (data, response) = try await URLSession.shared.data(from: url)
         
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            // Attempt to decode error
+            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let errorObj = errorJson["error"] as? [String: Any],
+               let message = errorObj["message"] as? String {
+                throw GeminiError.apiError(message)
+            }
             throw GeminiError.networkError(URLError(.badServerResponse))
         }
         
         let listResponse = try JSONDecoder().decode(ModelListResponse.self, from: data)
-        // Filter for Gemini models only
         return listResponse.models.filter { $0.name.contains("gemini") }
     }
     
     func estimateCalories(images: [Data], model: String, apiKey: String) async throws -> EstimationResult {
         guard !apiKey.isEmpty else { throw GeminiError.invalidAPIKey }
         
-        // Handle model name (API returns models/gemini-x, but generateContent expects models/gemini-x:generateContent)
-        // Usually we pass just the name. The API returns full resource name like "models/gemini-1.5-flash"
-        // If the user selected just "gemini-1.5-flash", we need to adjust, but let's assume we use what fetch returns or the default.
-        // The generateContent URL format is: https://generativelanguage.googleapis.com/v1beta/{model=models/*}:generateContent
-        
-        // Ensure model name doesn't double "models/" if already present
+        // Ensure model name format is correct (must start with "models/")
         let modelName = model.starts(with: "models/") ? model : "models/\(model)"
         
         let urlString = "https://generativelanguage.googleapis.com/v1beta/\(modelName):generateContent?key=\(apiKey)"
@@ -124,9 +123,10 @@ final class GeminiService: EstimationService {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
         // Construct Request Body
+        // Prompt refined to ensure strict JSON
         let prompt = """
         Analyze these food images. Identify the food items, estimate the portion size, and calculate the calories.
-        Return ONLY a JSON object with this structure:
+        Return ONLY a raw JSON object (no markdown, no code blocks) with this structure:
         {
           "items": [
             {
@@ -163,12 +163,21 @@ final class GeminiService: EstimationService {
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            // Attempt to decode error message
-            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                print("Gemini API Error: \(errorJson)")
-            }
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw GeminiError.networkError(URLError(.badServerResponse))
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            // Detailed Error Handling
+            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let errorObj = errorJson["error"] as? [String: Any],
+               let message = errorObj["message"] as? String {
+                print("Gemini API Error: \(message)") // Log to console
+                throw GeminiError.apiError(message)
+            }
+            let bodyString = String(data: data, encoding: .utf8) ?? "No body"
+            print("Gemini API Error (Status \(httpResponse.statusCode)): \(bodyString)")
+            throw GeminiError.apiError("Server returned \(httpResponse.statusCode)")
         }
         
         // Parse Gemini Response Structure
@@ -190,30 +199,32 @@ final class GeminiService: EstimationService {
             throw GeminiError.invalidResponse
         }
         
-        // Extract JSON from text (sometimes Gemini adds markdown ```json blocks)
-        let jsonString = text.replacingOccurrences(of: "```json", with: "").replacingOccurrences(of: "```", with: "")
-        guard let jsonData = jsonString.data(using: .utf8) else { throw GeminiError.invalidResponse }
+        // Clean up text (remove markdown if present)
+        let cleanText = text
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            
+        guard let jsonData = cleanText.data(using: .utf8) else { throw GeminiError.invalidResponse }
         
         return try JSONDecoder().decode(EstimationResult.self, from: jsonData)
     }
 }
 
-// MARK: - Mocks
-
+// MARK: - Mocks (Kept for fallback/testing)
 final class MockEstimationService: EstimationService {
     func fetchAvailableModels(apiKey: String) async throws -> [GeminiModel] {
         return [
-            GeminiModel(name: "models/gemini-1.5-flash", displayName: "Gemini 1.5 Flash", description: "Fast and versatile"),
-            GeminiModel(name: "models/gemini-2.0-flash-exp", displayName: "Gemini 2.0 Flash", description: "Next gen speed")
+            GeminiModel(name: "models/gemini-1.5-flash", displayName: "Gemini 1.5 Flash", description: nil),
+            GeminiModel(name: "models/gemini-2.0-flash-exp", displayName: "Gemini 2.0 Flash", description: nil)
         ]
     }
     
     func estimateCalories(images: [Data], model: String, apiKey: String) async throws -> EstimationResult {
-        try await Task.sleep(nanoseconds: 1_000_000_000) // 1s delay
+        try await Task.sleep(nanoseconds: 1_000_000_000)
         return EstimationResult(items: [
-            EstimationItem(name: "Grilled Chicken Breast", quantity: "150g", calories: 248, confidence: 0.95, protein: 46, carbs: 0, fat: 5),
-            EstimationItem(name: "Brown Rice", quantity: "1 cup", calories: 216, confidence: 0.90, protein: 5, carbs: 45, fat: 1.8),
-            EstimationItem(name: "Steamed Broccoli", quantity: "100g", calories: 34, confidence: 0.88, protein: 2.8, carbs: 7, fat: 0.4)
+            EstimationItem(name: "Mock Chicken", quantity: "150g", calories: 250, confidence: 0.95),
+            EstimationItem(name: "Mock Rice", quantity: "1 cup", calories: 200, confidence: 0.90)
         ])
     }
 }

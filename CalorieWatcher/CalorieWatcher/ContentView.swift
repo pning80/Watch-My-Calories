@@ -4,11 +4,13 @@ import SwiftData
 struct ContentView: View {
     @State private var selectedTab: Tab = .dashboard
     
+    // State to trigger scrolling
+    @State private var scrollToMeal: MealType?
+    
     enum Tab: Hashable {
         case dashboard, camera, history, settings
     }
     
-    // Customizing Tab Bar Appearance
     init() {
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
@@ -20,13 +22,13 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            DashboardView()
+            DashboardView(scrollToMeal: $scrollToMeal)
                 .tabItem {
                     Label("Today", systemImage: "flame.fill")
                 }
                 .tag(Tab.dashboard)
             
-            CameraRootView()
+            CameraRootView(selectedTab: $selectedTab, scrollToMeal: $scrollToMeal)
                 .tabItem {
                     Label("Scan", systemImage: "camera.fill")
                 }
@@ -44,17 +46,17 @@ struct ContentView: View {
                 }
                 .tag(Tab.settings)
         }
-        .tint(Color.cwPrimary) // Apply primary brand color to active tab
+        .tint(Color.cwPrimary)
     }
 }
 
 // Wrapper for Camera to handle navigation to review
 struct CameraRootView: View {
+    @Binding var selectedTab: ContentView.Tab
+    @Binding var scrollToMeal: MealType?
+    
     @State private var capturedImages: [UIImage] = []
     @State private var reviewData: [Data]?
-    
-    // Unique ID to force view recreation on tab switch if needed, 
-    // or we can use onAppear to clear state.
     @State private var resetID = UUID()
     
     var body: some View {
@@ -64,22 +66,26 @@ struct CameraRootView: View {
                     self.capturedImages = images
                     self.reviewData = images.compactMap { $0.jpegData(compressionQuality: 0.8) }
                 }
-                .id(resetID) // Force recreation if ID changes
+                .id(resetID)
             }
             .navigationDestination(isPresented: Binding(
                 get: { reviewData != nil },
                 set: { if !$0 { reviewData = nil; capturedImages.removeAll() } }
             )) {
                 if let data = reviewData {
-                    EstimationReviewView(images: data)
+                    EstimationReviewView(images: data, onDone: {
+                        // Switch to dashboard tab on completion
+                        selectedTab = .dashboard
+                        // Trigger scroll to the current time's meal type
+                        scrollToMeal = MealType.from(date: Date())
+                    })
                 }
             }
         }
         .onAppear {
-            // clear state when tab is selected
             capturedImages.removeAll()
             reviewData = nil
-            resetID = UUID() // This forces the CameraView (and its internal CameraManager) to re-init
+            resetID = UUID()
         }
     }
 }

@@ -3,8 +3,8 @@ import SwiftData
 
 @Model
 final class UserProfile {
-    var height: Double // cm
-    var weight: Double // kg
+    var height: Double // cm (Reverted to Metric storage)
+    var weight: Double // kg (Reverted to Metric storage)
     var age: Int
     var genderRaw: String
     var activityLevelRaw: String
@@ -47,6 +47,29 @@ enum ActivityLevel: String, CaseIterable, Identifiable {
     var id: Self { self }
 }
 
+enum MealType: String, Codable, CaseIterable {
+    case breakfast = "Breakfast"
+    case lunch = "Lunch"
+    case dinner = "Dinner"
+    case snack = "Snack"
+    
+    static func from(date: Date) -> MealType {
+        let calendar = Calendar.current
+        let hour = calendar.component(.hour, from: date)
+        
+        switch hour {
+        case 7..<9:
+            return .breakfast
+        case 11..<14:
+            return .lunch
+        case 17..<20:
+            return .dinner
+        default:
+            return .snack
+        }
+    }
+}
+
 @Model
 final class FoodEntry {
     var id: UUID
@@ -57,7 +80,13 @@ final class FoodEntry {
     var protein: Double?
     var carbs: Double?
     var fat: Double?
-    var imageID: UUID? // Reference to image stored in Documents directory
+    var imageID: UUID?
+    var mealTypeRaw: String = "Snack"
+    
+    var mealType: MealType {
+        get { MealType(rawValue: mealTypeRaw) ?? .snack }
+        set { mealTypeRaw = newValue.rawValue }
+    }
     
     init(name: String, calories: Double, quantity: String, timestamp: Date = Date(), protein: Double? = nil, carbs: Double? = nil, fat: Double? = nil, imageID: UUID? = nil) {
         self.id = UUID()
@@ -69,5 +98,6 @@ final class FoodEntry {
         self.carbs = carbs
         self.fat = fat
         self.imageID = imageID
+        self.mealTypeRaw = MealType.from(date: timestamp).rawValue
     }
 }
