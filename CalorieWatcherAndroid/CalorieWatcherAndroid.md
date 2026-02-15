@@ -70,7 +70,7 @@ This document contains a sequence of prompts designed to create the **Calorie-Wa
 > Implement `GeminiRepository` to verify food images using the **Google AI Client SDK for Android**.
 > -   **Function**: `suspend fun estimateCalories(images: List<Bitmap>, apiKey: String): FoodAnalysisResult`
 > -   **Prompt**: "Analyze these food images. Identify the food, estimate calories, quantity, and macros. Return strict JSON."
-> -   **Model**: Use `gemini-1.5-flash` or similar efficient model.
+> -   **Model**: Use `gemini-3.0-flash` or similar efficient model.
 > -   **Error Handling**: Wrap potential errors in a sealed `Result` class.
 
 **Prompt 5: Analysis Flow & Result Screen**
@@ -131,3 +131,9 @@ This document contains a sequence of prompts designed to create the **Calorie-Wa
 > -   **Routes**: `Home`, `Camera`, `Analysis`, `History`, `Settings`.
 > -   **Bottom Navigation**: Create a custom bottom bar with organic icons and subtle selection animations.
 > -   **Transitions**: Add slide-in/slide-out transitions between screens.
+
+**Prompt 11: Resources & Icons**
+> Add the following resources to the app:
+> -   **Icons**: Use **Material Design Icons** for the bottom bar and camera shutter.
+> -   **Images**: Invoke Gemini to generate all the images used in this app. Be consistent with these images.
+> -   **Other Resources**: Analyze all the resources used in this app and make sure they are consistent with the app's theme and style. If you find missing resources, add them. When needed, ask Gemini to generate the missing resources.
