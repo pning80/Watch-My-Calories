@@ -66,32 +66,38 @@ struct EmptyStateCard: View {
 
 struct HeroSummaryCard: View {
     let targetCalories: Double
+    var burnedCalories: Double = 0
     let entries: [FoodEntry]
     
     var consumed: Double {
         entries.reduce(0) { $0 + $1.calories }
     }
     
+    var effectiveTarget: Double {
+        targetCalories + burnedCalories
+    }
+    
     var progress: Double {
-        guard targetCalories > 0 else { return 0 }
-        return min(consumed / targetCalories, 1.0)
+        guard effectiveTarget > 0 else { return 0 }
+        return min(consumed / effectiveTarget, 1.0)
+    }
+    
+    var remaining: Double {
+        max(0, effectiveTarget - consumed)
     }
     
     var body: some View {
         HStack(spacing: 20) {
             ZStack {
+                // Background Ring (Total Budget / Remaining if seen as inverse)
                 Circle()
                     .stroke(Color.cwSecondary, lineWidth: 15)
                 
+                // Foreground Ring (Consumed)
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(
-                        AngularGradient(
-                            colors: [Color.cwPrimary, Color.cwAccent],
-                            center: .center,
-                            startAngle: .degrees(0),
-                            endAngle: .degrees(360)
-                        ),
+                        Color.cwPrimary,
                         style: StrokeStyle(lineWidth: 15, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
@@ -111,7 +117,13 @@ struct HeroSummaryCard: View {
             
             VStack(alignment: .leading, spacing: 12) {
                 StatRow(label: "Goal", value: "\(Int(targetCalories))", icon: "flag.fill", color: .gray)
-                StatRow(label: "Remaining", value: "\(Int(max(0, targetCalories - consumed)))", icon: "flame.fill", color: .cwAccent)
+                
+                if burnedCalories > 0 {
+                    StatRow(label: "Burned", value: "\(Int(burnedCalories))", icon: "flame.fill", color: .cwAccent)
+                }
+                
+                // Remaining -> Light Green (cwSecondary)
+                StatRow(label: "Remaining", value: "\(Int(remaining))", icon: "chart.bar.fill", color: .cwSecondary)
             }
         }
         .cwCard()
@@ -129,7 +141,8 @@ struct StatRow: View {
         HStack {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundStyle(.white)
+                // Explicitly use Color.cwPrimary to fix type inference error
+                .foregroundStyle(color == .cwSecondary ? Color.cwPrimary : Color.white)
                 .padding(6)
                 .background(Circle().fill(color))
             
@@ -213,6 +226,54 @@ struct FoodEntryCard: View {
         .onAppear {
             if let id = entry.imageID {
                 self.thumbnail = ImageStorage.shared.load(id: id)
+            }
+        }
+    }
+}
+
+// MARK: - Local Components
+struct MealSection: View {
+    let title: String
+    let entries: [FoodEntry]
+    var onImageTap: (UIImage) -> Void
+    @Environment(\.modelContext) private var modelContext
+    
+    var totalCalories: Double {
+        entries.reduce(0) { $0 + $1.calories }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(title)
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.cwTextPrimary)
+                
+                Spacer()
+                
+                Text("\(Int(totalCalories)) kcal")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.cwPrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.cwSecondary)
+                    .clipShape(Capsule())
+            }
+            .padding(.horizontal)
+            
+            VStack(spacing: 8) {
+                ForEach(entries) { entry in
+                    FoodEntryCard(entry: entry, onThumbnailTap: onImageTap)
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                modelContext.delete(entry)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                }
             }
         }
     }
