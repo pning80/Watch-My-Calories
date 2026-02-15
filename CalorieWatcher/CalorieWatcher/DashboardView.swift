@@ -6,6 +6,8 @@ struct DashboardView: View {
     @Query(sort: \FoodEntry.timestamp, order: .forward) private var foodEntries: [FoodEntry]
     @Query private var userProfiles: [UserProfile]
     
+    @StateObject private var healthKitManager = HealthKitManager()
+    
     @Binding var scrollToMeal: MealType?
     
     @State private var selectedImage: UIImage?
@@ -66,7 +68,11 @@ struct DashboardView: View {
                             .padding(.top)
                             .id("top")
                             
-                            HeroSummaryCard(targetCalories: activeProfileTarget, entries: todayEntries)
+                            HeroSummaryCard(
+                                targetCalories: activeProfileTarget,
+                                burnedCalories: healthKitManager.activeEnergyBurned,
+                                entries: todayEntries
+                            )
                             
                             if todayEntries.isEmpty {
                                 EmptyStateCard()
@@ -86,6 +92,9 @@ struct DashboardView: View {
                         }
                         .padding(.bottom, 100)
                     }
+                    .refreshable {
+                        healthKitManager.fetchTodayEnergyBurned()
+                    }
                     .onChange(of: scrollToMeal) { oldVal, newVal in
                         if let meal = newVal {
                             withAnimation {
@@ -102,54 +111,13 @@ struct DashboardView: View {
         )) { wrapper in
             FullScreenImageView(image: wrapper.image)
         }
+        .onAppear {
+            healthKitManager.requestAuthorization()
+        }
     }
 }
 
 // MARK: - Local Components
-struct MealSection: View {
-    let title: String
-    let entries: [FoodEntry]
-    var onImageTap: (UIImage) -> Void
-    @Environment(\.modelContext) private var modelContext
-    
-    var totalCalories: Double {
-        entries.reduce(0) { $0 + $1.calories }
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(title)
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color.cwTextPrimary)
-                
-                Spacer()
-                
-                Text("\(Int(totalCalories)) kcal")
-                    .font(.subheadline)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color.cwPrimary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(Color.cwSecondary)
-                    .clipShape(Capsule())
-            }
-            .padding(.horizontal)
-            
-            VStack(spacing: 8) {
-                ForEach(entries) { entry in
-                    FoodEntryCard(entry: entry, onThumbnailTap: onImageTap)
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                modelContext.delete(entry)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                }
-            }
-        }
-    }
-}
+// MARK: - Local Components
+// MealSection moved to Components.swift
 

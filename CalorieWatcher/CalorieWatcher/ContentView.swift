@@ -11,15 +11,6 @@ struct ContentView: View {
         case dashboard, camera, history, settings
     }
     
-    init() {
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor(Color.cwSurface)
-        
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
-    }
-    
     var body: some View {
         TabView(selection: $selectedTab) {
             DashboardView(scrollToMeal: $scrollToMeal)
@@ -47,6 +38,15 @@ struct ContentView: View {
                 .tag(Tab.settings)
         }
         .tint(Color.cwPrimary)
+        .onAppear {
+            // Configure Tab Bar appearance safely once the view is loaded
+            let appearance = UITabBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor(Color.cwSurface)
+            
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
     }
 }
 

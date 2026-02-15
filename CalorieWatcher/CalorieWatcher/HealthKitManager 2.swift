@@ -1,2 +1,3 @@
-// This line in HealthKitManager.swift often causes this log in the Simulator
-healthStore.enableBackgroundDelivery(for: type, frequency: .immediate) ...
+// This file appears to be a duplicate or erroneous file.
+// Please delete this file from your project in the Xcode Project Navigator.
+// (HealthKitManager.swift is the correct file to keep).

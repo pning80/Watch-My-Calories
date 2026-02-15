@@ -9,7 +9,9 @@ struct SettingsView: View {
     
     @Binding var selectedTab: ContentView.Tab
 
-    @StateObject private var store = SettingsStore.shared
+    // Use ObservedObject for singletons to avoid lifecycle conflicts
+    @ObservedObject private var store = SettingsStore.shared
+    
     @State private var apiKey: String = ""
     @State private var selectedModel: String = ""
     @State private var availableModels: [GeminiModel] = []
@@ -42,6 +44,28 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            AppIconView()
+                                .frame(width: 100, height: 100)
+                                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                                .shadow(radius: 5)
+                            
+                            Text("Calorie Watcher")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwPrimary)
+                            
+                            Text("Version 1.0.0")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .listRowBackground(Color.clear)
+                }
+
                 Section(header: Text("Gemini API")) {
                     SecureField("API Key", text: $apiKey)
                         .textContentType(.password)
@@ -188,11 +212,17 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
+                        // 1. Save Data
                         saveSettings()
+                        
+                        // 2. Dismiss Keyboard
                         focusedField = nil
+                        
+                        // 3. Switch Tab immediately
                         selectedTab = .dashboard
                     }
-                    .disabled(targetCalories == nil)
+                    // REMOVED: .disabled(targetCalories == nil)
+                    // The save logic defaults to 2000 if nil, so we should allow saving anytime.
                 }
                 
                 ToolbarItem(placement: .keyboard) {
@@ -220,6 +250,7 @@ struct SettingsView: View {
                 
                 let currentModelExists = availableModels.contains { $0.name.contains(selectedModel) }
                 if !currentModelExists {
+                    // Smart Selection: 2.0 -> 1.5 -> First
                     if let flash2 = availableModels.first(where: { $0.name.contains("gemini-2.0-flash") }) {
                         self.selectedModel = flash2.name.replacingOccurrences(of: "models/", with: "")
                     } else if let flash15 = availableModels.first(where: { $0.name.contains("gemini-1.5-flash") }) {
@@ -241,7 +272,7 @@ struct SettingsView: View {
         
         if let profile = userProfiles.first {
             // Metric (Stored) -> Imperial (UI)
-            let heightCm = profile.height // Assuming 'height' exists based on error
+            let heightCm = profile.height
             let heightInchesTotal = heightCm / 2.54
             
             if heightInchesTotal > 0 {
@@ -249,7 +280,7 @@ struct SettingsView: View {
                 heightInchesPart = Int(heightInchesTotal) % 12
             }
             
-            let weightKg = profile.weight // Assuming 'weight' exists
+            let weightKg = profile.weight
             weightLbs = Int((weightKg * 2.20462).rounded())
             
             age = profile.age
@@ -260,18 +291,22 @@ struct SettingsView: View {
     }
     
     private func saveSettings() {
+        // 1. Save to Store (UserDefaults / Keychain)
         store.apiKey = apiKey
         store.selectedModel = selectedModel
         store.save()
         
+        // 2. Prepare Profile Data
         // Imperial (UI) -> Metric (Storage)
         let totalInches = Double(heightFeet * 12 + heightInchesPart)
         let heightCm = totalInches * 2.54
         let weightKg = Double(weightLbs) / 2.20462
         
         let userAge = age
+        // Fallback to 2000 if user didn't set a target
         let target = targetCalories ?? 2000
         
+        // 3. Save to SwiftData
         if let profile = userProfiles.first {
             profile.height = heightCm
             profile.weight = weightKg
@@ -289,6 +324,14 @@ struct SettingsView: View {
                 targetCalories: target
             )
             modelContext.insert(newProfile)
+        }
+        
+        // 4. Commit Changes with Error Handling
+        do {
+            try modelContext.save()
+            print("Settings saved successfully.")
+        } catch {
+            print("CRITICAL ERROR: Failed to save user profile: \(error)")
         }
     }
     
