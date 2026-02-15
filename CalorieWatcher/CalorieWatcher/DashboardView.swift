@@ -42,7 +42,13 @@ struct DashboardView: View {
                 ScrollViewReader { proxy in
                     ScrollView {
                         VStack(spacing: 24) {
-                            HStack {
+                            HStack(spacing: 12) {
+                                Image("MiniAppIcon")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 44, height: 44)
+                                    .clipShape(ContainerRelativeShape())
+                                    
                                 VStack(alignment: .leading) {
                                     Text(Date(), format: .dateTime.weekday(.wide).day().month())
                                         .font(.subheadline)
