@@ -13,7 +13,7 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            DashboardView(scrollToMeal: $scrollToMeal)
+            DashboardView(selectedTab: $selectedTab, scrollToMeal: $scrollToMeal)
                 .tabItem {
                     Label("Today", systemImage: "flame.fill")
                 }
