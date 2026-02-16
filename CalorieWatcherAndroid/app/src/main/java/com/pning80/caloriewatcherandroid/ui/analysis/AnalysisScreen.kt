@@ -68,6 +68,7 @@ fun AnalysisScreen(
             is AnalysisUiState.Error -> {
                 ErrorView(
                     message = state.message,
+                    apiKey = state.apiKeySuffix,
                     showDetails = showDetails,
                     onToggleDetails = { showDetails = !showDetails },
                     onRetry = { viewModel.analyzeImages(imagePaths) },
@@ -137,6 +138,7 @@ private fun LoadingView() {
 @Composable
 private fun ErrorView(
     message: String,
+    apiKey: String?,
     showDetails: Boolean,
     onToggleDetails: () -> Unit,
     onRetry: () -> Unit,
@@ -172,18 +174,35 @@ private fun ErrorView(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 150.dp)
+                    .heightIn(max = 200.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.Red.copy(alpha = 0.1f))
                     .verticalScroll(rememberScrollState())
                     .padding(12.dp)
             ) {
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Red,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                )
+                Column {
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Red,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    )
+                    apiKey?.let {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "API Key Used:",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Red
+                        )
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Red,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
+                }
             }
         }
         
