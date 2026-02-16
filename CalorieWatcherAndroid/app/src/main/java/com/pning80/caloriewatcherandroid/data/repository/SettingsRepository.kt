@@ -29,6 +29,7 @@ class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val DATA_STORE_API_KEY = stringPreferencesKey("gemini_api_key")
+    private val DATA_STORE_SELECTED_MODEL = stringPreferencesKey("selected_model")
     private val PREFS_FILE = "secret_shared_prefs"
     private val ENCRYPTED_KEY = "encrypted_gemini_api_key"
 
@@ -46,6 +47,10 @@ class SettingsRepository @Inject constructor(
 
     private val _apiKeyFlow = MutableStateFlow<String?>(null)
     val apiKey: Flow<String?> = _apiKeyFlow.asStateFlow()
+
+    val selectedModel: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[DATA_STORE_SELECTED_MODEL]
+    }
 
     init {
         // Load initially from EncryptedSharedPreferences
@@ -76,5 +81,11 @@ class SettingsRepository @Inject constructor(
     suspend fun saveApiKey(key: String) {
         sharedPreferences.edit().putString(ENCRYPTED_KEY, key).apply()
         _apiKeyFlow.value = key
+    }
+
+    suspend fun saveSelectedModel(model: String) {
+        context.dataStore.edit { preferences ->
+            preferences[DATA_STORE_SELECTED_MODEL] = model
+        }
     }
 }

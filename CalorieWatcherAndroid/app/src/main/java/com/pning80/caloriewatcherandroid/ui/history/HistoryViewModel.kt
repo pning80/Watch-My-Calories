@@ -22,9 +22,12 @@ class HistoryViewModel @Inject constructor(
     private val foodEntryDao: FoodEntryDao
 ) : ViewModel() {
 
+    private val _expandedDates = MutableStateFlow<Set<String>>(emptySet())
+    val expandedDates: StateFlow<Set<String>> = _expandedDates.asStateFlow()
+
     val history: StateFlow<List<DailySummary>> = foodEntryDao.getAllEntries()
         .map { entries ->
-            entries.groupBy { 
+            entries.groupBy {
                 SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.timestamp))
             }.map { (date, dailyEntries) ->
                 DailySummary(
@@ -32,7 +35,15 @@ class HistoryViewModel @Inject constructor(
                     totalCalories = dailyEntries.sumOf { it.calories }.toInt(),
                     entries = dailyEntries
                 )
-            }
+            }.sortedByDescending { it.date }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun toggleDate(date: String) {
+        _expandedDates.value = if (_expandedDates.value.contains(date)) {
+            _expandedDates.value - date
+        } else {
+            _expandedDates.value + date
+        }
+    }
 }

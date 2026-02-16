@@ -16,6 +16,7 @@ import com.pning80.caloriewatcherandroid.ui.today.TodayScreen
 import com.pning80.caloriewatcherandroid.ui.history.HistoryScreen
 import com.pning80.caloriewatcherandroid.ui.theme.CalorieWatcherAndroidTheme
 import com.pning80.caloriewatcherandroid.ui.components.BottomNavigationBar
+import com.pning80.caloriewatcherandroid.ui.settings.SettingsScreen
 import dagger.hilt.android.AndroidEntryPoint
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -53,7 +54,7 @@ fun CalorieWatcherApp() {
                 )
             }
             composable("history") {
-                HistoryScreen()
+                HistoryScreen(onEntryClick = {})
             }
             composable("camera") {
                 CameraScreen(
@@ -77,7 +78,7 @@ fun CalorieWatcherApp() {
                 )
             }
             composable("settings") {
-                com.pning80.caloriewatcherandroid.ui.settings.SettingsScreen()
+                SettingsScreen(onSave = { navController.navigate("dashboard") })
             }
         }
     }

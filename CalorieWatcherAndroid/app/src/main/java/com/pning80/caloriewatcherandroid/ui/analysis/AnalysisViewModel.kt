@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pning80.caloriewatcherandroid.data.model.FoodAnalysisResult
 import com.pning80.caloriewatcherandroid.data.model.FoodEntry
-import com.pning80.caloriewatcherandroid.data.model.MealType
 import com.pning80.caloriewatcherandroid.data.repository.GeminiRepository
 import com.pning80.caloriewatcherandroid.data.database.FoodEntryDao
 import com.pning80.caloriewatcherandroid.util.ImageHelper
@@ -15,14 +14,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import java.util.Calendar
 import javax.inject.Inject
 
 sealed class AnalysisUiState {
     object Idle : AnalysisUiState()
     object Loading : AnalysisUiState()
     data class Success(val result: FoodAnalysisResult) : AnalysisUiState()
-    data class Error(val message: String) : AnalysisUiState()
+    data class Error(val message: String, val apiKeySuffix: String?) : AnalysisUiState()
 }
 
 @HiltViewModel
@@ -39,23 +37,27 @@ class AnalysisViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = AnalysisUiState.Loading
             
-            // Load bitmaps
             val bitmaps = imagePaths.mapNotNull { ImageHelper.loadImageFromPath(it) }
             
             if (bitmaps.isEmpty()) {
-                _uiState.value = AnalysisUiState.Error("Failed to load images")
+                _uiState.value = AnalysisUiState.Error("Failed to load images", null)
                 return@launch
             }
 
-            // Fetch API Key
             val apiKey = settingsRepository.apiKey.firstOrNull() ?: ""
-
-            val result = geminiRepository.estimateCalories(bitmaps, apiKey)
+            val selectedModel = settingsRepository.selectedModel.firstOrNull() ?: "gemini-1.5-flash"
+            
+            val result = geminiRepository.estimateCalories(bitmaps, apiKey, selectedModel)
             
             result.onSuccess {
                 _uiState.value = AnalysisUiState.Success(it)
             }.onFailure {
-                _uiState.value = AnalysisUiState.Error(it.message ?: "Unknown error")
+                val apiKeySuffix = if (apiKey.length > 8) {
+                    "...${apiKey.takeLast(8)}"
+                } else {
+                    apiKey
+                }
+                _uiState.value = AnalysisUiState.Error(it.message ?: "Unknown error", apiKeySuffix)
             }
         }
     }

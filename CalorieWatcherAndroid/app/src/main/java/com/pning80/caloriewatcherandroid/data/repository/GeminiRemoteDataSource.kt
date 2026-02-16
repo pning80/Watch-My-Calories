@@ -1,6 +1,7 @@
 package com.pning80.caloriewatcherandroid.data.repository
 
 import android.graphics.Bitmap
+import android.util.Log
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.pning80.caloriewatcherandroid.data.model.FoodAnalysisResult
@@ -9,9 +10,9 @@ import javax.inject.Inject
 
 class GeminiRemoteDataSource @Inject constructor() {
 
-    suspend fun analyze(images: List<Bitmap>, apiKey: String): Result<FoodAnalysisResult> {
+    suspend fun analyze(images: List<Bitmap>, apiKey: String, modelName: String): Result<FoodAnalysisResult> {
         val generativeModel = GenerativeModel(
-            modelName = "gemini-1.5-flash",
+            modelName = modelName,
             apiKey = apiKey
         )
 
@@ -48,7 +49,9 @@ class GeminiRemoteDataSource @Inject constructor() {
             val result = Json { ignoreUnknownKeys = true }.decodeFromString<FoodAnalysisResult>(cleanJson)
             Result.success(result)
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e("GeminiRemoteDataSource", "Error analyzing images: ${e.javaClass.name}: ${e.localizedMessage}", e)
+            val errorMessage = "An unexpected error occurred during AI analysis. Please check your API key and network connection. Model: $modelName. Details: ${e.javaClass.simpleName}"
+            Result.failure(Exception(errorMessage, e))
         }
     }
 }

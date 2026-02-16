@@ -13,26 +13,38 @@ class GeminiRepository @Inject constructor(
 
     suspend fun estimateCalories(
         images: List<Bitmap>,
-        apiKey: String
+        apiKey: String,
+        modelName: String
     ): Result<FoodAnalysisResult> = withContext(Dispatchers.IO) {
         
-        // Strategy:
-        // 1. If API Key is present, try Remote.
-        // 2. If Remote fails or no Key, try Local.
-        // 3. Fail if both unavailable.
+        var remoteError: Throwable? = null
 
         if (apiKey.isNotBlank()) {
-            val remoteResult = remoteDataSource.analyze(images, apiKey)
+            val remoteResult = remoteDataSource.analyze(images, apiKey, modelName)
             if (remoteResult.isSuccess) {
                 return@withContext remoteResult
+            } else {
+                remoteError = remoteResult.exceptionOrNull()
             }
-            // If remote failed, fall through to local (optional strategy, currently falling through)
         }
 
         if (localDataSource.isAvailable()) {
-            return@withContext localDataSource.analyze(images)
+            val localResult = localDataSource.analyze(images)
+            if (localResult.isSuccess) {
+                return@withContext localResult
+            }
         }
 
-        return@withContext Result.failure(Exception("AI Analysis failed. remote: ${if(apiKey.isBlank()) "No Key" else "Error"}, local: Not available"))
+        val errorMessage = buildString {
+            append("AI Analysis failed. ")
+            if (apiKey.isBlank()) {
+                append("Remote: No API Key provided. ")
+            } else {
+                append("Remote Error: ${remoteError?.message ?: "Unknown"}. ")
+            }
+            append("Local: Not available.")
+        }
+
+        return@withContext Result.failure(Exception(errorMessage))
     }
 }
