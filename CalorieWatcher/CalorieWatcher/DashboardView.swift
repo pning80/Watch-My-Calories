@@ -8,11 +8,13 @@ struct DashboardView: View {
     
     @StateObject private var healthKitManager = HealthKitManager()
     
+    @Binding var selectedTab: ContentView.Tab
     @Binding var scrollToMeal: MealType?
     
     @State private var selectedImage: UIImage?
     
-    init(scrollToMeal: Binding<MealType?> = .constant(nil)) {
+    init(selectedTab: Binding<ContentView.Tab>, scrollToMeal: Binding<MealType?> = .constant(nil)) {
+        self._selectedTab = selectedTab
         self._scrollToMeal = scrollToMeal
     }
     
@@ -75,7 +77,12 @@ struct DashboardView: View {
                             )
                             
                             if todayEntries.isEmpty {
-                                EmptyStateCard()
+                                Button {
+                                    selectedTab = .camera
+                                } label: {
+                                    EmptyStateCard()
+                                }
+                                .buttonStyle(.plain)
                             } else {
                                 VStack(alignment: .leading, spacing: 20) {
                                     ForEach(mealOrder, id: \.self) { mealType in
@@ -117,7 +124,6 @@ struct DashboardView: View {
     }
 }
 
-// MARK: - Local Components
 // MARK: - Local Components
 // MealSection moved to Components.swift
 
