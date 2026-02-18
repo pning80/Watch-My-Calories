@@ -126,12 +126,13 @@ final class GeminiService: EstimationService {
         // Prompt refined to ensure strict JSON
         let prompt = """
         Analyze these food images. Identify the food items, estimate the portion size, and calculate the calories.
+        Always use US customary units for quantities (oz, lbs, cups, tbsp, tsp, pieces, slices). Never use metric units like grams or milliliters.
         Return ONLY a raw JSON object (no markdown, no code blocks) with this structure:
         {
           "items": [
             {
               "name": "Food Name",
-              "quantity": "Estimated Quantity (e.g. 1 cup, 200g)",
+              "quantity": "Estimated Quantity in US customary units (e.g. 1 cup, 6 oz, 2 pieces)",
               "calories": 150,
               "protein": 10,
               "carbs": 20,
@@ -223,7 +224,7 @@ final class MockEstimationService: EstimationService {
     func estimateCalories(images: [Data], model: String, apiKey: String) async throws -> EstimationResult {
         try await Task.sleep(nanoseconds: 1_000_000_000)
         return EstimationResult(items: [
-            EstimationItem(name: "Mock Chicken", quantity: "150g", calories: 250, confidence: 0.95),
+            EstimationItem(name: "Mock Chicken", quantity: "5 oz", calories: 250, confidence: 0.95),
             EstimationItem(name: "Mock Rice", quantity: "1 cup", calories: 200, confidence: 0.90)
         ])
     }
