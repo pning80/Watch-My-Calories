@@ -26,62 +26,74 @@ cd CalorieWatcherAndroid
 ```
 - Requires physical device (API 26+) for camera; Health Connect needs Android 14+
 - Test device: Pixel 9a
+- Tests are boilerplate only (ExampleUnitTest, ExampleInstrumentedTest) — no real test coverage yet
 
 ## Architecture
 
 ### iOS — SwiftUI + SwiftData (iOS 17+)
 - **Persistence**: SwiftData `@Model` classes (`UserProfile`, `FoodEntry` in `DataModels.swift`). Views query via `@Query` and `@Environment(\.modelContext)`.
-- **Singletons**: `AppEnvironment` (holds `EstimationService` protocol, injectable for testing via `MockEstimationService`), `SettingsStore` (API key in Keychain, model name in UserDefaults).
-- **Camera flow**: `CameraManager` (AVFoundation) → `CameraView` → `EstimationReviewView` (calls Gemini, saves to SwiftData).
-- **Images**: Stored in Documents directory, keyed by UUID in `FoodEntry.imageID`.
-- **Health**: `HealthKitManager` reads `activeEnergyBurned` with background delivery.
+- **Singletons**: `AppEnvironment` (holds `EstimationService` protocol, injectable for testing via `MockEstimationService`), `SettingsStore` (API key in Keychain via `KeychainHelper`, model name in UserDefaults, default model: `gemini-2.0-flash-exp`).
+- **Camera flow**: `CameraManager` (AVFoundation, `@MainActor`) → `CameraView` → `EstimationReviewView` (calls Gemini, saves to SwiftData). Up to 3 photos per meal; only the first image is persisted.
+- **Images**: Stored in Documents directory as `{UUID}.jpg`, keyed by `FoodEntry.imageID`.
+- **Health**: `HealthKitManager` reads `activeEnergyBurned` with `HKObserverQuery` + background delivery.
+- **Tab navigation**: `ContentView` hosts 4 tabs — Dashboard, Camera, History, Settings.
 
 ### Android — MVVM + Hilt + Jetpack Compose + Room
-- **Repository layer**: `GeminiRepository` (remote API → local AI fallback), `HealthRepository`, `SettingsRepository` — all Hilt-injected.
-- **ViewModels**: Expose `StateFlow<UiState>` to composables. No direct DAO access from UI.
-- **Navigation**: Single `NavHost` in `MainActivity`.
-- **Secure storage**: `EncryptedSharedPreferences` for API key; Jetpack DataStore for preferences.
-- **DI**: Hilt module in `di/AppModule.kt` provides `AppDatabase` and DAOs.
+- **Repository layer**: `GeminiRepository` (delegates to `GeminiRemoteDataSource`; `GeminiLocalDataSource` is a stub/TODO, always returns failure), `HealthRepository`, `SettingsRepository` — all Hilt-injected.
+- **ViewModels**: Expose `StateFlow<UiState>` to composables. `AnalysisViewModel` uses sealed class `AnalysisUiState` (Idle, Loading, Success, Error). No direct DAO access from UI.
+- **Navigation**: Single `NavHost` in `MainActivity` with routes: `dashboard`, `camera`, `analysis/{imagePaths}` (URL-encoded), `history`, `settings`. Bottom navigation bar with 4 tabs.
+- **Secure storage**: `EncryptedSharedPreferences` (AES256) for API key; Jetpack DataStore for model preference. `BuildConfig.GEMINI_API_KEY` fallback from `local.properties`.
+- **DI**: Hilt module in `di/AppModule.kt` provides `AppDatabase`, DAOs, and repositories.
 
 ## Key Data Conventions
 
 - **Units**: UI displays Imperial (lbs, ft/in); storage is always **metric** (kg, cm). Conversion happens at the view layer.
-- **MealType auto-assignment**: Breakfast 7–9, Lunch 11–14, Dinner 17–20, Snack otherwise (based on entry timestamp).
-- **Calorie goal**: Mifflin-St Jeor BMR × activity multiplier + active calories burned from HealthKit/Health Connect.
+- **Food quantity units (Gemini prompt)**: iOS explicitly forces **US customary units** (oz, cups, lbs, tbsp, tsp) in the prompt and forbids metric. Android does **not** enforce this — its prompt is unit-agnostic.
+- **MealType auto-assignment**: Breakfast 7–9, Lunch 11–14, Dinner 17–20, Snack otherwise (based on entry hour). iOS uses exclusive upper bounds (`7..<10`, `11..<15`, `17..<21`); Android uses inclusive ranges (`7..9`, `11..14`, `17..20`).
+- **Calorie goal**: Mifflin-St Jeor BMR × activity multiplier. Effective goal = target + active calories burned (from HealthKit/Health Connect). BMR calculated on-demand, not persisted.
 - **No backend**: All data is on-device. Only food images are sent to Gemini API for analysis.
 
 ## Gemini API Integration
 
-Both platforms call the same REST endpoint:
-```
-POST https://generativelanguage.googleapis.com/v1beta/{model}:generateContent
-```
-with base64-encoded images + a text prompt. Response is parsed as JSON with `{ name, quantity, calories, protein, carbs, fat, confidence }` items.
+The two platforms use **different integration methods**:
+
+- **iOS**: Raw REST calls to `POST https://generativelanguage.googleapis.com/v1beta/{model}:generateContent` with base64-encoded images. Available models fetched dynamically from `/v1beta/models`. Response includes `confidence` field. Prompt enforces US customary units.
+- **Android**: Google AI SDK (`com.google.ai.client.generativeai.GenerativeModel`) with `Bitmap` images. Model list is curated/hardcoded in `SettingsViewModel` with friendly name → API name mapping. Response includes `imageIndex` field (0-based). No unit enforcement in prompt.
+
+Both parse JSON responses with food items containing `{ name, quantity, calories, protein, carbs, fat }`.
 
 - API key is user-provided at runtime (Settings screen), stored in Keychain (iOS) / EncryptedSharedPreferences (Android).
-- Available models are fetched dynamically; default preference is a "flash" or "lite" model.
 
 ## Key Files
 
-| iOS | Purpose |
-|-----|---------|
-| `CalorieWatcher/Services.swift` | Gemini API client + `EstimationService` protocol |
-| `CalorieWatcher/DataModels.swift` | SwiftData models (`UserProfile`, `FoodEntry`, `MealType`) |
-| `CalorieWatcher/DashboardView.swift` | Main "Today" screen |
-| `CalorieWatcher/DesignSystem.swift` | Color palette and view modifiers |
-| `CalorieWatcher/Components.swift` | Shared UI components (`HeroSummaryCard`, `FoodEntryCard`) |
+| iOS (under `CalorieWatcher/CalorieWatcher/`) | Purpose |
+|----------------------------------------------|---------|
+| `Services.swift` | Gemini REST client + `EstimationService` protocol + `MockEstimationService` |
+| `DataModels.swift` | SwiftData models (`UserProfile`, `FoodEntry`, `MealType`) |
+| `DashboardView.swift` | Main "Today" screen |
+| `ContentView.swift` | Tab navigation root |
+| `EstimationReviewView.swift` | Post-capture analysis results + save flow |
+| `DesignSystem.swift` | Color palette and view modifiers |
+| `Components.swift` | Shared UI components (`HeroSummaryCard`, `FoodEntryCard`, `MealSection`) |
+| `AppEnvironment.swift` | `EstimationService` dependency injection |
+| `SettingsStore.swift` | API key (Keychain) + model name (UserDefaults) |
 
-| Android | Purpose |
-|---------|---------|
-| `data/repository/GeminiRepository.kt` | AI layer with remote + local fallback |
+| Android (under `CalorieWatcherAndroid/app/src/main/java/.../`) | Purpose |
+|----------------------------------------------------------------|---------|
+| `data/repository/GeminiRepository.kt` | AI orchestrator (remote + local stub) |
+| `data/repository/GeminiRemoteDataSource.kt` | Google AI SDK calls |
 | `data/model/FoodEntry.kt` | Room entity + `MealType` enum |
 | `data/model/UserProfile.kt` | Room entity |
+| `ui/today/TodayScreen.kt` + `TodayViewModel.kt` | Main "Today" screen (active) |
+| `ui/analysis/AnalysisScreen.kt` + `AnalysisViewModel.kt` | Post-capture analysis + save |
 | `ui/theme/Color.kt` | Color system (mirrors iOS palette) |
 | `util/CalorieCalculator.kt` | BMR/TDEE computation |
-| `app/build.gradle.kts` | Full dependency manifest |
+| `di/AppModule.kt` | Hilt DI configuration |
 
 ## Important Notes
 
-- **Dual codebase**: Changes to shared logic (e.g., calorie formula, meal time windows) must be applied to both platforms independently.
-- **Legacy iOS files**: `TodayView.swift`, `CaptureView.swift`, `CoreDataService.swift`, and `GeminiEstimationService.swift` are stubs or superseded — the active implementations are `DashboardView.swift` and `Services.swift`.
-- **Android local.properties**: Can pre-seed `GEMINI_API_KEY=...` for development.
+- **Dual codebase**: Changes to shared logic (e.g., calorie formula) must be applied to both platforms independently. Note that meal time windows already differ between platforms (see above).
+- **Legacy/deprecated files**:
+  - **iOS**: `TodayView.swift`, `CaptureView.swift`, `CoreDataService.swift`, and `GeminiEstimationService.swift` (in parent `CalorieWatcher/` directory) are stubs or superseded — the active implementations are `DashboardView.swift` and `Services.swift`.
+  - **Android**: `ui/dashboard/DashboardScreen.kt` and `DashboardViewModel.kt` are deprecated — the active implementation is `ui/today/TodayScreen.kt` and `TodayViewModel.kt`.
+- **Android `local.properties`**: Can pre-seed `GEMINI_API_KEY=...` for development (accessed via `BuildConfig`).
