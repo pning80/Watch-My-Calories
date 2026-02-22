@@ -12,7 +12,9 @@ struct DashboardView: View {
     @Binding var scrollToMeal: MealType?
     
     @State private var selectedImage: UIImage?
-    
+    @State private var showManualEntry = false
+    @State private var pendingManualEntry: FoodEntry?
+
     init(selectedTab: Binding<ContentView.Tab>, scrollToMeal: Binding<MealType?> = .constant(nil)) {
         self._selectedTab = selectedTab
         self._scrollToMeal = scrollToMeal
@@ -65,6 +67,16 @@ struct DashboardView: View {
                                         .cwTitle()
                                 }
                                 Spacer()
+
+                                Button {
+                                    showManualEntry = true
+                                } label: {
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundStyle(Color.white)
+                                        .padding(10)
+                                        .background(Circle().fill(Color.cwPrimary))
+                                }
                             }
                             .padding(.horizontal)
                             .padding(.top)
@@ -77,12 +89,23 @@ struct DashboardView: View {
                             )
                             
                             if todayEntries.isEmpty {
-                                Button {
-                                    selectedTab = .camera
-                                } label: {
-                                    EmptyStateCard()
+                                VStack(spacing: 12) {
+                                    Button {
+                                        selectedTab = .camera
+                                    } label: {
+                                        EmptyStateCard()
+                                    }
+                                    .buttonStyle(.plain)
+
+                                    Button {
+                                        showManualEntry = true
+                                    } label: {
+                                        Label("or log manually", systemImage: "square.and.pencil")
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                            .foregroundStyle(Color.cwPrimary)
+                                    }
                                 }
-                                .buttonStyle(.plain)
                             } else {
                                 VStack(alignment: .leading, spacing: 20) {
                                     ForEach(mealOrder, id: \.self) { mealType in
@@ -121,9 +144,153 @@ struct DashboardView: View {
         .onAppear {
             healthKitManager.requestAuthorization()
         }
+        .sheet(isPresented: $showManualEntry, onDismiss: {
+            if let entry = pendingManualEntry {
+                modelContext.insert(entry)
+                pendingManualEntry = nil
+            }
+        }) {
+            ManualEntryView(onSave: { entry in
+                pendingManualEntry = entry
+                showManualEntry = false
+            })
+        }
     }
 }
 
-// MARK: - Local Components
-// MealSection moved to Components.swift
+// MARK: - Manual Entry
+
+private struct ManualEntryView: View {
+    @Environment(\.dismiss) private var dismiss
+    var onSave: (FoodEntry) -> Void
+
+    @State private var name = ""
+    @State private var caloriesText = ""
+    @State private var quantity = ""
+    @State private var mealType: MealType = MealType.from(date: Date())
+    @State private var proteinText = ""
+    @State private var carbsText = ""
+    @State private var fatText = ""
+    @State private var showNutrition = false
+
+    private var canSave: Bool {
+        !name.trimmingCharacters(in: .whitespaces).isEmpty
+        && Double(caloriesText) != nil && Double(caloriesText)! > 0
+        && !quantity.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.cwBackground.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Food info section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Food Details")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
+
+                            VStack(spacing: 12) {
+                                TextField("Food name", text: $name)
+                                    .textFieldStyle(.roundedBorder)
+
+                                TextField("Calories", text: $caloriesText)
+                                    .textFieldStyle(.roundedBorder)
+                                    .keyboardType(.decimalPad)
+
+                                TextField("Quantity (e.g. 1 cup, 6 oz)", text: $quantity)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+
+                        // Meal type picker
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Meal")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
+
+                            Picker("Meal", selection: $mealType) {
+                                ForEach(MealType.allCases, id: \.self) { type in
+                                    Text(type.rawValue).tag(type)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+
+                        // Optional nutrition
+                        VStack(alignment: .leading, spacing: 12) {
+                            DisclosureGroup("Nutrition Details (optional)", isExpanded: $showNutrition) {
+                                VStack(spacing: 12) {
+                                    HStack(spacing: 12) {
+                                        NutrientField(label: "Protein (g)", text: $proteinText)
+                                        NutrientField(label: "Carbs (g)", text: $carbsText)
+                                        NutrientField(label: "Fat (g)", text: $fatText)
+                                    }
+                                }
+                                .padding(.top, 8)
+                            }
+                            .font(.headline)
+                            .foregroundStyle(Color.cwTextPrimary)
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+                    }
+                    .padding(.top)
+                }
+            }
+            .navigationTitle("Log Food")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .fontWeight(.semibold)
+                        .disabled(!canSave)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        let calories = Double(caloriesText) ?? 0
+        let protein = Double(proteinText)
+        let carbs = Double(carbsText)
+        let fat = Double(fatText)
+
+        let entry = FoodEntry(
+            name: name.trimmingCharacters(in: .whitespaces),
+            calories: calories,
+            quantity: quantity.trimmingCharacters(in: .whitespaces),
+            protein: protein,
+            carbs: carbs,
+            fat: fat
+        )
+        entry.mealType = mealType
+        onSave(entry)
+    }
+}
+
+private struct NutrientField: View {
+    let label: String
+    @Binding var text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(Color.gray)
+            TextField("—", text: $text)
+                .textFieldStyle(.roundedBorder)
+                .keyboardType(.decimalPad)
+        }
+    }
+}
 
