@@ -58,11 +58,11 @@ enum MealType: String, Codable, CaseIterable {
         let hour = calendar.component(.hour, from: date)
         
         switch hour {
-        case 7..<9:
+        case 7..<10:
             return .breakfast
-        case 11..<14:
+        case 11..<15:
             return .lunch
-        case 17..<20:
+        case 17..<21:
             return .dinner
         default:
             return .snack

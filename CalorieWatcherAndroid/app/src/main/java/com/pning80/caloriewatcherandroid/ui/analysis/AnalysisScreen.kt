@@ -335,9 +335,9 @@ fun FoodItemResultCard(item: com.pning80.caloriewatcherandroid.data.model.Identi
 fun getMealTypeByTime(): MealType {
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     return when (hour) {
-        in 5..10 -> MealType.BREAKFAST
+        in 7..9 -> MealType.BREAKFAST
         in 11..14 -> MealType.LUNCH
-        in 17..21 -> MealType.DINNER
+        in 17..20 -> MealType.DINNER
         else -> MealType.SNACK
     }
 }
