@@ -8,6 +8,7 @@ struct SettingsView: View {
     @EnvironmentObject private var env: AppEnvironment
     
     @Binding var selectedTab: ContentView.Tab
+    @Binding var hasUnsavedChanges: Bool
 
     // Use ObservedObject for singletons to avoid lifecycle conflicts
     @ObservedObject private var store = SettingsStore.shared
@@ -37,8 +38,9 @@ struct SettingsView: View {
         case apiKey, calories
     }
     
-    init(selectedTab: Binding<ContentView.Tab> = .constant(.settings)) {
+    init(selectedTab: Binding<ContentView.Tab> = .constant(.settings), hasUnsavedChanges: Binding<Bool> = .constant(false)) {
         self._selectedTab = selectedTab
+        self._hasUnsavedChanges = hasUnsavedChanges
     }
 
     var body: some View {
@@ -95,6 +97,15 @@ struct SettingsView: View {
                         }
                     }
                     Link("Get an API key", destination: URL(string: "https://aistudio.google.com/app/apikey")!)
+                }
+                
+                Section(header: Text("App Appearance")) {
+                    Picker("Theme", selection: $store.appTheme) {
+                        ForEach(AppTheme.allCases) { theme in
+                            Text(theme.rawValue).tag(theme)
+                        }
+                    }
+                    .pickerStyle(.menu)
                 }
                 
                 Section(header: Text("Profile")) {
@@ -235,7 +246,54 @@ struct SettingsView: View {
                 loadSettings()
                 focusedField = nil
                 Task { await fetchModels() }
+                checkUnsaved()
             }
+            .onChange(of: apiKey) { _, _ in checkUnsaved() }
+            .onChange(of: selectedModel) { _, _ in checkUnsaved() }
+            .onChange(of: heightFeet) { _, _ in checkUnsaved() }
+            .onChange(of: heightInchesPart) { _, _ in checkUnsaved() }
+            .onChange(of: weightLbs) { _, _ in checkUnsaved() }
+            .onChange(of: age) { _, _ in checkUnsaved() }
+            .onChange(of: gender) { _, _ in checkUnsaved() }
+            .onChange(of: activityLevel) { _, _ in checkUnsaved() }
+            .onChange(of: targetCalories) { _, _ in checkUnsaved() }
+            .onChange(of: store.appTheme) { _, _ in checkUnsaved() }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DiscardSettings"))) { _ in
+                loadSettings()
+                checkUnsaved()
+            }
+        }
+        .preferredColorScheme(store.appTheme.colorScheme)
+    }
+    
+    private func checkUnsaved() {
+        let target = targetCalories ?? 2000
+        let totalInches = Double(heightFeet * 12 + heightInchesPart)
+        let heightCm = totalInches * 2.54
+        let weightKg = Double(weightLbs) / 2.20462
+        
+        var isUnsaved = false
+        
+        if apiKey != store.apiKey { isUnsaved = true }
+        else if selectedModel != store.selectedModel { isUnsaved = true }
+        else if store.appTheme != store.savedAppTheme { isUnsaved = true }
+        else if let p = userProfiles.first {
+            if abs(p.height - heightCm) > 0.1 ||
+               abs(p.weight - weightKg) > 0.1 ||
+               p.age != age ||
+               p.gender != gender ||
+               p.activityLevel != activityLevel ||
+               p.targetCalories != target {
+                isUnsaved = true
+            }
+        } else {
+            if heightFeet != 5 || heightInchesPart != 8 || weightLbs != 150 || age != 30 || gender != .male || activityLevel != .sedentary || targetCalories != nil {
+                isUnsaved = true
+            }
+        }
+        
+        if hasUnsavedChanges != isUnsaved {
+            hasUnsavedChanges = isUnsaved
         }
     }
     
@@ -269,6 +327,7 @@ struct SettingsView: View {
     private func loadSettings() {
         apiKey = store.apiKey
         selectedModel = store.selectedModel
+        store.appTheme = store.savedAppTheme
         
         if let profile = userProfiles.first {
             // Metric (Stored) -> Imperial (UI)

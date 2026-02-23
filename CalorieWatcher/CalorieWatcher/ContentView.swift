@@ -7,12 +7,33 @@ struct ContentView: View {
     // State to trigger scrolling
     @State private var scrollToMeal: MealType?
     
+    @ObservedObject private var store = SettingsStore.shared
+    
+    // State for Settings unsaved changes alerts
+    @State private var settingsHasUnsavedChanges: Bool = false
+    @State private var showUnsavedWarning: Bool = false
+    @State private var pendingTab: Tab? = nil
+    
+    var tabBinding: Binding<Tab> {
+        Binding(
+            get: { selectedTab },
+            set: { newTab in
+                if selectedTab == .settings && newTab != .settings && settingsHasUnsavedChanges {
+                    pendingTab = newTab
+                    showUnsavedWarning = true
+                } else {
+                    selectedTab = newTab
+                }
+            }
+        )
+    }
+    
     enum Tab: Hashable {
         case dashboard, camera, history, settings
     }
     
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: tabBinding) {
             DashboardView(selectedTab: $selectedTab, scrollToMeal: $scrollToMeal)
                 .tabItem {
                     Label("Today", systemImage: "flame.fill")
@@ -31,13 +52,27 @@ struct ContentView: View {
                 }
                 .tag(Tab.history)
             
-            SettingsView(selectedTab: $selectedTab)
+            SettingsView(selectedTab: $selectedTab, hasUnsavedChanges: $settingsHasUnsavedChanges)
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
                 .tag(Tab.settings)
         }
+        .alert("Unsaved Changes", isPresented: $showUnsavedWarning) {
+            Button("Discard", role: .destructive) {
+                if let t = pendingTab {
+                    NotificationCenter.default.post(name: Notification.Name("DiscardSettings"), object: nil)
+                    selectedTab = t
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                pendingTab = nil
+            }
+        } message: {
+            Text("You have unsaved changes. Are you sure you want to leave?")
+        }
         .tint(Color.cwPrimary)
+        .preferredColorScheme(store.appTheme.colorScheme)
         .onAppear {
             // Configure Tab Bar appearance safely once the view is loaded
             let appearance = UITabBarAppearance()
