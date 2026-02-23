@@ -48,23 +48,27 @@ struct DashboardView: View {
                 ScrollViewReader { proxy in
                     ScrollView {
                         VStack(spacing: 24) {
-                            HStack(spacing: 12) {
+                            HStack(alignment: .center, spacing: 14) {
                                 Image("MiniAppIcon")
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: 44, height: 44)
-                                    .clipShape(ContainerRelativeShape())
+                                    .frame(width: 38, height: 38)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                    .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
                                     
-                                VStack(alignment: .leading) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Calorie Watcher")
+                                        .font(.system(.title2, design: .serif, weight: .bold))
+                                        .foregroundStyle(Color.cwPrimary)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.8)
+                                    
                                     Text(Date(), format: .dateTime.weekday(.wide).day().month())
-                                        .font(.subheadline)
+                                        .font(.caption)
                                         .fontWeight(.medium)
                                         .textCase(.uppercase)
                                         .foregroundStyle(Color.gray)
-                                        .kerning(1)
-                                    
-                                    Text("Calorie Watcher")
-                                        .cwTitle()
+                                        .kerning(0.5)
                                 }
                                 Spacer()
 
@@ -72,10 +76,11 @@ struct DashboardView: View {
                                     showManualEntry = true
                                 } label: {
                                     Image(systemName: "plus")
-                                        .font(.system(size: 16, weight: .bold))
+                                        .font(.system(size: 15, weight: .bold))
                                         .foregroundStyle(Color.white)
                                         .padding(10)
                                         .background(Circle().fill(Color.cwPrimary))
+                                        .shadow(color: Color.cwPrimary.opacity(0.3), radius: 4, x: 0, y: 2)
                                 }
                             }
                             .padding(.horizontal)

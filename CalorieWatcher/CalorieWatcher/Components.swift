@@ -85,7 +85,11 @@ struct HeroSummaryCard: View {
     var remaining: Double {
         max(0, effectiveTarget - consumed)
     }
-    
+    var burnedProgress: Double {
+        guard effectiveTarget > 0 else { return 0 }
+        return min(burnedCalories / effectiveTarget, 1.0)
+    }
+
     var body: some View {
         HStack(spacing: 20) {
             ZStack {
@@ -93,7 +97,19 @@ struct HeroSummaryCard: View {
                 Circle()
                     .stroke(Color.cwSecondary, lineWidth: 15)
                 
-                // Foreground Ring (Consumed)
+                // Burned Ring (Orange, starts at 0, goes to burnedProgress)
+                // This is laid OUT UNDER the Consumed ring or stacked with it.
+                // It represents the "bonus" or expanded part of the target.
+                Circle()
+                    .trim(from: 0, to: min(progress + burnedProgress, 1.0))
+                    .stroke(
+                        Color.cwAccent,
+                        style: StrokeStyle(lineWidth: 15, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    .animation(.spring(response: 1.0, dampingFraction: 0.7), value: progress + burnedProgress)
+
+                // Foreground Ring (Consumed, Green, over the orange background)
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(
