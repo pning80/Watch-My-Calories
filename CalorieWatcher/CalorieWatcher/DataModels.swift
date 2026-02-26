@@ -88,7 +88,7 @@ final class FoodEntry {
         set { mealTypeRaw = newValue.rawValue }
     }
     
-    init(name: String, calories: Double, quantity: String, timestamp: Date = Date(), protein: Double? = nil, carbs: Double? = nil, fat: Double? = nil, imageID: UUID? = nil) {
+    init(name: String, calories: Double, quantity: String, timestamp: Date = Date(), protein: Double? = nil, carbs: Double? = nil, fat: Double? = nil, imageID: UUID? = nil, mealType: MealType? = nil) {
         self.id = UUID()
         self.name = name
         self.calories = calories
@@ -98,6 +98,10 @@ final class FoodEntry {
         self.carbs = carbs
         self.fat = fat
         self.imageID = imageID
-        self.mealTypeRaw = MealType.from(date: timestamp).rawValue
+        if let explicitMealType = mealType {
+            self.mealTypeRaw = explicitMealType.rawValue
+        } else {
+            self.mealTypeRaw = MealType.from(date: timestamp).rawValue
+        }
     }
 }

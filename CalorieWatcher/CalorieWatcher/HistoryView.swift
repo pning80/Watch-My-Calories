@@ -74,7 +74,7 @@ struct HistoryDayCard: View {
     
     var mealGroupedEntries: [MealType: [FoodEntry]] {
         Dictionary(grouping: entries) { entry in
-            MealType.from(date: entry.timestamp)
+            entry.mealType
         }
     }
     

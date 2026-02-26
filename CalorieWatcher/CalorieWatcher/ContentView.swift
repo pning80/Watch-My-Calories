@@ -92,6 +92,7 @@ struct CameraRootView: View {
     
     @State private var capturedImages: [UIImage] = []
     @State private var reviewData: [Data]?
+    @State private var capturedDate: Date? = nil
     @State private var resetID = UUID()
     
     var body: some View {
@@ -100,19 +101,20 @@ struct CameraRootView: View {
                 CameraView { images in
                     self.capturedImages = images
                     self.reviewData = images.compactMap { $0.jpegData(compressionQuality: 0.8) }
+                    self.capturedDate = Date()
                 }
                 .id(resetID)
             }
             .navigationDestination(isPresented: Binding(
                 get: { reviewData != nil },
-                set: { if !$0 { reviewData = nil; capturedImages.removeAll() } }
+                set: { if !$0 { reviewData = nil; capturedImages.removeAll(); capturedDate = nil } }
             )) {
-                if let data = reviewData {
-                    EstimationReviewView(images: data, onDone: {
+                if let data = reviewData, let date = capturedDate {
+                    EstimationReviewView(images: data, captureDate: date, onDone: {
                         // Switch to dashboard tab on completion
                         selectedTab = .dashboard
-                        // Trigger scroll to the current time's meal type
-                        scrollToMeal = MealType.from(date: Date())
+                        // Trigger scroll to the captured time's meal type
+                        scrollToMeal = MealType.from(date: date)
                     })
                 }
             }

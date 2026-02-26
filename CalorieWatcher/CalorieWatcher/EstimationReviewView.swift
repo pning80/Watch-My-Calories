@@ -7,6 +7,7 @@ struct EstimationReviewView: View {
     @Environment(\.dismiss) private var dismiss
 
     let images: [Data]
+    let captureDate: Date
     var onDone: () -> Void = {}
 
     @State private var result: EstimationResult? = nil
@@ -177,7 +178,7 @@ struct EstimationReviewView: View {
                 name: item.name,
                 calories: item.calories,
                 quantity: item.quantity,
-                timestamp: Date(),
+                timestamp: captureDate,
                 protein: item.protein,
                 carbs: item.carbs,
                 fat: item.fat,

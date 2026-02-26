@@ -12,7 +12,14 @@ Calorie Watcher is a dual-platform native mobile app (iOS + Android) that estima
 - Open `CalorieWatcher/CalorieWatcher.xcodeproj` in Xcode
 - Requires physical device for camera and HealthKit (simulator has limited support with `#if targetEnvironment(simulator)` guards)
 - No SPM or CocoaPods dependencies — all Apple frameworks only
-- Build/run: Cmd+R in Xcode
+- **Build/run (Xcode)**: Cmd+R in Xcode
+- **Build/run (Terminal)**: `ios-deploy` is not actively installed. To build and run from the terminal, compile with `xcodebuild` and deploy via `xcrun devicectl` using **absolute paths** to bypass the Developer Sandbox:
+  ```bash
+  cd CalorieWatcher
+  xcodebuild -project CalorieWatcher.xcodeproj -scheme CalorieWatcher -destination "id=<YOUR_DEVICE_ID>" -allowProvisioningUpdates build SYMROOT=$(PWD)/build
+  xcrun devicectl device install app --device <YOUR_DEVICE_ID> $(PWD)/build/Debug-iphoneos/CalorieWatcher.app
+  xcrun devicectl device process launch --device <YOUR_DEVICE_ID> com.pning80.CalorieWatcher
+  ```
 - No test targets currently configured
 
 ### Android (`CalorieWatcherAndroid/`)
