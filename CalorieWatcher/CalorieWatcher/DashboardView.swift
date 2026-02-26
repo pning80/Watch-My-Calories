@@ -27,7 +27,7 @@ struct DashboardView: View {
     
     var groupedMeals: [MealType: [FoodEntry]] {
         Dictionary(grouping: todayEntries) { entry in
-            MealType.from(date: entry.timestamp)
+            entry.mealType
         }
     }
     
