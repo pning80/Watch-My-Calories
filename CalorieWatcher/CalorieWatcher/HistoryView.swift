@@ -6,6 +6,8 @@ struct HistoryView: View {
     @Query(sort: \FoodEntry.timestamp, order: .forward) private var foodEntries: [FoodEntry]
     
     @State private var selectedImage: UIImage?
+    @State private var entryToEdit: FoodEntry?
+    @State private var entryToView: FoodEntry?
     
     var groupedEntries: [Date: [FoodEntry]] {
         let calendar = Calendar.current
@@ -41,6 +43,10 @@ struct HistoryView: View {
                             ForEach(sortedDates, id: \.self) { date in
                                 HistoryDayCard(date: date, entries: groupedEntries[date] ?? [], onImageTap: { image in
                                     self.selectedImage = image
+                                }, onEdit: { entry in
+                                    self.entryToEdit = entry
+                                }, onView: { entry in
+                                    self.entryToView = entry
                                 })
                             }
                         }
@@ -55,6 +61,12 @@ struct HistoryView: View {
         )) { wrapper in
             FullScreenImageView(image: wrapper.image)
         }
+        .sheet(item: $entryToEdit) { entry in
+            EditFoodEntryView(entry: entry)
+        }
+        .sheet(item: $entryToView) { entry in
+            ViewFoodEntryView(entry: entry)
+        }
     }
 }
 
@@ -63,6 +75,8 @@ struct HistoryDayCard: View {
     let date: Date
     let entries: [FoodEntry]
     var onImageTap: (UIImage) -> Void
+    var onEdit: ((FoodEntry) -> Void)? = nil
+    var onView: ((FoodEntry) -> Void)? = nil
     
     @Environment(\.modelContext) private var modelContext
     
@@ -138,6 +152,16 @@ struct HistoryDayCard: View {
                                 // Assumes FoodEntryCard is defined in Components.swift or locally
                                 FoodEntryCard(entry: entry, onThumbnailTap: onImageTap)
                                     .contextMenu {
+                                        Button {
+                                            onView?(entry)
+                                        } label: {
+                                            Label("View", systemImage: "eye")
+                                        }
+                                        Button {
+                                            onEdit?(entry)
+                                        } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
                                         Button(role: .destructive) {
                                             withAnimation {
                                                 modelContext.delete(entry)

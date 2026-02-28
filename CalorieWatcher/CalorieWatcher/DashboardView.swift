@@ -14,6 +14,8 @@ struct DashboardView: View {
     @State private var selectedImage: UIImage?
     @State private var showManualEntry = false
     @State private var pendingManualEntry: FoodEntry?
+    @State private var entryToEdit: FoodEntry?
+    @State private var entryToView: FoodEntry?
 
     init(selectedTab: Binding<ContentView.Tab>, scrollToMeal: Binding<MealType?> = .constant(nil)) {
         self._selectedTab = selectedTab
@@ -117,6 +119,10 @@ struct DashboardView: View {
                                         if let entries = groupedMeals[mealType], !entries.isEmpty {
                                             MealSection(title: mealType.rawValue, entries: entries, onImageTap: { image in
                                                 self.selectedImage = image
+                                            }, onEdit: { entry in
+                                                self.entryToEdit = entry
+                                            }, onView: { entry in
+                                                self.entryToView = entry
                                             })
                                             .id(mealType)
                                         }
@@ -159,6 +165,12 @@ struct DashboardView: View {
                 pendingManualEntry = entry
                 showManualEntry = false
             })
+        }
+        .sheet(item: $entryToEdit) { entry in
+            EditFoodEntryView(entry: entry)
+        }
+        .sheet(item: $entryToView) { entry in
+            ViewFoodEntryView(entry: entry)
         }
     }
 }

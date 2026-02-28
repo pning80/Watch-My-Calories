@@ -252,6 +252,8 @@ struct MealSection: View {
     let title: String
     let entries: [FoodEntry]
     var onImageTap: (UIImage) -> Void
+    var onEdit: ((FoodEntry) -> Void)? = nil
+    var onView: ((FoodEntry) -> Void)? = nil
     @Environment(\.modelContext) private var modelContext
     
     var totalCalories: Double {
@@ -283,6 +285,16 @@ struct MealSection: View {
                 ForEach(entries) { entry in
                     FoodEntryCard(entry: entry, onThumbnailTap: onImageTap)
                         .contextMenu {
+                            Button {
+                                onView?(entry)
+                            } label: {
+                                Label("View", systemImage: "eye")
+                            }
+                            Button {
+                                onEdit?(entry)
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
                             Button(role: .destructive) {
                                 modelContext.delete(entry)
                             } label: {
@@ -291,6 +303,283 @@ struct MealSection: View {
                         }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Edit Food Entry
+
+struct EditFoodEntryView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    let entry: FoodEntry
+    
+    @State private var name: String
+    @State private var caloriesText: String
+    @State private var quantity: String
+    @State private var mealType: MealType
+    @State private var proteinText: String
+    @State private var carbsText: String
+    @State private var fatText: String
+    @State private var showNutrition: Bool
+
+    init(entry: FoodEntry) {
+        self.entry = entry
+        _name = State(initialValue: entry.name)
+        _caloriesText = State(initialValue: String(format: "%g", entry.calories))
+        _quantity = State(initialValue: entry.quantity)
+        _mealType = State(initialValue: entry.mealType)
+        _proteinText = State(initialValue: entry.protein != nil ? String(format: "%g", entry.protein!) : "")
+        _carbsText = State(initialValue: entry.carbs != nil ? String(format: "%g", entry.carbs!) : "")
+        _fatText = State(initialValue: entry.fat != nil ? String(format: "%g", entry.fat!) : "")
+        _showNutrition = State(initialValue: entry.protein != nil || entry.carbs != nil || entry.fat != nil)
+    }
+
+    private var canSave: Bool {
+        !name.trimmingCharacters(in: .whitespaces).isEmpty
+        && Double(caloriesText) != nil && Double(caloriesText)! >= 0
+        && !quantity.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.cwBackground.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Food info section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Food Details")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
+
+                            VStack(spacing: 12) {
+                                TextField("Food name", text: $name)
+                                    .textFieldStyle(.roundedBorder)
+
+                                TextField("Calories", text: $caloriesText)
+                                    .textFieldStyle(.roundedBorder)
+                                    .keyboardType(.decimalPad)
+
+                                TextField("Quantity (e.g. 1 cup, 6 oz)", text: $quantity)
+                                    .textFieldStyle(.roundedBorder)
+                            }
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+
+                        // Meal type picker
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Meal")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
+
+                            Picker("Meal", selection: $mealType) {
+                                ForEach(MealType.allCases, id: \.self) { type in
+                                    Text(type.rawValue).tag(type)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+
+                        // Optional nutrition
+                        VStack(alignment: .leading, spacing: 12) {
+                            DisclosureGroup("Nutrition Details (optional)", isExpanded: $showNutrition) {
+                                VStack(spacing: 12) {
+                                    HStack(spacing: 12) {
+                                        EditNutrientField(label: "Protein (g)", text: $proteinText)
+                                        EditNutrientField(label: "Carbs (g)", text: $carbsText)
+                                        EditNutrientField(label: "Fat (g)", text: $fatText)
+                                    }
+                                }
+                                .padding(.top, 8)
+                            }
+                            .font(.headline)
+                            .foregroundStyle(Color.cwTextPrimary)
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+                    }
+                    .padding(.top)
+                }
+            }
+            .navigationTitle("Edit Food")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .fontWeight(.semibold)
+                        .disabled(!canSave)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        entry.name = name.trimmingCharacters(in: .whitespaces)
+        entry.calories = Double(caloriesText) ?? 0
+        entry.quantity = quantity.trimmingCharacters(in: .whitespaces)
+        entry.mealType = mealType
+        
+        if let p = Double(proteinText) {
+            entry.protein = p
+        } else if proteinText.isEmpty {
+            entry.protein = nil
+        }
+        
+        if let c = Double(carbsText) {
+            entry.carbs = c
+        } else if carbsText.isEmpty {
+            entry.carbs = nil
+        }
+        
+        if let f = Double(fatText) {
+            entry.fat = f
+        } else if fatText.isEmpty {
+            entry.fat = nil
+        }
+
+        dismiss()
+    }
+}
+
+private struct EditNutrientField: View {
+    let label: String
+    @Binding var text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(Color.gray)
+            TextField("—", text: $text)
+                .textFieldStyle(.roundedBorder)
+                .keyboardType(.decimalPad)
+        }
+    }
+}
+
+// MARK: - View Food Entry
+
+struct ViewFoodEntryView: View {
+    @Environment(\.dismiss) private var dismiss
+    let entry: FoodEntry
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.cwBackground.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Food info section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Food Details")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
+
+                            VStack(spacing: 12) {
+                                ViewFieldRow(label: "Food name", value: entry.name)
+                                ViewFieldRow(label: "Calories", value: "\(Int(entry.calories)) kcal")
+                                ViewFieldRow(label: "Quantity", value: entry.quantity)
+                            }
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+
+                        // Meal type
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Meal")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
+
+                            Text(entry.mealType.rawValue)
+                                .font(.subheadline)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+
+                        // Optional nutrition
+                        if entry.protein != nil || entry.carbs != nil || entry.fat != nil {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Nutrition Details")
+                                    .font(.headline)
+                                    .foregroundStyle(Color.cwTextPrimary)
+
+                                VStack(spacing: 12) {
+                                    HStack(spacing: 12) {
+                                        ViewNutrientBox(label: "Protein", value: entry.protein, unit: "g")
+                                        ViewNutrientBox(label: "Carbs", value: entry.carbs, unit: "g")
+                                        ViewNutrientBox(label: "Fat", value: entry.fat, unit: "g")
+                                    }
+                                }
+                            }
+                            .cwCard()
+                            .padding(.horizontal)
+                        }
+                    }
+                    .padding(.top)
+                }
+            }
+            .navigationTitle("View Food")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+    }
+}
+
+private struct ViewFieldRow: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(Color.gray)
+            Text(value)
+                .font(.body)
+                .foregroundStyle(Color.cwTextPrimary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .background(Color.cwSurface)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 1))
+        }
+    }
+}
+
+private struct ViewNutrientBox: View {
+    let label: String
+    let value: Double?
+    let unit: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(Color.gray)
+            Text(value != nil ? "\(String(format: "%g", value!)) \(unit)" : "—")
+                .font(.body)
+                .foregroundStyle(Color.cwTextPrimary)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.vertical, 8)
+                .background(Color.cwSurface)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 1))
         }
     }
 }
