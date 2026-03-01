@@ -249,6 +249,11 @@ struct FoodEntryCard: View {
 
 // MARK: - Group Card Concept
 
+struct FoodEntryGroupEdit: Identifiable {
+    let id = UUID()
+    let items: [FoodEntry]
+}
+
 struct FoodEntryGroup {
     let id = UUID()
     var items: [FoodEntry]
@@ -270,9 +275,12 @@ struct FoodEntryGroupCard: View {
     let group: FoodEntryGroup
     var onThumbnailTap: ((UIImage) -> Void)? = nil
     var onEdit: ((FoodEntry) -> Void)? = nil
+    var onEditGroup: (([FoodEntry]) -> Void)? = nil
     var onView: ((FoodEntry) -> Void)? = nil
+    var onViewGroup: (([FoodEntry]) -> Void)? = nil
     var onDelete: ((FoodEntry) -> Void)? = nil
-    
+    var onDeleteGroup: (([FoodEntry]) -> Void)? = nil
+
     @State private var thumbnail: UIImage?
     @State private var isExpanded = false
     
@@ -353,10 +361,25 @@ struct FoodEntryGroupCard: View {
         VStack(spacing: 0) {
             // Main Summary Row
             if group.items.count > 1 {
-                Button(action: { withAnimation(.snappy) { isExpanded.toggle() } }) {
-                    summaryRow
-                }
-                .buttonStyle(.plain)
+                summaryRow
+                    .onTapGesture { withAnimation(.snappy) { isExpanded.toggle() } }
+                    .contextMenu {
+                        Button {
+                            onViewGroup?(group.items)
+                        } label: {
+                            Label("View", systemImage: "eye")
+                        }
+                        Button {
+                            onEditGroup?(group.items)
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                        Button(role: .destructive) {
+                            onDeleteGroup?(group.items)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
             } else {
                 summaryRow
                     .contextMenu {
@@ -454,7 +477,9 @@ struct MealSection: View {
     let entries: [FoodEntry]
     var onImageTap: (UIImage) -> Void
     var onEdit: ((FoodEntry) -> Void)? = nil
+    var onEditGroup: (([FoodEntry]) -> Void)? = nil
     var onView: ((FoodEntry) -> Void)? = nil
+    var onViewGroup: (([FoodEntry]) -> Void)? = nil
     @Environment(\.modelContext) private var modelContext
     
     var totalCalories: Double {
@@ -522,9 +547,16 @@ struct MealSection: View {
                         group: group,
                         onThumbnailTap: onImageTap,
                         onEdit: onEdit,
+                        onEditGroup: onEditGroup,
                         onView: onView,
+                        onViewGroup: onViewGroup,
                         onDelete: { item in
                             modelContext.delete(item)
+                        },
+                        onDeleteGroup: { items in
+                            for item in items {
+                                modelContext.delete(item)
+                            }
                         }
                     )
                 }
@@ -712,6 +744,209 @@ struct EditFoodEntryView: View {
     }
 }
 
+// MARK: - Edit Meal Group
+
+struct EditMealGroupView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+
+    let entries: [FoodEntry]
+
+    @State private var mealName: String
+    @State private var mealType: MealType
+    @State private var itemStates: [ItemEditState]
+
+    struct ItemEditState: Identifiable {
+        let id: PersistentIdentifier
+        var name: String
+        var caloriesText: String
+        var quantity: String
+        var proteinText: String
+        var carbsText: String
+        var fatText: String
+        var showNutrition: Bool
+    }
+
+    init(entries: [FoodEntry]) {
+        self.entries = entries
+        _mealName = State(initialValue: entries.first?.mealName ?? "")
+        _mealType = State(initialValue: entries.first?.mealType ?? .snack)
+        _itemStates = State(initialValue: entries.map { entry in
+            ItemEditState(
+                id: entry.persistentModelID,
+                name: entry.name,
+                caloriesText: String(format: "%g", entry.calories),
+                quantity: entry.quantity,
+                proteinText: entry.protein != nil ? String(format: "%g", entry.protein!) : "",
+                carbsText: entry.carbs != nil ? String(format: "%g", entry.carbs!) : "",
+                fatText: entry.fat != nil ? String(format: "%g", entry.fat!) : "",
+                showNutrition: entry.protein != nil || entry.carbs != nil || entry.fat != nil
+            )
+        })
+    }
+
+    private var totalCalories: Double {
+        itemStates.reduce(0) { $0 + (Double($1.caloriesText) ?? 0) }
+    }
+
+    private var canSave: Bool {
+        itemStates.allSatisfy { item in
+            !item.name.trimmingCharacters(in: .whitespaces).isEmpty
+            && Double(item.caloriesText) != nil && Double(item.caloriesText)! >= 0
+            && !item.quantity.trimmingCharacters(in: .whitespaces).isEmpty
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.cwBackground.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Shared meal info
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Meal Info")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
+
+                            VStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Meal Name")
+                                        .font(.caption)
+                                        .foregroundStyle(Color.gray)
+                                    TextField("Meal Name (e.g., Chicken & Rice)", text: $mealName)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+
+                                Picker("Meal", selection: $mealType) {
+                                    ForEach(MealType.allCases, id: \.self) { type in
+                                        Text(type.rawValue).tag(type)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+                            }
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+
+                        // Per-item sections
+                        ForEach($itemStates) { $item in
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text(item.name.isEmpty ? "Item" : item.name)
+                                    .font(.headline)
+                                    .foregroundStyle(Color.cwTextPrimary)
+
+                                VStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Item Name")
+                                            .font(.caption)
+                                            .foregroundStyle(Color.gray)
+                                        TextField("Food name", text: $item.name)
+                                            .textFieldStyle(.roundedBorder)
+                                    }
+
+                                    HStack(spacing: 12) {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Calories")
+                                                .font(.caption)
+                                                .foregroundStyle(Color.gray)
+                                            TextField("Calories", text: $item.caloriesText)
+                                                .textFieldStyle(.roundedBorder)
+                                                .keyboardType(.decimalPad)
+                                        }
+
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Quantity")
+                                                .font(.caption)
+                                                .foregroundStyle(Color.gray)
+                                            TextField("e.g. 1 cup", text: $item.quantity)
+                                                .textFieldStyle(.roundedBorder)
+                                        }
+                                    }
+
+                                    DisclosureGroup("Nutrition (optional)", isExpanded: $item.showNutrition) {
+                                        HStack(spacing: 12) {
+                                            EditNutrientField(label: "Protein (g)", text: $item.proteinText)
+                                            EditNutrientField(label: "Carbs (g)", text: $item.carbsText)
+                                            EditNutrientField(label: "Fat (g)", text: $item.fatText)
+                                        }
+                                        .padding(.top, 8)
+                                    }
+                                    .font(.subheadline)
+                                    .foregroundStyle(Color.cwTextPrimary)
+                                }
+                            }
+                            .cwCard()
+                            .padding(.horizontal)
+                        }
+
+                        // Total calories summary
+                        HStack {
+                            Text("Total Calories")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
+                            Spacer()
+                            Text("\(Int(totalCalories)) kcal")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Color.cwPrimary)
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+                    }
+                    .padding(.top)
+                }
+            }
+            .navigationTitle("Edit Meal")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .fontWeight(.semibold)
+                        .disabled(!canSave)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        let updatedMealName = mealName.trimmingCharacters(in: .whitespaces)
+        let newMealNameValue: String? = updatedMealName.isEmpty ? nil : updatedMealName
+
+        for (entry, state) in zip(entries, itemStates) {
+            entry.mealName = newMealNameValue
+            entry.mealType = mealType
+            entry.name = state.name.trimmingCharacters(in: .whitespaces)
+            entry.calories = Double(state.caloriesText) ?? 0
+            entry.quantity = state.quantity.trimmingCharacters(in: .whitespaces)
+
+            if let p = Double(state.proteinText) {
+                entry.protein = p
+            } else if state.proteinText.isEmpty {
+                entry.protein = nil
+            }
+
+            if let c = Double(state.carbsText) {
+                entry.carbs = c
+            } else if state.carbsText.isEmpty {
+                entry.carbs = nil
+            }
+
+            if let f = Double(state.fatText) {
+                entry.fat = f
+            } else if state.fatText.isEmpty {
+                entry.fat = nil
+            }
+        }
+
+        dismiss()
+    }
+}
+
 private struct EditNutrientField: View {
     let label: String
     @Binding var text: String
@@ -792,6 +1027,109 @@ struct ViewFoodEntryView: View {
                 }
             }
             .navigationTitle("View Food")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - View Meal Group
+
+struct ViewMealGroupView: View {
+    @Environment(\.dismiss) private var dismiss
+    let entries: [FoodEntry]
+
+    private var displayedTitle: String {
+        if let userDefined = entries.first(where: { $0.mealName != nil })?.mealName, !userDefined.isEmpty {
+            return userDefined
+        }
+        if entries.count == 1 {
+            return entries[0].name
+        } else if let firstItem = entries.first {
+            return "\(firstItem.name) + \(entries.count - 1) more"
+        }
+        return "Meal"
+    }
+
+    private var mealType: MealType {
+        entries.first?.mealType ?? .snack
+    }
+
+    private var totalCalories: Double {
+        entries.reduce(0) { $0 + $1.calories }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.cwBackground.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Meal info
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Meal Info")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
+
+                            VStack(spacing: 12) {
+                                ViewFieldRow(label: "Meal Name", value: displayedTitle)
+                                ViewFieldRow(label: "Meal Type", value: mealType.rawValue)
+                            }
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+
+                        // Per-item sections
+                        ForEach(entries) { entry in
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text(entry.name)
+                                    .font(.headline)
+                                    .foregroundStyle(Color.cwTextPrimary)
+
+                                VStack(spacing: 12) {
+                                    ViewFieldRow(label: "Food name", value: entry.name)
+                                    ViewFieldRow(label: "Calories", value: "\(Int(entry.calories)) kcal")
+                                    ViewFieldRow(label: "Quantity", value: entry.quantity)
+                                }
+
+                                if entry.protein != nil || entry.carbs != nil || entry.fat != nil {
+                                    VStack(spacing: 12) {
+                                        HStack(spacing: 12) {
+                                            ViewNutrientBox(label: "Protein", value: entry.protein, unit: "g")
+                                            ViewNutrientBox(label: "Carbs", value: entry.carbs, unit: "g")
+                                            ViewNutrientBox(label: "Fat", value: entry.fat, unit: "g")
+                                        }
+                                    }
+                                }
+                            }
+                            .cwCard()
+                            .padding(.horizontal)
+                        }
+
+                        // Total calories
+                        HStack {
+                            Text("Total Calories")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
+                            Spacer()
+                            Text("\(Int(totalCalories)) kcal")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Color.cwPrimary)
+                        }
+                        .cwCard()
+                        .padding(.horizontal)
+                    }
+                    .padding(.top)
+                }
+            }
+            .navigationTitle("View Meal")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
