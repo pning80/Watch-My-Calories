@@ -247,6 +247,207 @@ struct FoodEntryCard: View {
     }
 }
 
+// MARK: - Group Card Concept
+
+struct FoodEntryGroup {
+    let id = UUID()
+    var items: [FoodEntry]
+    
+    var representativeImageID: UUID? {
+        items.first(where: { $0.imageID != nil })?.imageID
+    }
+    
+    var representativeName: String? {
+        items.first(where: { $0.mealName != nil })?.mealName
+    }
+    
+    var totalCalories: Double {
+        items.reduce(0) { $0 + $1.calories }
+    }
+}
+
+struct FoodEntryGroupCard: View {
+    let group: FoodEntryGroup
+    var onThumbnailTap: ((UIImage) -> Void)? = nil
+    var onEdit: ((FoodEntry) -> Void)? = nil
+    var onView: ((FoodEntry) -> Void)? = nil
+    var onDelete: ((FoodEntry) -> Void)? = nil
+    
+    @State private var thumbnail: UIImage?
+    @State private var isExpanded = false
+    
+    var displayedTitle: String {
+        if let userDefined = group.representativeName, !userDefined.isEmpty {
+            return userDefined
+        }
+        
+        // Fallback styling if no user-defined or Gemini name
+        if group.items.count == 1 {
+            return group.items[0].name
+        } else if let firstItem = group.items.first {
+            return "\(firstItem.name) + \(group.items.count - 1) more"
+        } else {
+            return "Meal"
+        }
+    }
+    
+    private var summaryRow: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.cwSecondary)
+                    .frame(width: 48, height: 48)
+
+                if let thumbnail = thumbnail {
+                    Button(action: { onThumbnailTap?(thumbnail) }) {
+                        Image(uiImage: thumbnail)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 40, height: 40)
+                            .clipShape(Circle())
+                            .shadow(radius: 1)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                } else if let first = displayedTitle.first {
+                    Text(String(first))
+                        .font(.headline)
+                        .foregroundStyle(Color.cwPrimary)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(displayedTitle)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.cwTextPrimary)
+                    .lineLimit(1)
+
+                if let firstTimestamp = group.items.first?.timestamp {
+                    Text(firstTimestamp, style: .time)
+                        .font(.caption2)
+                        .foregroundStyle(Color.gray)
+                }
+            }
+
+            Spacer()
+
+            HStack(spacing: 6) {
+                Text("\(Int(group.totalCalories)) kcal")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.cwPrimary)
+
+                if group.items.count > 1 {
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(Color.gray)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                }
+            }
+        }
+        .padding()
+        .contentShape(Rectangle())
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Main Summary Row
+            if group.items.count > 1 {
+                Button(action: { withAnimation(.snappy) { isExpanded.toggle() } }) {
+                    summaryRow
+                }
+                .buttonStyle(.plain)
+            } else {
+                summaryRow
+                    .contextMenu {
+                        if let item = group.items.first {
+                            Button {
+                                onView?(item)
+                            } label: {
+                                Label("View", systemImage: "eye")
+                            }
+                            Button {
+                                onEdit?(item)
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            Button(role: .destructive) {
+                                onDelete?(item)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
+            }
+
+            // Sub-items List
+            if isExpanded && group.items.count > 1 {
+                VStack(spacing: 0) {
+                    Divider()
+                        .padding(.leading, 64)
+                    
+                    ForEach(group.items) { item in
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(width: 4, height: 4)
+                            
+                            Text(item.name)
+                                .font(.caption)
+                                .foregroundStyle(Color.cwTextPrimary.opacity(0.8))
+                                .lineLimit(1)
+                            
+                            Spacer()
+                            
+                            Text("\(Int(item.calories))")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(Color.gray)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.leading, 64)
+                        .padding(.trailing, 16)
+                        .contentShape(Rectangle()) // Make row tappable for context menu
+                        .contextMenu {
+                            Button {
+                                onView?(item)
+                            } label: {
+                                Label("View", systemImage: "eye")
+                            }
+                            Button {
+                                onEdit?(item)
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            Button(role: .destructive) {
+                                onDelete?(item)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        
+                        if item.id != group.items.last?.id {
+                            Divider()
+                                .padding(.leading, 64)
+                        }
+                    }
+                }
+                .padding(.bottom, 8)
+                .transition(.opacity)
+            }
+        }
+        .background(Color.cwSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .padding(.horizontal)
+        .onAppear {
+            if let id = group.representativeImageID {
+                self.thumbnail = ImageStorage.shared.load(id: id)
+            }
+        }
+    }
+}
+
 // MARK: - Local Components
 struct MealSection: View {
     let title: String
@@ -258,6 +459,40 @@ struct MealSection: View {
     
     var totalCalories: Double {
         entries.reduce(0) { $0 + $1.calories }
+    }
+    
+    var groupedEntries: [FoodEntryGroup] {
+        var groups: [FoodEntryGroup] = []
+        var currentGroupItems: [FoodEntry] = []
+        var currentImageID: UUID? = nil
+        
+        for entry in entries {
+            if entry.imageID == nil {
+                // Standalone item without an image
+                if !currentGroupItems.isEmpty {
+                    groups.append(FoodEntryGroup(items: currentGroupItems))
+                    currentGroupItems = []
+                }
+                groups.append(FoodEntryGroup(items: [entry]))
+                currentImageID = nil
+            } else if entry.imageID == currentImageID {
+                // Same contiguous image group
+                currentGroupItems.append(entry)
+            } else {
+                // New image group
+                if !currentGroupItems.isEmpty {
+                    groups.append(FoodEntryGroup(items: currentGroupItems))
+                }
+                currentGroupItems = [entry]
+                currentImageID = entry.imageID
+            }
+        }
+        
+        if !currentGroupItems.isEmpty {
+            groups.append(FoodEntryGroup(items: currentGroupItems))
+        }
+        
+        return groups
     }
     
     var body: some View {
@@ -281,26 +516,17 @@ struct MealSection: View {
             }
             .padding(.horizontal)
             
-            VStack(spacing: 8) {
-                ForEach(entries) { entry in
-                    FoodEntryCard(entry: entry, onThumbnailTap: onImageTap)
-                        .contextMenu {
-                            Button {
-                                onView?(entry)
-                            } label: {
-                                Label("View", systemImage: "eye")
-                            }
-                            Button {
-                                onEdit?(entry)
-                            } label: {
-                                Label("Edit", systemImage: "pencil")
-                            }
-                            Button(role: .destructive) {
-                                modelContext.delete(entry)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
+            VStack(spacing: 12) {
+                ForEach(groupedEntries, id: \.id) { group in
+                    FoodEntryGroupCard(
+                        group: group,
+                        onThumbnailTap: onImageTap,
+                        onEdit: onEdit,
+                        onView: onView,
+                        onDelete: { item in
+                            modelContext.delete(item)
                         }
+                    )
                 }
             }
         }
@@ -315,6 +541,7 @@ struct EditFoodEntryView: View {
     let entry: FoodEntry
     
     @State private var name: String
+    @State private var mealName: String
     @State private var caloriesText: String
     @State private var quantity: String
     @State private var mealType: MealType
@@ -326,6 +553,7 @@ struct EditFoodEntryView: View {
     init(entry: FoodEntry) {
         self.entry = entry
         _name = State(initialValue: entry.name)
+        _mealName = State(initialValue: entry.mealName ?? "")
         _caloriesText = State(initialValue: String(format: "%g", entry.calories))
         _quantity = State(initialValue: entry.quantity)
         _mealType = State(initialValue: entry.mealType)
@@ -355,8 +583,21 @@ struct EditFoodEntryView: View {
                                 .foregroundStyle(Color.cwTextPrimary)
 
                             VStack(spacing: 12) {
-                                TextField("Food name", text: $name)
-                                    .textFieldStyle(.roundedBorder)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Group Title (Meal Name)")
+                                        .font(.caption)
+                                        .foregroundStyle(Color.gray)
+                                    TextField("Meal Name (e.g., Chicken & Rice)", text: $mealName)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Item Name")
+                                        .font(.caption)
+                                        .foregroundStyle(Color.gray)
+                                    TextField("Food name", text: $name)
+                                        .textFieldStyle(.roundedBorder)
+                                }
 
                                 TextField("Calories", text: $caloriesText)
                                     .textFieldStyle(.roundedBorder)
@@ -421,8 +662,30 @@ struct EditFoodEntryView: View {
         }
     }
 
+    @Environment(\.modelContext) private var modelContext
+    
+    // We update the save method to also update sibling entries that share the same imageID.
     private func save() {
         entry.name = name.trimmingCharacters(in: .whitespaces)
+        
+        // Update mealName for this entry and any sibling entries in the same group
+        let updatedMealName = mealName.trimmingCharacters(in: .whitespaces)
+        let newMealNameValue: String? = updatedMealName.isEmpty ? nil : updatedMealName
+        
+        entry.mealName = newMealNameValue
+        
+        if let imageID = entry.imageID {
+            // Find other entries with the same imageID and update their mealName too
+            let fetchDescriptor = FetchDescriptor<FoodEntry>(
+                predicate: #Predicate { $0.imageID == imageID }
+            )
+            if let siblings = try? modelContext.fetch(fetchDescriptor) {
+                for sibling in siblings where sibling.id != entry.id {
+                    sibling.mealName = newMealNameValue
+                }
+            }
+        }
+        
         entry.calories = Double(caloriesText) ?? 0
         entry.quantity = quantity.trimmingCharacters(in: .whitespaces)
         entry.mealType = mealType

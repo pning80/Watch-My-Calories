@@ -182,7 +182,8 @@ struct EstimationReviewView: View {
                 protein: item.protein,
                 carbs: item.carbs,
                 fat: item.fat,
-                imageID: savedImageID
+                imageID: savedImageID,
+                mealName: result.mealName
             )
             modelContext.insert(entry)
         }
