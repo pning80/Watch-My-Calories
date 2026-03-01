@@ -16,6 +16,8 @@ struct DashboardView: View {
     @State private var pendingManualEntry: FoodEntry?
     @State private var entryToEdit: FoodEntry?
     @State private var entryToView: FoodEntry?
+    @State private var groupToEdit: FoodEntryGroupEdit?
+    @State private var groupToView: FoodEntryGroupEdit?
 
     init(selectedTab: Binding<ContentView.Tab>, scrollToMeal: Binding<MealType?> = .constant(nil)) {
         self._selectedTab = selectedTab
@@ -121,8 +123,12 @@ struct DashboardView: View {
                                                 self.selectedImage = image
                                             }, onEdit: { entry in
                                                 self.entryToEdit = entry
+                                            }, onEditGroup: { items in
+                                                self.groupToEdit = FoodEntryGroupEdit(items: items)
                                             }, onView: { entry in
                                                 self.entryToView = entry
+                                            }, onViewGroup: { items in
+                                                self.groupToView = FoodEntryGroupEdit(items: items)
                                             })
                                             .id(mealType)
                                         }
@@ -169,8 +175,14 @@ struct DashboardView: View {
         .sheet(item: $entryToEdit) { entry in
             EditFoodEntryView(entry: entry)
         }
+        .sheet(item: $groupToEdit) { group in
+            EditMealGroupView(entries: group.items)
+        }
         .sheet(item: $entryToView) { entry in
             ViewFoodEntryView(entry: entry)
+        }
+        .sheet(item: $groupToView) { group in
+            ViewMealGroupView(entries: group.items)
         }
     }
 }

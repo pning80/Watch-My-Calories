@@ -8,6 +8,8 @@ struct HistoryView: View {
     @State private var selectedImage: UIImage?
     @State private var entryToEdit: FoodEntry?
     @State private var entryToView: FoodEntry?
+    @State private var groupToEdit: FoodEntryGroupEdit?
+    @State private var groupToView: FoodEntryGroupEdit?
     
     var groupedEntries: [Date: [FoodEntry]] {
         let calendar = Calendar.current
@@ -45,8 +47,12 @@ struct HistoryView: View {
                                     self.selectedImage = image
                                 }, onEdit: { entry in
                                     self.entryToEdit = entry
+                                }, onEditGroup: { items in
+                                    self.groupToEdit = FoodEntryGroupEdit(items: items)
                                 }, onView: { entry in
                                     self.entryToView = entry
+                                }, onViewGroup: { items in
+                                    self.groupToView = FoodEntryGroupEdit(items: items)
                                 })
                             }
                         }
@@ -64,8 +70,14 @@ struct HistoryView: View {
         .sheet(item: $entryToEdit) { entry in
             EditFoodEntryView(entry: entry)
         }
+        .sheet(item: $groupToEdit) { group in
+            EditMealGroupView(entries: group.items)
+        }
         .sheet(item: $entryToView) { entry in
             ViewFoodEntryView(entry: entry)
+        }
+        .sheet(item: $groupToView) { group in
+            ViewMealGroupView(entries: group.items)
         }
     }
 }
@@ -76,8 +88,10 @@ struct HistoryDayCard: View {
     let entries: [FoodEntry]
     var onImageTap: (UIImage) -> Void
     var onEdit: ((FoodEntry) -> Void)? = nil
+    var onEditGroup: (([FoodEntry]) -> Void)? = nil
     var onView: ((FoodEntry) -> Void)? = nil
-    
+    var onViewGroup: (([FoodEntry]) -> Void)? = nil
+
     @Environment(\.modelContext) private var modelContext
     
     var totalCalories: Double {
@@ -186,10 +200,19 @@ struct HistoryDayCard: View {
                                     group: group,
                                     onThumbnailTap: onImageTap,
                                     onEdit: onEdit,
+                                    onEditGroup: onEditGroup,
                                     onView: onView,
+                                    onViewGroup: onViewGroup,
                                     onDelete: { item in
                                         withAnimation {
                                             modelContext.delete(item)
+                                        }
+                                    },
+                                    onDeleteGroup: { items in
+                                        withAnimation {
+                                            for item in items {
+                                                modelContext.delete(item)
+                                            }
                                         }
                                     }
                                 )
