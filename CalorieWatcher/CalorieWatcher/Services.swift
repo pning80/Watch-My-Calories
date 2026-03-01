@@ -43,6 +43,7 @@ struct EstimationItem: Identifiable, Codable {
 }
 
 struct EstimationResult: Codable {
+    var mealName: String?
     var items: [EstimationItem]
     var totalCalories: Double {
         items.reduce(0) { $0 + $1.calories }
@@ -223,7 +224,7 @@ final class MockEstimationService: EstimationService {
     
     func estimateCalories(images: [Data], model: String, apiKey: String) async throws -> EstimationResult {
         try await Task.sleep(nanoseconds: 1_000_000_000)
-        return EstimationResult(items: [
+        return EstimationResult(mealName: "Mock Chicken and Rice", items: [
             EstimationItem(name: "Mock Chicken", quantity: "5 oz", calories: 250, confidence: 0.95),
             EstimationItem(name: "Mock Rice", quantity: "1 cup", calories: 200, confidence: 0.90)
         ])

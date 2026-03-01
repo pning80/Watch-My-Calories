@@ -92,6 +92,38 @@ struct HistoryDayCard: View {
         }
     }
     
+    // Extracted grouping logic (similar to MealSection)
+    func groupEntries(_ mealEntries: [FoodEntry]) -> [FoodEntryGroup] {
+        var groups: [FoodEntryGroup] = []
+        var currentGroupItems: [FoodEntry] = []
+        var currentImageID: UUID? = nil
+        
+        for entry in mealEntries {
+            if entry.imageID == nil {
+                if !currentGroupItems.isEmpty {
+                    groups.append(FoodEntryGroup(items: currentGroupItems))
+                    currentGroupItems = []
+                }
+                groups.append(FoodEntryGroup(items: [entry]))
+                currentImageID = nil
+            } else if entry.imageID == currentImageID {
+                currentGroupItems.append(entry)
+            } else {
+                if !currentGroupItems.isEmpty {
+                    groups.append(FoodEntryGroup(items: currentGroupItems))
+                }
+                currentGroupItems = [entry]
+                currentImageID = entry.imageID
+            }
+        }
+        
+        if !currentGroupItems.isEmpty {
+            groups.append(FoodEntryGroup(items: currentGroupItems))
+        }
+        
+        return groups
+    }
+    
     let mealOrder: [MealType] = [.breakfast, .lunch, .dinner, .snack]
     
     var body: some View {
@@ -148,30 +180,21 @@ struct HistoryDayCard: View {
                             .padding(.horizontal)
                             .background(Color.cwBackground)
                             
-                            ForEach(mealEntries) { entry in
-                                // Assumes FoodEntryCard is defined in Components.swift or locally
-                                FoodEntryCard(entry: entry, onThumbnailTap: onImageTap)
-                                    .contextMenu {
-                                        Button {
-                                            onView?(entry)
-                                        } label: {
-                                            Label("View", systemImage: "eye")
-                                        }
-                                        Button {
-                                            onEdit?(entry)
-                                        } label: {
-                                            Label("Edit", systemImage: "pencil")
-                                        }
-                                        Button(role: .destructive) {
-                                            withAnimation {
-                                                modelContext.delete(entry)
-                                            }
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
+                            let groups = groupEntries(mealEntries)
+                            ForEach(groups, id: \.id) { group in
+                                FoodEntryGroupCard(
+                                    group: group,
+                                    onThumbnailTap: onImageTap,
+                                    onEdit: onEdit,
+                                    onView: onView,
+                                    onDelete: { item in
+                                        withAnimation {
+                                            modelContext.delete(item)
                                         }
                                     }
+                                )
                                 
-                                if entry.id != mealEntries.last?.id {
+                                if group.id != groups.last?.id {
                                     Divider()
                                         .padding(.leading, 56)
                                 }
@@ -179,6 +202,7 @@ struct HistoryDayCard: View {
                         }
                     }
                 }
+                .padding(.bottom, 8)
                 .background(Color.cwSurface)
                 .transition(.opacity)
             }
