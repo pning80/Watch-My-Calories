@@ -146,8 +146,7 @@ struct EstimationReviewView: View {
         errorMessage = nil
         showDetails = false
         do {
-            let store = SettingsStore.shared
-            let estimation = try await env.estimationService.estimateCalories(images: images, model: store.selectedModel, apiKey: store.apiKey)
+            let estimation = try await env.estimationService.estimateCalories(images: images)
             
             try? await Task.sleep(nanoseconds: 500_000_000)
             
