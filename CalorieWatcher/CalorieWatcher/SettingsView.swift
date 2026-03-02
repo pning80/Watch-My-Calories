@@ -6,38 +6,33 @@ struct SettingsView: View {
     @Query private var userProfiles: [UserProfile]
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var env: AppEnvironment
-    
+
     @Binding var selectedTab: ContentView.Tab
     @Binding var hasUnsavedChanges: Bool
 
     // Use ObservedObject for singletons to avoid lifecycle conflicts
     @ObservedObject private var store = SettingsStore.shared
-    
-    @State private var apiKey: String = ""
-    @State private var selectedModel: String = ""
-    @State private var availableModels: [GeminiModel] = []
-    @State private var isLoadingModels: Bool = false
-    
+
     // UI State (Imperial)
     @State private var heightFeet: Int = 5
     @State private var heightInchesPart: Int = 8
     @State private var weightLbs: Int = 150
     @State private var age: Int = 30
-    
+
     @State private var gender: Gender = .male
     @State private var activityLevel: ActivityLevel = .sedentary
     @State private var targetCalories: Double? = nil
-    
+
     // Toggle state for inline pickers
     @State private var isEditingWeight = false
     @State private var isEditingAge = false
-    
+
     @FocusState private var focusedField: Field?
-    
+
     enum Field {
-        case apiKey, calories
+        case calories
     }
-    
+
     init(selectedTab: Binding<ContentView.Tab> = .constant(.settings), hasUnsavedChanges: Binding<Bool> = .constant(false)) {
         self._selectedTab = selectedTab
         self._hasUnsavedChanges = hasUnsavedChanges
@@ -54,11 +49,11 @@ struct SettingsView: View {
                                 .frame(width: 100, height: 100)
                                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                                 .shadow(radius: 5)
-                            
+
                             Text("Calorie Watcher")
                                 .font(.headline)
                                 .foregroundStyle(Color.cwPrimary)
-                            
+
                             Text("Version 1.0.0")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -68,37 +63,6 @@ struct SettingsView: View {
                     .listRowBackground(Color.clear)
                 }
 
-                Section(header: Text("Gemini API")) {
-                    SecureField("API Key", text: $apiKey)
-                        .textContentType(.password)
-                        .focused($focusedField, equals: .apiKey)
-                        .onChange(of: apiKey) { oldValue, newValue in
-                            if newValue.count > 10 {
-                                Task { await fetchModels() }
-                            }
-                        }
-                    
-                    if isLoadingModels {
-                        HStack {
-                            Text("Loading models...")
-                            Spacer()
-                            ProgressView()
-                        }
-                    } else {
-                        Picker("Model", selection: $selectedModel) {
-                            if availableModels.isEmpty {
-                                Text("Gemini 2.0 Flash Exp").tag("gemini-2.0-flash-exp")
-                                Text("Gemini 1.5 Flash").tag("gemini-1.5-flash")
-                            } else {
-                                ForEach(availableModels, id: \.name) { model in
-                                    Text(model.displayName).tag(model.name.replacingOccurrences(of: "models/", with: ""))
-                                }
-                            }
-                        }
-                    }
-                    Link("Get an API key", destination: URL(string: "https://aistudio.google.com/app/apikey")!)
-                }
-                
                 Section(header: Text("App Appearance")) {
                     Picker("Theme", selection: $store.appTheme) {
                         ForEach(AppTheme.allCases) { theme in
@@ -107,7 +71,7 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.menu)
                 }
-                
+
                 Section(header: Text("Profile")) {
                     HStack {
                         Text("Height")
@@ -120,7 +84,7 @@ struct SettingsView: View {
                         .labelsHidden()
                         .frame(width: 60)
                         .clipped()
-                        
+
                         Picker("Inches", selection: $heightInchesPart) {
                             ForEach(0...11, id: \.self) { inch in
                                 Text("\(inch)\"").tag(inch)
@@ -130,7 +94,7 @@ struct SettingsView: View {
                         .frame(width: 60)
                         .clipped()
                     }
-                    
+
                     DisclosureGroup(isExpanded: $isEditingWeight) {
                         Picker("Weight", selection: $weightLbs) {
                             ForEach(50...400, id: \.self) { lbs in
@@ -156,7 +120,7 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    
+
                     DisclosureGroup(isExpanded: $isEditingAge) {
                         Picker("Age", selection: $age) {
                             ForEach(1...100, id: \.self) { y in
@@ -182,7 +146,7 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    
+
                     Picker("Gender", selection: $gender) {
                         ForEach(Gender.allCases) { gender in
                             Text(gender.rawValue).tag(gender)
@@ -194,7 +158,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                
+
                 Section(header: Text("Daily Goals")) {
                     HStack {
                         Text("Target Calories")
@@ -204,7 +168,7 @@ struct SettingsView: View {
                             .multilineTextAlignment(.trailing)
                             .focused($focusedField, equals: .calories)
                     }
-                    
+
                     Button("Calculate Recommended Goal") {
                         calculateCalories()
                         focusedField = nil
@@ -214,7 +178,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Text("Calorie Watcher keeps your data on-device.")
+                    Text("Calorie Watcher keeps your data on-device. Only food images are sent to the backend for analysis.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -223,19 +187,12 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        // 1. Save Data
                         saveSettings()
-                        
-                        // 2. Dismiss Keyboard
                         focusedField = nil
-                        
-                        // 3. Switch Tab immediately
                         selectedTab = .dashboard
                     }
-                    // REMOVED: .disabled(targetCalories == nil)
-                    // The save logic defaults to 2000 if nil, so we should allow saving anytime.
                 }
-                
+
                 ToolbarItem(placement: .keyboard) {
                     Button("Done") {
                         focusedField = nil
@@ -245,11 +202,8 @@ struct SettingsView: View {
             .onAppear {
                 loadSettings()
                 focusedField = nil
-                Task { await fetchModels() }
                 checkUnsaved()
             }
-            .onChange(of: apiKey) { _, _ in checkUnsaved() }
-            .onChange(of: selectedModel) { _, _ in checkUnsaved() }
             .onChange(of: heightFeet) { _, _ in checkUnsaved() }
             .onChange(of: heightInchesPart) { _, _ in checkUnsaved() }
             .onChange(of: weightLbs) { _, _ in checkUnsaved() }
@@ -265,18 +219,16 @@ struct SettingsView: View {
         }
         .preferredColorScheme(store.appTheme.colorScheme)
     }
-    
+
     private func checkUnsaved() {
         let target = targetCalories ?? 2000
         let totalInches = Double(heightFeet * 12 + heightInchesPart)
         let heightCm = totalInches * 2.54
         let weightKg = Double(weightLbs) / 2.20462
-        
+
         var isUnsaved = false
-        
-        if apiKey != store.apiKey { isUnsaved = true }
-        else if selectedModel != store.selectedModel { isUnsaved = true }
-        else if store.appTheme != store.savedAppTheme { isUnsaved = true }
+
+        if store.appTheme != store.savedAppTheme { isUnsaved = true }
         else if let p = userProfiles.first {
             if abs(p.height - heightCm) > 0.1 ||
                abs(p.weight - weightKg) > 0.1 ||
@@ -291,80 +243,49 @@ struct SettingsView: View {
                 isUnsaved = true
             }
         }
-        
+
         if hasUnsavedChanges != isUnsaved {
             hasUnsavedChanges = isUnsaved
         }
     }
-    
-    private func fetchModels() async {
-        guard !apiKey.isEmpty else { return }
-        isLoadingModels = true
-        do {
-            let models = try await env.estimationService.fetchAvailableModels(apiKey: apiKey)
-            await MainActor.run {
-                self.availableModels = models.sorted { $0.displayName < $1.displayName }
-                self.isLoadingModels = false
-                
-                let currentModelExists = availableModels.contains { $0.name.contains(selectedModel) }
-                if !currentModelExists {
-                    // Smart Selection: 2.0 -> 1.5 -> First
-                    if let flash2 = availableModels.first(where: { $0.name.contains("gemini-2.0-flash") }) {
-                        self.selectedModel = flash2.name.replacingOccurrences(of: "models/", with: "")
-                    } else if let flash15 = availableModels.first(where: { $0.name.contains("gemini-1.5-flash") }) {
-                        self.selectedModel = flash15.name.replacingOccurrences(of: "models/", with: "")
-                    } else if let first = availableModels.first {
-                        self.selectedModel = first.name.replacingOccurrences(of: "models/", with: "")
-                    }
-                }
-            }
-        } catch {
-            print("Failed to fetch models: \(error)")
-            await MainActor.run { self.isLoadingModels = false }
-        }
-    }
-    
+
     private func loadSettings() {
-        apiKey = store.apiKey
-        selectedModel = store.selectedModel
         store.appTheme = store.savedAppTheme
-        
+
         if let profile = userProfiles.first {
             // Metric (Stored) -> Imperial (UI)
             let heightCm = profile.height
             let heightInchesTotal = heightCm / 2.54
-            
+
             if heightInchesTotal > 0 {
                 heightFeet = Int(heightInchesTotal) / 12
                 heightInchesPart = Int(heightInchesTotal) % 12
             }
-            
+
             let weightKg = profile.weight
             weightLbs = Int((weightKg * 2.20462).rounded())
-            
+
             age = profile.age
             gender = profile.gender
             activityLevel = profile.activityLevel
             targetCalories = profile.targetCalories > 0 ? profile.targetCalories : nil
         }
     }
-    
+
     private func saveSettings() {
-        // 1. Save to Store (UserDefaults / Keychain)
-        store.apiKey = apiKey
-        store.selectedModel = selectedModel
+        // 1. Save to Store (UserDefaults)
         store.save()
-        
+
         // 2. Prepare Profile Data
         // Imperial (UI) -> Metric (Storage)
         let totalInches = Double(heightFeet * 12 + heightInchesPart)
         let heightCm = totalInches * 2.54
         let weightKg = Double(weightLbs) / 2.20462
-        
+
         let userAge = age
         // Fallback to 2000 if user didn't set a target
         let target = targetCalories ?? 2000
-        
+
         // 3. Save to SwiftData
         if let profile = userProfiles.first {
             profile.height = heightCm
@@ -384,7 +305,7 @@ struct SettingsView: View {
             )
             modelContext.insert(newProfile)
         }
-        
+
         // 4. Commit Changes with Error Handling
         do {
             try modelContext.save()
@@ -393,20 +314,20 @@ struct SettingsView: View {
             print("CRITICAL ERROR: Failed to save user profile: \(error)")
         }
     }
-    
+
     private func calculateCalories() {
         let totalInches = Double(heightFeet * 12 + heightInchesPart)
         let heightCm = totalInches * 2.54
         let weightKg = Double(weightLbs) * 0.453592
-        
+
         var bmr: Double = (10 * weightKg) + (6.25 * heightCm) - (5 * Double(age))
-        
+
         if gender == .male {
             bmr += 5
         } else {
             bmr -= 161
         }
-        
+
         let multiplier: Double
         switch activityLevel {
         case .sedentary: multiplier = 1.2
@@ -414,8 +335,7 @@ struct SettingsView: View {
         case .moderatelyActive: multiplier = 1.55
         case .veryActive: multiplier = 1.725
         }
-        
+
         targetCalories = (bmr * multiplier).rounded()
     }
 }
-

@@ -32,6 +32,9 @@ xcuserdata/
 #
 Pods/
 
+# Node
+node_modules/
+
 # Security
 #
 .env
