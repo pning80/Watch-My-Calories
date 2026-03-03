@@ -80,7 +80,7 @@ calorie,tracker,food,AI,nutrition,macro,health,diet,meal,camera,fitness,weight,p
 
 ### Support URL
 
-> *(Required — publish `AppStore/Support.md` as a public GitHub Gist and paste the URL here.)*
+> https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470
 
 ### Marketing URL
 
@@ -177,7 +177,7 @@ Confirm that the following are **not collected**:
 
 ### Privacy Policy URL
 
-> *(Required — publish `AppStore/PrivacyPolicy.md` as a public GitHub Gist and paste the URL here.)*
+> https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb
 
 ---
 
@@ -260,8 +260,8 @@ Complete these items before clicking **Submit for Review**:
 
 ### Must Do (Blockers)
 
-- [ ] **Privacy Policy URL** — Publish `AppStore/PrivacyPolicy.md` as a public GitHub Gist and paste the URL in App Store Connect.
-- [ ] **Support URL** — Publish `AppStore/Support.md` as a public GitHub Gist and paste the URL in App Store Connect.
+- [x] **Privacy Policy URL** — https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb
+- [x] **Support URL** — https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470
 - [ ] **Screenshots** — Take screenshots using iPhone 16 Pro Max simulator (see Section 3 above).
 - [x] **App Icon** — 1024×1024 icon is in the Xcode asset catalog (`AppIcon.png` also copied to `AppStore/`).
 - [ ] **Upload Build** — Archive and upload via Xcode (see Section 7).
