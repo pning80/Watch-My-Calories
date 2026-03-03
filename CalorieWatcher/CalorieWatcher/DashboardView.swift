@@ -170,6 +170,9 @@ struct DashboardView: View {
             ManualEntryView(onSave: { entry in
                 pendingManualEntry = entry
                 showManualEntry = false
+            }, onScanFood: {
+                showManualEntry = false
+                selectedTab = .camera
             })
         }
         .sheet(item: $entryToEdit) { entry in
@@ -192,6 +195,7 @@ struct DashboardView: View {
 private struct ManualEntryView: View {
     @Environment(\.dismiss) private var dismiss
     var onSave: (FoodEntry) -> Void
+    var onScanFood: (() -> Void)?
 
     @State private var name = ""
     @State private var caloriesText = ""
@@ -215,6 +219,45 @@ private struct ManualEntryView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
+                        // Scan with camera
+                        if let onScanFood {
+                            Button {
+                                onScanFood()
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "camera.viewfinder")
+                                        .font(.system(size: 24))
+                                        .foregroundStyle(Color.cwSecondary)
+                                        .padding(10)
+                                        .background(Circle().fill(Color.cwPrimary))
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Scan with Camera")
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(Color.cwTextPrimary)
+                                        Text("Estimate calories from a photo, or enter manually below")
+                                            .font(.caption)
+                                            .foregroundStyle(Color.gray)
+                                    }
+
+                                    Spacer()
+
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(Color.gray)
+                                }
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .strokeBorder(Color.cwPrimary.opacity(0.3), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal)
+                        }
+
                         // Food info section
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Food Details")
