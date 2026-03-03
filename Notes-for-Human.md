@@ -33,10 +33,13 @@ Take a look at the project fold and find the initial ideas from Ideation.md file
 ## Adding a GCP backend to the app
 - The Prompt file for the GCP backend: `GCP_Backend_Plan.md`
 - **Note after completion**: Successfully added the backend to the app. The backend is deployed on GCP Cloud Run and can be accessed by the app. 
-- Next Step is to publish the app to App Store. Please refer to `AppStore/App-Store-Set-Up.md` for the steps.
-  - Need to publish the privacy policy on GitHub gist.
-  - Need to publish the support page on GitHub gist.
-  - Need to create an App Store Connect account.
+
+## Preparing for App Store submission
+- Plan to publish the app to App Store so that other people can use it. 
+- Used Claude to create the privacy policy and the support page.
+- Published the privacy policy and the support page on GitHub gist.
+- The remaining steps are captured in `AppStore/App-Store-Set-Up.md`.
+
   
   
 
