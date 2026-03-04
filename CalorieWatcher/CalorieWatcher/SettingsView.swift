@@ -54,7 +54,7 @@ struct SettingsView: View {
                                 .font(.headline)
                                 .foregroundStyle(Color.cwPrimary)
 
-                            Text("Version 1.0.0")
+                            Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
