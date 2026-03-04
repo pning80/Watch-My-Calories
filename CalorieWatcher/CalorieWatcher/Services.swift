@@ -152,7 +152,6 @@ final class GeminiService: EstimationService {
             if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let errorObj = errorJson["error"] as? [String: Any],
                let message = errorObj["message"] as? String {
-                print("API Error: \(message)")
                 throw GeminiError.apiError(message)
             }
             // Check for plain-text error from backend
@@ -160,8 +159,6 @@ final class GeminiService: EstimationService {
                let message = errorJson["error"] as? String {
                 throw GeminiError.apiError(message)
             }
-            let bodyString = String(data: data, encoding: .utf8) ?? "No body"
-            print("API Error (Status \(httpResponse.statusCode)): \(bodyString)")
             throw GeminiError.apiError("Server returned \(httpResponse.statusCode)")
         }
 

@@ -40,11 +40,6 @@ class HealthKitManager: ObservableObject {
                     self.fetchTodayEnergyBurned()
                     self.startObserving()
                 }
-            } else {
-                print("HealthKit Authorization Failed: \(String(describing: error))")
-                if let error = error {
-                    print("Error details: \(error.localizedDescription)")
-                }
             }
         }
     }
@@ -59,9 +54,6 @@ class HealthKitManager: ObservableObject {
         
         let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
             guard let result = result, let sum = result.sumQuantity() else {
-                if let error = error {
-                    print("Failed to fetch active energy: \(error.localizedDescription)")
-                }
                 return
             }
             
@@ -81,21 +73,13 @@ class HealthKitManager: ObservableObject {
         let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
         
         let query = HKObserverQuery(sampleType: type, predicate: nil) { [weak self] _, _, error in
-            if let error = error {
-                print("Observer query failed: \(error.localizedDescription)")
-                return
-            }
-            // Fetch new data when an update is observed
+            guard error == nil else { return }
             self?.fetchTodayEnergyBurned()
         }
         
         healthStore.execute(query)
         
         // Enable background delivery
-        healthStore.enableBackgroundDelivery(for: type, frequency: .immediate) { success, error in
-            if !success {
-                print("Failed to enable background delivery: \(String(describing: error))")
-            }
-        }
+        healthStore.enableBackgroundDelivery(for: type, frequency: .immediate) { _, _ in }
     }
 }
