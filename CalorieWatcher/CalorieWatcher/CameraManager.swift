@@ -118,7 +118,7 @@ class CameraManager: NSObject, ObservableObject {
             try AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            print("Failed to configure audio session: \(error)")
+            // Audio session configuration failed — camera still usable
         }
         
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -230,7 +230,7 @@ class CameraManager: NSObject, ObservableObject {
 extension CameraManager: AVCapturePhotoCaptureDelegate {
     nonisolated func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error = error {
-            print("Error processing photo: \(error)")
+            // Photo processing error
             return
         }
         
