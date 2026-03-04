@@ -432,7 +432,7 @@ struct SettingsView: View {
         if store.unitSystem == .us {
             let totalInches = Double(heightFeet * 12 + heightInchesPart)
             heightCm = totalInches * 2.54
-            weightKg = Double(weightLbs) * 0.453592
+            weightKg = Double(weightLbs) / 2.20462
         } else {
             heightCm = Double(heightCmUI)
             weightKg = Double(weightKgUI)
