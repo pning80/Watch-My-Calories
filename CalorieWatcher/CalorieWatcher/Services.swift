@@ -94,15 +94,25 @@ final class GeminiService: EstimationService {
         request.addValue(backendKey, forHTTPHeaderField: "x-backend-key")
 
         // Construct Request Body
+        let unitInstruction: String
+        let quantityExample: String
+        if SettingsStore.shared.unitSystem == .metric {
+            unitInstruction = "Always use metric units for quantities (g, kg, ml, L, pieces, slices). Never use US customary units like oz, cups, or lbs."
+            quantityExample = "Estimated Quantity in metric units (e.g. 200 g, 250 ml, 2 pieces)"
+        } else {
+            unitInstruction = "Always use US customary units for quantities (oz, lbs, cups, tbsp, tsp, pieces, slices). Never use metric units like grams or milliliters."
+            quantityExample = "Estimated Quantity in US customary units (e.g. 1 cup, 6 oz, 2 pieces)"
+        }
+
         let prompt = """
         Analyze these food images. Identify the food items, estimate the portion size, and calculate the calories.
-        Always use US customary units for quantities (oz, lbs, cups, tbsp, tsp, pieces, slices). Never use metric units like grams or milliliters.
+        \(unitInstruction)
         Return ONLY a raw JSON object (no markdown, no code blocks) with this structure:
         {
           "items": [
             {
               "name": "Food Name",
-              "quantity": "Estimated Quantity in US customary units (e.g. 1 cup, 6 oz, 2 pieces)",
+              "quantity": "\(quantityExample)",
               "calories": 150,
               "protein": 10,
               "carbs": 20,

@@ -23,7 +23,7 @@ When you use the camera scan feature, photos of your food are sent to our backen
 - **Not stored on our server** — they are forwarded to Google Gemini in real time and discarded
 - Subject to [Google's API Terms of Service](https://ai.google.dev/gemini-api/terms) and [Privacy Policy](https://policies.google.com/privacy)
 
-Only the first photo from each meal session is saved locally on your device for your reference. You can delete it at any time by deleting the food entry.
+The photo from each meal session is saved locally on your device for your reference. You can delete it at any time by deleting the food entry.
 
 ### Health Data (Apple HealthKit)
 

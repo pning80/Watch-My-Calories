@@ -635,7 +635,7 @@ struct EditFoodEntryView: View {
                                     .textFieldStyle(.roundedBorder)
                                     .keyboardType(.decimalPad)
 
-                                TextField("Quantity (e.g. 1 cup, 6 oz)", text: $quantity)
+                                TextField(SettingsStore.shared.unitSystem == .metric ? "Quantity (e.g. 200 g, 250 ml)" : "Quantity (e.g. 1 cup, 6 oz)", text: $quantity)
                                     .textFieldStyle(.roundedBorder)
                             }
                         }
@@ -860,7 +860,7 @@ struct EditMealGroupView: View {
                                             Text("Quantity")
                                                 .font(.caption)
                                                 .foregroundStyle(Color.gray)
-                                            TextField("e.g. 1 cup", text: $item.quantity)
+                                            TextField(SettingsStore.shared.unitSystem == .metric ? "e.g. 200 g" : "e.g. 1 cup", text: $item.quantity)
                                                 .textFieldStyle(.roundedBorder)
                                         }
                                     }

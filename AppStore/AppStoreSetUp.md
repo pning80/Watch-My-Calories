@@ -8,8 +8,8 @@ All the content you need to fill in App Store Connect for your first submission.
 
 | Field | Value |
 |-------|-------|
-| **App Name** | Calorie Watcher |
-| **Subtitle** | AI-Powered Food Tracker |
+| **App Name** | Calorie Watcher: AI-Powered Food Tracker |
+| **Subtitle** | Snap, Track, and Stay Fit with AI. |
 | **Bundle ID** | `com.pning80.CalorieWatcher` |
 | **SKU** | `calorie-watcher-ios-001` |
 | **Primary Category** | Health & Fitness |
@@ -49,7 +49,7 @@ Answer **None** / **No** to all questions:
 >
 > KEY FEATURES
 >
-> - AI Food Analysis — Take up to 3 photos per meal. Calorie Watcher uses Google Gemini AI to identify foods and estimate calories, protein, carbs, and fat.
+> - AI Food Analysis — Snap a photo of your meal. Calorie Watcher uses Google Gemini AI to identify foods and estimate calories, protein, carbs, and fat.
 > - Smart Meal Tracking — Entries are automatically categorized as Breakfast, Lunch, Dinner, or Snack based on the time of day.
 > - Daily Dashboard — See your calorie intake at a glance with a visual progress card showing how close you are to your daily goal.
 > - HealthKit Integration — Reads your active energy burned from Apple Health to dynamically adjust your effective calorie target.
@@ -62,7 +62,7 @@ Answer **None** / **No** to all questions:
 
 ### Promotional Text
 
-> Snap a photo, get instant calorie estimates. AI-powered food tracking that keeps your data on your device.
+> Stop guessing and start tracking! Snap a photo of your meal for instant AI calorie estimates. Private, fast, and synced with your fitness goals.
 
 *(Promotional text can be updated without a new app version.)*
 
@@ -106,7 +106,7 @@ You must provide screenshots for at least one size per device family. Recommende
 Capture these in order — they tell the story of the app:
 
 1. **Dashboard** — Show the daily summary hero card with calorie progress, active energy, and a few meal entries below. This is your lead screenshot.
-2. **Camera Scan** — The live camera view with 1–2 food photo thumbnails at the bottom, ready to analyze.
+2. **Camera Scan** — The live camera view with the shutter button, or the photo review screen showing "Retake" and "Use Photo" options.
 3. **Analysis Results** — The estimation review screen showing identified food items with calories, quantities, and macros.
 4. **Meal History** — The history tab showing entries grouped by date and meal type.
 5. **Settings / Profile** — The settings screen with user profile fields and calorie goal.
@@ -195,7 +195,7 @@ Paste this into the **Notes for Review** field:
 >
 > **Demo flow:**
 > 1. Open the app → Dashboard tab shows daily summary (empty on first launch)
-> 2. Tap the Camera tab → grant camera permission → take a photo of food → tap "Analyze"
+> 2. Tap the Camera tab → grant camera permission → take a photo of food → review and tap "Use Photo" → tap "Analyze"
 > 3. Review the AI-estimated food items, calories, and macros → tap "Save"
 > 4. Return to Dashboard to see the logged entry
 > 5. Tap History tab to view past entries

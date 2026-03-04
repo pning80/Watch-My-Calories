@@ -272,7 +272,7 @@ private struct ManualEntryView: View {
                                     .textFieldStyle(.roundedBorder)
                                     .keyboardType(.decimalPad)
 
-                                TextField("Quantity (e.g. 1 cup, 6 oz)", text: $quantity)
+                                TextField(SettingsStore.shared.unitSystem == .metric ? "Quantity (e.g. 200 g, 250 ml)" : "Quantity (e.g. 1 cup, 6 oz)", text: $quantity)
                                     .textFieldStyle(.roundedBorder)
                             }
                         }
