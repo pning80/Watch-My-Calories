@@ -97,11 +97,11 @@ final class GeminiService: EstimationService {
         let unitInstruction: String
         let quantityExample: String
         if SettingsStore.shared.unitSystem == .metric {
-            unitInstruction = "Always use metric units for quantities (g, kg, ml, L, pieces, slices). Never use US customary units like oz, cups, or lbs."
-            quantityExample = "Estimated Quantity in metric units (e.g. 200 g, 250 ml, 2 pieces)"
+            unitInstruction = "Prefer metric units for quantities (g, kg, ml, L, pieces, slices) when possible."
+            quantityExample = "Estimated Quantity (e.g. 200 g, 250 ml, 2 pieces)"
         } else {
-            unitInstruction = "Always use US customary units for quantities (oz, lbs, cups, tbsp, tsp, pieces, slices). Never use metric units like grams or milliliters."
-            quantityExample = "Estimated Quantity in US customary units (e.g. 1 cup, 6 oz, 2 pieces)"
+            unitInstruction = "Prefer US customary units for quantities. Use oz for weight, fl oz for liquid volume, and cups/tbsp/tsp for other volumes. Examples: 6 oz, 8 fl oz, 1 cup, 2 pieces."
+            quantityExample = "Estimated Quantity (e.g. 1 cup, 6 oz, 2 pieces)"
         }
 
         let prompt = """

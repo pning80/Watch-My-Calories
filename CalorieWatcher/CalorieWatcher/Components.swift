@@ -221,7 +221,7 @@ struct FoodEntryCard: View {
                         .font(.caption2)
                         .foregroundStyle(Color.gray)
                     
-                    Text(entry.quantity)
+                    Text(SettingsStore.shared.unitSystem.convertQuantity(entry.quantity))
                         .font(.caption2)
                         .foregroundStyle(Color.gray)
                 }
@@ -985,7 +985,7 @@ struct ViewFoodEntryView: View {
                             VStack(spacing: 12) {
                                 ViewFieldRow(label: "Food name", value: entry.name)
                                 ViewFieldRow(label: "Calories", value: "\(Int(entry.calories)) kcal")
-                                ViewFieldRow(label: "Quantity", value: entry.quantity)
+                                ViewFieldRow(label: "Quantity", value: SettingsStore.shared.unitSystem.convertQuantity(entry.quantity))
                             }
                         }
                         .cwCard()
@@ -1095,7 +1095,7 @@ struct ViewMealGroupView: View {
                                 VStack(spacing: 12) {
                                     ViewFieldRow(label: "Food name", value: entry.name)
                                     ViewFieldRow(label: "Calories", value: "\(Int(entry.calories)) kcal")
-                                    ViewFieldRow(label: "Quantity", value: entry.quantity)
+                                    ViewFieldRow(label: "Quantity", value: SettingsStore.shared.unitSystem.convertQuantity(entry.quantity))
                                 }
 
                                 if entry.protein != nil || entry.carbs != nil || entry.fat != nil {
