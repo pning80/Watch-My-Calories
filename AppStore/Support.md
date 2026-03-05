@@ -4,7 +4,7 @@
 
 For questions, feedback, or issues, please email:
 
-**pn80online@gmail.com**
+**pning80.git@gmail.com**
 
 We aim to respond within 7 days.
 
