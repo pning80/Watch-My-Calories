@@ -86,4 +86,4 @@ If this Privacy Policy is updated, the revised version will be posted here with 
 
 If you have questions about this Privacy Policy, please contact:
 
-- **Email:** pn80online@gmail.com
+- **Email:** pning80.git@gmail.com

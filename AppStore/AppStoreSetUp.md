@@ -207,7 +207,7 @@ Paste this into the **Notes for Review** field:
 |-------|-------|
 | **First Name** | *(your first name)* |
 | **Last Name** | *(your last name)* |
-| **Email** | pn80online@gmail.com |
+| **Email** | pning80.git@gmail.com |
 | **Phone** | *(your phone number)* |
 
 ### Sign-In Required
@@ -268,7 +268,7 @@ Complete these items before clicking **Submit for Review**:
 - [ ] **Select Build** — Choose the uploaded build in App Store Connect.
 - [ ] **Fill in Privacy Details** — Complete the App Privacy section (see Section 4).
 - [x] **Export Compliance** — `ITSAppUsesNonExemptEncryption = NO` added to Xcode project build settings.
-- [ ] **Review Contact Info** — Add your name, email (pn80online@gmail.com), and phone for App Review.
+- [ ] **Review Contact Info** — Add your name, email (pning80.git@gmail.com), and phone for App Review.
 
 ### Recommended
 
