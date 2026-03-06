@@ -83,60 +83,92 @@ struct EstimationReviewView: View {
                 }
                 .padding()
             } else if let result {
-                VStack(spacing: 24) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 64))
-                        .foregroundStyle(Color.cwPrimary)
-                        .transition(.scale.combined(with: .opacity))
-                    
-                    Text("Logged Successfully!")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.cwTextPrimary)
-                    
+                if result.items.isEmpty {
+                    // No food detected
                     VStack(spacing: 16) {
-                        ForEach(result.items.indices, id: \.self) { idx in
-                            HStack {
-                                Text(result.items[idx].name)
-                                    .font(.headline)
-                                    .foregroundStyle(Color.cwTextPrimary)
-                                Spacer()
-                                Text("\(Int(result.items[idx].calories)) kcal")
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(Color.cwPrimary)
+                        Image(systemName: "fork.knife.circle")
+                            .font(.system(size: 64))
+                            .foregroundStyle(Color.gray)
+
+                        Text("No Food Detected")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color.cwTextPrimary)
+
+                        Text("We couldn't identify any food items in this photo. Try taking a clearer photo.")
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(Color.gray)
+
+                        VStack(spacing: 12) {
+                            Button("Try Again") { dismiss() }
+                                .buttonStyle(.borderedProminent)
+                                .tint(Color.cwPrimary)
+
+                            Button("Cancel") {
+                                onDone()
+                                dismiss()
                             }
-                            .padding()
-                            .background(Color.cwSurface)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                        }
-                        
-                        Divider()
-                        
-                        HStack {
-                            Text("Total Added")
-                                .font(.headline)
-                                .foregroundStyle(Color.cwTextPrimary)
-                            Spacer()
-                            Text("\(Int(result.totalCalories)) kcal")
-                                .font(.title3)
-                                .fontWeight(.bold)
-                                .foregroundStyle(Color.cwAccent)
+                                .foregroundStyle(Color.gray)
                         }
                         .padding(.top, 8)
                     }
-                    .padding(.horizontal)
-                    
-                    Button("Done") {
-                        onDone()
-                        dismiss()
+                    .padding()
+                } else {
+                    VStack(spacing: 24) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 64))
+                            .foregroundStyle(Color.cwPrimary)
+                            .transition(.scale.combined(with: .opacity))
+
+                        Text("Logged Successfully!")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color.cwTextPrimary)
+
+                        VStack(spacing: 16) {
+                            ForEach(result.items.indices, id: \.self) { idx in
+                                HStack {
+                                    Text(result.items[idx].name)
+                                        .font(.headline)
+                                        .foregroundStyle(Color.cwTextPrimary)
+                                    Spacer()
+                                    Text("\(Int(result.items[idx].calories)) kcal")
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(Color.cwPrimary)
+                                }
+                                .padding()
+                                .background(Color.cwSurface)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                            }
+
+                            Divider()
+
+                            HStack {
+                                Text("Total Added")
+                                    .font(.headline)
+                                    .foregroundStyle(Color.cwTextPrimary)
+                                Spacer()
+                                Text("\(Int(result.totalCalories)) kcal")
+                                    .font(.title3)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(Color.cwAccent)
+                            }
+                            .padding(.top, 8)
+                        }
+                        .padding(.horizontal)
+
+                        Button("Done") {
+                            onDone()
+                            dismiss()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Color.cwPrimary)
+                        .padding(.top)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color.cwPrimary)
-                    .padding(.top)
+                    .padding()
+                    .transition(.opacity)
                 }
-                .padding()
-                .transition(.opacity)
             }
         }
         .navigationTitle("Review")
@@ -180,8 +212,10 @@ struct EstimationReviewView: View {
             await MainActor.run {
                 self.result = estimation
                 self.isLoading = false
-                saveToHistory(estimation)
-                self.isSaved = true
+                if !estimation.items.isEmpty {
+                    saveToHistory(estimation)
+                    self.isSaved = true
+                }
             }
         } catch {
             await MainActor.run {

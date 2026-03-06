@@ -116,7 +116,7 @@ struct CameraRootView: View {
             }
             .navigationDestination(isPresented: Binding(
                 get: { reviewData != nil },
-                set: { if !$0 { reviewData = nil; capturedImages.removeAll(); capturedDate = nil } }
+                set: { if !$0 { reviewData = nil; capturedImages.removeAll(); capturedDate = nil; resetID = UUID() } }
             )) {
                 if let data = reviewData, let date = capturedDate {
                     EstimationReviewView(images: data, captureDate: date, onDone: {
