@@ -230,7 +230,9 @@ class CameraManager: NSObject, ObservableObject {
 extension CameraManager: AVCapturePhotoCaptureDelegate {
     nonisolated func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error = error {
-            // Photo processing error
+            Task { @MainActor in
+                self.alert = .runtimeError(error.localizedDescription)
+            }
             return
         }
         

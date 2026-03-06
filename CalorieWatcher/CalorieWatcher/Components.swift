@@ -551,10 +551,23 @@ struct MealSection: View {
                         onView: onView,
                         onViewGroup: onViewGroup,
                         onDelete: { item in
+                            if let imageID = item.imageID {
+                                let otherEntries = entries.filter { $0.imageID == imageID && $0.id != item.id }
+                                if otherEntries.isEmpty {
+                                    ImageStorage.shared.delete(id: imageID)
+                                }
+                            }
                             modelContext.delete(item)
                         },
                         onDeleteGroup: { items in
+                            let deletingIDs = Set(items.map { $0.id })
                             for item in items {
+                                if let imageID = item.imageID {
+                                    let otherEntries = entries.filter { $0.imageID == imageID && !deletingIDs.contains($0.id) }
+                                    if otherEntries.isEmpty {
+                                        ImageStorage.shared.delete(id: imageID)
+                                    }
+                                }
                                 modelContext.delete(item)
                             }
                         }
@@ -1182,6 +1195,64 @@ private struct ViewNutrientBox: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2), lineWidth: 1))
         }
+    }
+}
+
+// MARK: - AI Consent Sheet
+
+struct AIConsentSheet: View {
+    var onAccept: () -> Void
+    var onDecline: () -> Void
+
+    var body: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            Image(systemName: "photo.badge.arrow.up")
+                .font(.system(size: 48))
+                .foregroundStyle(Color.cwPrimary)
+
+            Text("AI Food Analysis")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundStyle(Color.cwTextPrimary)
+
+            Text("Your food photos are sent to Google Gemini, a third-party AI service by Google, for calorie estimation. Photos are not stored permanently.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+
+            Text("You can change this in Settings.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                Button(action: onAccept) {
+                    Text("Allow Photo Analysis")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.cwPrimary)
+                .controlSize(.large)
+
+                Button(action: onDecline) {
+                    Text("Don't Allow")
+                        .fontWeight(.medium)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+            }
+            .padding(.horizontal)
+            .padding(.bottom)
+        }
+        .padding()
+        .presentationDetents([.medium])
+        .interactiveDismissDisabled()
     }
 }
 

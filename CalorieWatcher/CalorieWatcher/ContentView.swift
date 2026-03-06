@@ -1,6 +1,11 @@
 import SwiftUI
 import SwiftData
 
+extension Notification.Name {
+    static let saveSettings = Notification.Name("SaveSettings")
+    static let discardSettings = Notification.Name("DiscardSettings")
+}
+
 struct ContentView: View {
     @State private var selectedTab: Tab = .dashboard
     
@@ -59,17 +64,22 @@ struct ContentView: View {
                 .tag(Tab.settings)
         }
         .alert("Unsaved Changes", isPresented: $showUnsavedWarning) {
-            Button("Discard", role: .destructive) {
+            Button("Save", role: .cancel) {
                 if let t = pendingTab {
-                    NotificationCenter.default.post(name: Notification.Name("DiscardSettings"), object: nil)
                     selectedTab = t
+                    pendingTab = nil
+                    NotificationCenter.default.post(name: .saveSettings, object: nil)
                 }
             }
-            Button("Cancel", role: .cancel) {
-                pendingTab = nil
+            Button("Discard", role: .destructive) {
+                if let t = pendingTab {
+                    selectedTab = t
+                    pendingTab = nil
+                    NotificationCenter.default.post(name: .discardSettings, object: nil)
+                }
             }
         } message: {
-            Text("You have unsaved changes. Are you sure you want to leave?")
+            Text("Do you want to save or discard your changes?")
         }
         .tint(Color.cwPrimary)
         .preferredColorScheme(store.appTheme.colorScheme)
@@ -89,7 +99,6 @@ struct ContentView: View {
 struct CameraRootView: View {
     @Binding var selectedTab: ContentView.Tab
     @Binding var scrollToMeal: MealType?
-    
     @State private var capturedImages: [UIImage] = []
     @State private var reviewData: [Data]?
     @State private var capturedDate: Date? = nil

@@ -207,8 +207,9 @@ private struct ManualEntryView: View {
     @State private var showNutrition = false
 
     private var canSave: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty
-        && Double(caloriesText) != nil && Double(caloriesText)! > 0
+        let trimmedCalories = caloriesText.trimmingCharacters(in: .whitespaces)
+        return !name.trimmingCharacters(in: .whitespaces).isEmpty
+        && !trimmedCalories.isEmpty && (Double(trimmedCalories) ?? 0) > 0
         && !quantity.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
@@ -332,10 +333,10 @@ private struct ManualEntryView: View {
     }
 
     private func save() {
-        let calories = Double(caloriesText) ?? 0
-        let protein = Double(proteinText)
-        let carbs = Double(carbsText)
-        let fat = Double(fatText)
+        let calories = Double(caloriesText.trimmingCharacters(in: .whitespaces)) ?? 0
+        let protein = Double(proteinText.trimmingCharacters(in: .whitespaces))
+        let carbs = Double(carbsText.trimmingCharacters(in: .whitespaces))
+        let fat = Double(fatText.trimmingCharacters(in: .whitespaces))
 
         let entry = FoodEntry(
             name: name.trimmingCharacters(in: .whitespaces),

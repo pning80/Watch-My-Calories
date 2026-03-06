@@ -1,7 +1,9 @@
 import SwiftUI
 import SwiftData
+import os
 
 struct SettingsView: View {
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "CalorieWatcher", category: "Settings")
     @Environment(\.modelContext) private var modelContext
     @Query private var userProfiles: [UserProfile]
     @Environment(\.dismiss) private var dismiss
@@ -247,8 +249,14 @@ struct SettingsView: View {
                     }
                 }
 
-                Section {
-                    Text("Calorie Watcher keeps your data on-device. Only food images are sent to the backend for analysis.")
+                Section(header: Text("Privacy")) {
+                    Toggle("AI Photo Analysis", isOn: Binding(
+                        get: { store.aiConsent == .accepted },
+                        set: { store.saveAIConsent($0 ? .accepted : .declined) }
+                    ))
+                    .tint(Color.cwPrimary)
+
+                    Text("When enabled, food photos are sent to Google Gemini, a third-party AI service by Google, for calorie estimation. All other data stays on-device.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -285,25 +293,43 @@ struct SettingsView: View {
             .onChange(of: weightKgUI) { _, _ in checkUnsaved() }
             .onChange(of: store.appTheme) { _, _ in checkUnsaved() }
             .onChange(of: store.unitSystem) { _, _ in
-                // Cross-sync values when user toggles unit system
-                if store.unitSystem == .metric {
-                    // Imperial -> Metric
-                    let totalInches = Double(heightFeet * 12 + heightInchesPart)
-                    heightCmUI = Int((totalInches * 2.54).rounded())
-                    weightKgUI = Int((Double(weightLbs) / 2.20462).rounded())
+                // Cross-sync values when user toggles unit system.
+                // Derive from persisted metric profile to avoid rounding drift.
+                if let profile = userProfiles.first {
+                    let heightCm = profile.height
+                    let weightKg = profile.weight
+                    if store.unitSystem == .metric {
+                        heightCmUI = Int(heightCm.rounded())
+                        weightKgUI = Int(weightKg.rounded())
+                    } else {
+                        let totalInches = heightCm / 2.54
+                        heightFeet = Int(totalInches) / 12
+                        heightInchesPart = Int(totalInches) % 12
+                        weightLbs = Int((weightKg * 2.20462).rounded())
+                    }
                 } else {
-                    // Metric -> Imperial
-                    let totalInches = Double(heightCmUI) / 2.54
-                    heightFeet = Int(totalInches) / 12
-                    heightInchesPart = Int(totalInches) % 12
-                    weightLbs = Int((Double(weightKgUI) * 2.20462).rounded())
+                    // No saved profile yet — fall back to cross-converting UI values
+                    if store.unitSystem == .metric {
+                        let totalInches = Double(heightFeet * 12 + heightInchesPart)
+                        heightCmUI = Int((totalInches * 2.54).rounded())
+                        weightKgUI = Int((Double(weightLbs) / 2.20462).rounded())
+                    } else {
+                        let totalInches = Double(heightCmUI) / 2.54
+                        heightFeet = Int(totalInches) / 12
+                        heightInchesPart = Int(totalInches) % 12
+                        weightLbs = Int((Double(weightKgUI) * 2.20462).rounded())
+                    }
                 }
                 isEditingHeight = false
                 isEditingWeight = false
                 isEditingAge = false
                 checkUnsaved()
             }
-            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DiscardSettings"))) { _ in
+            .onReceive(NotificationCenter.default.publisher(for: .saveSettings)) { _ in
+                saveSettings()
+                checkUnsaved()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .discardSettings)) { _ in
                 loadSettings()
                 checkUnsaved()
             }
@@ -420,9 +446,8 @@ struct SettingsView: View {
         // 4. Commit Changes with Error Handling
         do {
             try modelContext.save()
-            print("Settings saved successfully.")
         } catch {
-            print("CRITICAL ERROR: Failed to save user profile: \(error)")
+            Self.logger.error("Failed to save user profile: \(error.localizedDescription)")
         }
     }
 

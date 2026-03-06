@@ -10,11 +10,14 @@ struct EstimationReviewView: View {
     let captureDate: Date
     var onDone: () -> Void = {}
 
+    @ObservedObject private var store = SettingsStore.shared
+
     @State private var result: EstimationResult? = nil
     @State private var isLoading: Bool = true
     @State private var errorMessage: String? = nil
     @State private var showDetails: Bool = false // State for error details
-    
+    @State private var showConsentSheet: Bool = false
+
     // Auto-save state
     @State private var isSaved: Bool = false
 
@@ -138,7 +141,31 @@ struct EstimationReviewView: View {
         }
         .navigationTitle("Review")
         .navigationBarBackButtonHidden(true)
-        .task { await estimate() }
+        .task {
+            switch store.aiConsent {
+            case .accepted:
+                await estimate()
+            case .notAsked:
+                showConsentSheet = true
+            case .declined:
+                showConsentSheet = true
+            }
+        }
+        .sheet(isPresented: $showConsentSheet) {
+            AIConsentSheet(
+                onAccept: {
+                    store.saveAIConsent(.accepted)
+                    showConsentSheet = false
+                    isLoading = true
+                    Task { await estimate() }
+                },
+                onDecline: {
+                    store.saveAIConsent(.declined)
+                    showConsentSheet = false
+                    dismiss()
+                }
+            )
+        }
     }
 
     private func estimate() async {
