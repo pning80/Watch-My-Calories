@@ -22,11 +22,14 @@ struct CalorieWatcherApp: App {
 
             container = try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            print("Failed to create ModelContainer: \(error)")
-            // Fallback for development: Use in-memory if persistent store fails
+            // Fallback: Use in-memory store if persistent store fails
             let schema = Schema([UserProfile.self, FoodEntry.self])
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-            container = try! ModelContainer(for: schema, configurations: [config])
+            do {
+                container = try ModelContainer(for: schema, configurations: [config])
+            } catch {
+                fatalError("Failed to create both persistent and in-memory ModelContainer: \(error)")
+            }
         }
     }
 

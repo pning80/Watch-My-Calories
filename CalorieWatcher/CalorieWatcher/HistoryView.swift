@@ -205,12 +205,25 @@ struct HistoryDayCard: View {
                                     onViewGroup: onViewGroup,
                                     onDelete: { item in
                                         withAnimation {
+                                            if let imageID = item.imageID {
+                                                let otherEntries = entries.filter { $0.imageID == imageID && $0.id != item.id }
+                                                if otherEntries.isEmpty {
+                                                    ImageStorage.shared.delete(id: imageID)
+                                                }
+                                            }
                                             modelContext.delete(item)
                                         }
                                     },
                                     onDeleteGroup: { items in
                                         withAnimation {
+                                            let deletingIDs = Set(items.map { $0.id })
                                             for item in items {
+                                                if let imageID = item.imageID {
+                                                    let otherEntries = entries.filter { $0.imageID == imageID && !deletingIDs.contains($0.id) }
+                                                    if otherEntries.isEmpty {
+                                                        ImageStorage.shared.delete(id: imageID)
+                                                    }
+                                                }
                                                 modelContext.delete(item)
                                             }
                                         }

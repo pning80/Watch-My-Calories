@@ -2,8 +2,10 @@ import Foundation
 import HealthKit
 import SwiftUI
 import Combine
+import os
 
 class HealthKitManager: ObservableObject {
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "CalorieWatcher", category: "HealthKit")
     private let healthStore = HKHealthStore()
     
     @Published var activeEnergyBurned: Double = 0.0
@@ -34,6 +36,9 @@ class HealthKitManager: ObservableObject {
         
         // Request authorization to read active energy burned
         healthStore.requestAuthorization(toShare: nil, read: readTypes) { success, error in
+            if let error = error {
+                Self.logger.error("HealthKit authorization failed: \(error.localizedDescription)")
+            }
             if success {
                 DispatchQueue.main.async {
                     self.isAuthorized = true
@@ -80,6 +85,10 @@ class HealthKitManager: ObservableObject {
         healthStore.execute(query)
         
         // Enable background delivery
-        healthStore.enableBackgroundDelivery(for: type, frequency: .immediate) { _, _ in }
+        healthStore.enableBackgroundDelivery(for: type, frequency: .immediate) { success, error in
+            if let error = error {
+                Self.logger.error("HealthKit background delivery failed: \(error.localizedDescription)")
+            }
+        }
     }
 }

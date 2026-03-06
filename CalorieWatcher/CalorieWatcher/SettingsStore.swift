@@ -13,6 +13,12 @@ enum UnitSystem: String, CaseIterable, Identifiable {
     }
 }
 
+enum AIConsentStatus: String {
+    case notAsked
+    case accepted
+    case declined
+}
+
 enum AppTheme: String, CaseIterable, Identifiable {
     case system = "System"
     case light = "Light"
@@ -34,11 +40,13 @@ final class SettingsStore: ObservableObject {
 
     @Published var appTheme: AppTheme = .system
     @Published var unitSystem: UnitSystem = UnitSystem.localeDefault
+    @Published var aiConsent: AIConsentStatus = .notAsked
 
     private let defaults = UserDefaults.standard
 
     private let themeKey = "appTheme"
     private let unitSystemKey = "unitSystem"
+    private let aiConsentKey = "aiConsentStatus"
 
     var savedAppTheme: AppTheme {
         if let themeRaw = defaults.string(forKey: themeKey), let theme = AppTheme(rawValue: themeRaw) {
@@ -65,11 +73,19 @@ final class SettingsStore: ObservableObject {
         if let unitRaw = defaults.string(forKey: unitSystemKey), let unit = UnitSystem(rawValue: unitRaw) {
             unitSystem = unit
         }
+        if let consentRaw = defaults.string(forKey: aiConsentKey), let consent = AIConsentStatus(rawValue: consentRaw) {
+            aiConsent = consent
+        }
     }
 
     func save() {
         defaults.set(appTheme.rawValue, forKey: themeKey)
         defaults.set(unitSystem.rawValue, forKey: unitSystemKey)
+    }
+
+    func saveAIConsent(_ status: AIConsentStatus) {
+        aiConsent = status
+        defaults.set(status.rawValue, forKey: aiConsentKey)
     }
 }
 

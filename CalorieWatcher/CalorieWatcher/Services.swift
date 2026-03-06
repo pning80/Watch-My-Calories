@@ -141,6 +141,7 @@ final class GeminiService: EstimationService {
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.timeoutInterval = 30
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -163,11 +164,13 @@ final class GeminiService: EstimationService {
         }
 
         // Parse Gemini Response Structure
+        // Note: text is optional because thinking models (e.g. gemini-3-flash)
+        // may include thought-only parts without a text field.
         struct GeminiResponse: Decodable {
             struct Candidate: Decodable {
                 struct Content: Decodable {
                     struct Part: Decodable {
-                        let text: String
+                        let text: String?
                     }
                     let parts: [Part]
                 }
@@ -177,7 +180,7 @@ final class GeminiService: EstimationService {
         }
 
         let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
-        guard let text = geminiResponse.candidates?.first?.content.parts.first?.text else {
+        guard let text = geminiResponse.candidates?.first?.content.parts.compactMap(\.text).first else {
             throw GeminiError.invalidResponse
         }
 
@@ -189,7 +192,23 @@ final class GeminiService: EstimationService {
 
         guard let jsonData = cleanText.data(using: .utf8) else { throw GeminiError.invalidResponse }
 
-        return try JSONDecoder().decode(EstimationResult.self, from: jsonData)
+        let result = try JSONDecoder().decode(EstimationResult.self, from: jsonData)
+
+        // Clamp negative calorie/macro values to zero
+        let validatedItems = result.items.map { item in
+            EstimationItem(
+                id: item.id,
+                name: item.name,
+                quantity: item.quantity,
+                calories: max(0, item.calories),
+                confidence: item.confidence,
+                protein: item.protein.map { max(0, $0) },
+                carbs: item.carbs.map { max(0, $0) },
+                fat: item.fat.map { max(0, $0) }
+            )
+        }
+
+        return EstimationResult(mealName: result.mealName, items: validatedItems)
     }
 }
 
