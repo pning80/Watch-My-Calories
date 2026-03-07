@@ -1,6 +1,6 @@
 # Privacy Policy — Calorie Watcher
 
-**Last Updated: March 2, 2026**
+**Last Updated: March 7, 2026**
 
 Calorie Watcher ("the App") is a mobile application that helps you track your daily calorie intake using AI-powered food recognition. This Privacy Policy explains what data the App collects, how it is used, and your choices.
 
@@ -33,7 +33,7 @@ The App does not write any data to Apple Health.
 
 ### App Preferences
 
-Your selected app theme (Light, Dark, or System) is stored locally on your device using standard app preferences.
+Your selected app theme (Light, Dark, or System) and unit system preference (US Customary or Metric) are stored locally on your device using standard app preferences.
 
 ## Data We Do NOT Collect
 
@@ -63,7 +63,6 @@ The App does not include any analytics SDKs, advertising frameworks, crash repor
 - All personal, nutritional, and health data is stored on-device only using Apple's SwiftData framework.
 - Food photos are stored in the app's local Documents directory.
 - Network communication uses HTTPS (TLS encryption).
-- The backend API key is obfuscated in the app binary to prevent unauthorized access.
 
 ## Data Retention & Deletion
 

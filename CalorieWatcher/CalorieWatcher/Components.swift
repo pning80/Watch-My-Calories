@@ -619,7 +619,7 @@ struct EditFoodEntryView: View {
 
     private var canSave: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty
-        && (Double(caloriesText) ?? -1) >= 0
+        && (Double(caloriesText) ?? -1) > 0
         && !quantity.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
@@ -814,7 +814,7 @@ struct EditMealGroupView: View {
     private var canSave: Bool {
         itemStates.allSatisfy { item in
             !item.name.trimmingCharacters(in: .whitespaces).isEmpty
-            && (Double(item.caloriesText) ?? -1) >= 0
+            && (Double(item.caloriesText) ?? -1) > 0
             && !item.quantity.trimmingCharacters(in: .whitespaces).isEmpty
         }
     }

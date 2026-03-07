@@ -187,7 +187,7 @@ Paste this into the **Notes for Review** field:
 
 > **No login or account required.** The app works entirely on-device with no sign-up.
 >
-> **Camera access required:** The core feature is scanning food with the camera. On launch, the app requests camera permission. Please grant camera access to test food scanning. Point the camera at any food or food image, take a photo, and tap "Analyze" to see AI-estimated calories.
+> **Camera access required:** The core feature is scanning food with the camera. On launch, the app requests camera permission. Please grant camera access to test food scanning. Point the camera at any food or food image, take a photo, and tap "Use Photo" to start AI analysis.
 >
 > **HealthKit access:** The app requests permission to read Active Energy Burned from Apple Health. This is optional — the app works without it, but the daily calorie goal adjusts based on activity data when granted.
 >
@@ -195,8 +195,8 @@ Paste this into the **Notes for Review** field:
 >
 > **Demo flow:**
 > 1. Open the app → Dashboard tab shows daily summary (empty on first launch)
-> 2. Tap the Camera tab → grant camera permission → take a photo of food → review and tap "Use Photo" → tap "Analyze"
-> 3. Review the AI-estimated food items, calories, and macros → tap "Save"
+> 2. Tap the Camera tab → grant camera permission → take a photo of food → tap "Use Photo"
+> 3. The app automatically analyzes the photo and displays estimated food items, calories, and macros → tap "Done" to save
 > 4. Return to Dashboard to see the logged entry
 > 5. Tap History tab to view past entries
 > 6. Tap Settings tab to enter profile data and see the calculated calorie goal

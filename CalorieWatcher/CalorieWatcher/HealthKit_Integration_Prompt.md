@@ -7,7 +7,6 @@ This document contains a sequence of prompts designed to guide Xcode Intelligenc
 > 1.  Add the **HealthKit** capability in your project's "Signing & Capabilities" tab.
 > 2.  Ensure your target's `Info.plist` (or Info tab) has the following keys:
 >     -   `NSHealthShareUsageDescription`: "We need access to your active energy data to adjust your daily calorie goals."
->     -   `NSHealthUpdateUsageDescription`: "We use this data to track your burned calories."
 
 ## Phase 1: Logic & Data Fetching
 

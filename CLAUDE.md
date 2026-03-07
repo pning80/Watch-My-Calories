@@ -39,7 +39,7 @@ cd CalorieWatcherAndroid
 
 ### iOS — SwiftUI + SwiftData (iOS 17+)
 - **Persistence**: SwiftData `@Model` classes (`UserProfile`, `FoodEntry` in `DataModels.swift`). Views query via `@Query` and `@Environment(\.modelContext)`.
-- **Singletons**: `AppEnvironment` (holds `EstimationService` protocol, injectable for testing via `MockEstimationService`), `SettingsStore` (API key in Keychain via `KeychainHelper`, model name in UserDefaults, default model: `gemini-2.0-flash-exp`).
+- **Singletons**: `AppEnvironment` (holds `EstimationService` protocol, injectable for testing via `MockEstimationService`), `SettingsStore` (app theme, unit system, AI consent in UserDefaults), `BackendConfig` (Cloud Run URL + obfuscated API key).
 - **Camera flow**: `CameraManager` (AVFoundation, `@MainActor`) → `CameraView` → `EstimationReviewView` (calls Gemini, saves to SwiftData). Up to 3 photos per meal; only the first image is persisted.
 - **Images**: Stored in Documents directory as `{UUID}.jpg`, keyed by `FoodEntry.imageID`.
 - **Health**: `HealthKitManager` reads `activeEnergyBurned` with `HKObserverQuery` + background delivery.
@@ -54,22 +54,20 @@ cd CalorieWatcherAndroid
 
 ## Key Data Conventions
 
-- **Units**: UI displays Imperial (lbs, ft/in); storage is always **metric** (kg, cm). Conversion happens at the view layer.
-- **Food quantity units (Gemini prompt)**: iOS explicitly forces **US customary units** (oz, cups, lbs, tbsp, tsp) in the prompt and forbids metric. Android does **not** enforce this — its prompt is unit-agnostic.
+- **Units**: UI supports both US Customary and Metric (user-selectable in Settings); storage is always **metric** (kg, cm). Conversion happens at the view layer (`UnitSystem.convertQuantity` in `SettingsStore.swift`).
+- **Food quantity units (Gemini prompt)**: iOS adjusts the prompt based on the user's unit system preference (US customary or metric). Android does **not** enforce this — its prompt is unit-agnostic.
 - **MealType auto-assignment**: Breakfast 7–9, Lunch 11–14, Dinner 17–20, Snack otherwise (based on entry hour). iOS uses exclusive upper bounds (`7..<10`, `11..<15`, `17..<21`); Android uses inclusive ranges (`7..9`, `11..14`, `17..20`).
 - **Calorie goal**: Mifflin-St Jeor BMR × activity multiplier. Effective goal = target + active calories burned (from HealthKit/Health Connect). BMR calculated on-demand, not persisted.
-- **No backend**: All data is on-device. Only food images are sent to Gemini API for analysis.
+- **Backend proxy (iOS)**: Food images are sent to a Cloud Run backend (`BackendConfig.swift`) which forwards them to Google Gemini AI. All other data is on-device. Android sends directly to Google AI SDK.
 
 ## Gemini API Integration
 
 The two platforms use **different integration methods**:
 
-- **iOS**: Raw REST calls to `POST https://generativelanguage.googleapis.com/v1beta/{model}:generateContent` with base64-encoded images. Available models fetched dynamically from `/v1beta/models`. Response includes `confidence` field. Prompt enforces US customary units.
-- **Android**: Google AI SDK (`com.google.ai.client.generativeai.GenerativeModel`) with `Bitmap` images. Model list is curated/hardcoded in `SettingsViewModel` with friendly name → API name mapping. Response includes `imageIndex` field (0-based). No unit enforcement in prompt.
+- **iOS**: REST calls to a Cloud Run backend proxy (`BackendConfig.baseURL`) which forwards to Gemini. Base64-encoded images sent via `POST /v1beta/models/default:generateContent`. API key is XOR-obfuscated in `BackendConfig.swift` (not user-provided). Response includes `confidence` field. Prompt adapts to user's unit system preference.
+- **Android**: Google AI SDK (`com.google.ai.client.generativeai.GenerativeModel`) with `Bitmap` images. Model list is curated/hardcoded in `SettingsViewModel` with friendly name → API name mapping. Response includes `imageIndex` field (0-based). No unit enforcement in prompt. API key is user-provided at runtime (Settings screen), stored in EncryptedSharedPreferences.
 
 Both parse JSON responses with food items containing `{ name, quantity, calories, protein, carbs, fat }`.
-
-- API key is user-provided at runtime (Settings screen), stored in Keychain (iOS) / EncryptedSharedPreferences (Android).
 
 ## Key Files
 
@@ -83,7 +81,8 @@ Both parse JSON responses with food items containing `{ name, quantity, calories
 | `DesignSystem.swift` | Color palette and view modifiers |
 | `Components.swift` | Shared UI components (`HeroSummaryCard`, `FoodEntryCard`, `MealSection`) |
 | `AppEnvironment.swift` | `EstimationService` dependency injection |
-| `SettingsStore.swift` | API key (Keychain) + model name (UserDefaults) |
+| `SettingsStore.swift` | App theme, unit system, AI consent (UserDefaults) |
+| `BackendConfig.swift` | Cloud Run backend URL + XOR-obfuscated API key |
 
 | Android (under `CalorieWatcherAndroid/app/src/main/java/.../`) | Purpose |
 |----------------------------------------------------------------|---------|
