@@ -86,6 +86,7 @@ struct DashboardView: View {
                                         .background(Circle().fill(Color.cwPrimary))
                                         .shadow(color: Color.cwPrimary.opacity(0.3), radius: 4, x: 0, y: 2)
                                 }
+                                .accessibilityIdentifier(AccessibilityID.Dashboard.addButton)
                             }
                             .padding(.horizontal)
                             .padding(.top)
@@ -96,6 +97,7 @@ struct DashboardView: View {
                                 burnedCalories: healthKitManager.activeEnergyBurned,
                                 entries: todayEntries
                             )
+                            .accessibilityIdentifier(AccessibilityID.Dashboard.heroCard)
                             
                             if todayEntries.isEmpty {
                                 VStack(spacing: 12) {
@@ -105,6 +107,7 @@ struct DashboardView: View {
                                         EmptyStateCard()
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityIdentifier(AccessibilityID.Dashboard.emptyStateCard)
 
                                     Button {
                                         showManualEntry = true
@@ -114,6 +117,7 @@ struct DashboardView: View {
                                             .fontWeight(.medium)
                                             .foregroundStyle(Color.cwPrimary)
                                     }
+                                    .accessibilityIdentifier(AccessibilityID.Dashboard.manualEntryLink)
                                 }
                             } else {
                                 VStack(alignment: .leading, spacing: 20) {
@@ -256,6 +260,7 @@ private struct ManualEntryView: View {
                                 )
                             }
                             .buttonStyle(.plain)
+                            .accessibilityIdentifier(AccessibilityID.ManualEntry.scanButton)
                             .padding(.horizontal)
                         }
 
@@ -268,13 +273,16 @@ private struct ManualEntryView: View {
                             VStack(spacing: 12) {
                                 TextField("Food name", text: $name)
                                     .textFieldStyle(.roundedBorder)
+                                    .accessibilityIdentifier(AccessibilityID.ManualEntry.foodName)
 
                                 TextField("Calories", text: $caloriesText)
                                     .textFieldStyle(.roundedBorder)
                                     .keyboardType(.decimalPad)
+                                    .accessibilityIdentifier(AccessibilityID.ManualEntry.calories)
 
                                 TextField(SettingsStore.shared.unitSystem == .metric ? "Quantity (e.g. 200 g, 250 ml)" : "Quantity (e.g. 1 cup, 6 oz)", text: $quantity)
                                     .textFieldStyle(.roundedBorder)
+                                    .accessibilityIdentifier(AccessibilityID.ManualEntry.quantity)
                             }
                         }
                         .cwCard()
@@ -292,6 +300,7 @@ private struct ManualEntryView: View {
                                 }
                             }
                             .pickerStyle(.segmented)
+                            .accessibilityIdentifier(AccessibilityID.ManualEntry.mealPicker)
                         }
                         .cwCard()
                         .padding(.horizontal)
@@ -322,11 +331,13 @@ private struct ManualEntryView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier(AccessibilityID.ManualEntry.cancelButton)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
                         .fontWeight(.semibold)
                         .disabled(!canSave)
+                        .accessibilityIdentifier(AccessibilityID.ManualEntry.saveButton)
                 }
             }
         }

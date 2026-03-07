@@ -128,18 +128,21 @@ struct HeroSummaryCard: View {
                         .fontWeight(.bold)
                         .foregroundStyle(Color.gray)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(Int(consumed))")
+                .accessibilityIdentifier(AccessibilityID.Dashboard.consumedCalories)
             }
             .frame(width: 120, height: 120)
             
             VStack(alignment: .leading, spacing: 12) {
-                StatRow(label: "Goal", value: "\(Int(targetCalories))", icon: "flag.fill", color: .gray)
-                
+                StatRow(label: "Goal", value: "\(Int(targetCalories))", icon: "flag.fill", color: .gray, accessibilityID: AccessibilityID.Dashboard.goalValue)
+
                 if burnedCalories > 0 {
                     StatRow(label: "Burned", value: "\(Int(burnedCalories))", icon: "flame.fill", color: .cwAccent)
                 }
-                
+
                 // Remaining -> Light Green (cwSecondary)
-                StatRow(label: "Remaining", value: "\(Int(remaining))", icon: "chart.bar.fill", color: .cwSecondary)
+                StatRow(label: "Remaining", value: "\(Int(remaining))", icon: "chart.bar.fill", color: .cwSecondary, accessibilityID: AccessibilityID.Dashboard.remainingValue)
             }
         }
         .cwCard()
@@ -152,7 +155,8 @@ struct StatRow: View {
     let value: String
     let icon: String
     let color: Color
-    
+    var accessibilityID: String? = nil
+
     var body: some View {
         HStack {
             Image(systemName: icon)
@@ -161,7 +165,7 @@ struct StatRow: View {
                 .foregroundStyle(color == .cwSecondary ? Color.cwPrimary : Color.white)
                 .padding(6)
                 .background(Circle().fill(color))
-            
+
             VStack(alignment: .leading) {
                 Text(label)
                     .font(.caption)
@@ -171,6 +175,8 @@ struct StatRow: View {
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundStyle(Color.cwTextPrimary)
+                    .accessibilityLabel(value)
+                    .accessibilityIdentifier(accessibilityID ?? label)
             }
         }
     }
@@ -602,15 +608,15 @@ struct EditFoodEntryView: View {
         _caloriesText = State(initialValue: String(format: "%g", entry.calories))
         _quantity = State(initialValue: entry.quantity)
         _mealType = State(initialValue: entry.mealType)
-        _proteinText = State(initialValue: entry.protein != nil ? String(format: "%g", entry.protein!) : "")
-        _carbsText = State(initialValue: entry.carbs != nil ? String(format: "%g", entry.carbs!) : "")
-        _fatText = State(initialValue: entry.fat != nil ? String(format: "%g", entry.fat!) : "")
+        _proteinText = State(initialValue: entry.protein.map { String(format: "%g", $0) } ?? "")
+        _carbsText = State(initialValue: entry.carbs.map { String(format: "%g", $0) } ?? "")
+        _fatText = State(initialValue: entry.fat.map { String(format: "%g", $0) } ?? "")
         _showNutrition = State(initialValue: entry.protein != nil || entry.carbs != nil || entry.fat != nil)
     }
 
     private var canSave: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty
-        && Double(caloriesText) != nil && Double(caloriesText)! >= 0
+        && (Double(caloriesText) ?? -1) >= 0
         && !quantity.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
@@ -790,9 +796,9 @@ struct EditMealGroupView: View {
                 name: entry.name,
                 caloriesText: String(format: "%g", entry.calories),
                 quantity: entry.quantity,
-                proteinText: entry.protein != nil ? String(format: "%g", entry.protein!) : "",
-                carbsText: entry.carbs != nil ? String(format: "%g", entry.carbs!) : "",
-                fatText: entry.fat != nil ? String(format: "%g", entry.fat!) : "",
+                proteinText: entry.protein.map { String(format: "%g", $0) } ?? "",
+                carbsText: entry.carbs.map { String(format: "%g", $0) } ?? "",
+                fatText: entry.fat.map { String(format: "%g", $0) } ?? "",
                 showNutrition: entry.protein != nil || entry.carbs != nil || entry.fat != nil
             )
         })
@@ -805,7 +811,7 @@ struct EditMealGroupView: View {
     private var canSave: Bool {
         itemStates.allSatisfy { item in
             !item.name.trimmingCharacters(in: .whitespaces).isEmpty
-            && Double(item.caloriesText) != nil && Double(item.caloriesText)! >= 0
+            && (Double(item.caloriesText) ?? -1) >= 0
             && !item.quantity.trimmingCharacters(in: .whitespaces).isEmpty
         }
     }
@@ -1186,7 +1192,7 @@ private struct ViewNutrientBox: View {
             Text(label)
                 .font(.caption)
                 .foregroundStyle(Color.gray)
-            Text(value != nil ? "\(String(format: "%g", value!)) \(unit)" : "—")
+            Text(value.map { "\(String(format: "%g", $0)) \(unit)" } ?? "—")
                 .font(.body)
                 .foregroundStyle(Color.cwTextPrimary)
                 .frame(maxWidth: .infinity, alignment: .center)
