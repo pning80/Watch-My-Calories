@@ -19,9 +19,9 @@ class HealthKitManager: ObservableObject {
     }
     
     func checkAuthorizationStatus() {
-        guard HKHealthStore.isHealthDataAvailable() else { return }
-        
-        let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+        guard HKHealthStore.isHealthDataAvailable(),
+              let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
+
         let status = healthStore.authorizationStatus(for: type)
         
         DispatchQueue.main.async {
@@ -30,9 +30,10 @@ class HealthKitManager: ObservableObject {
     }
     
     func requestAuthorization() {
-        guard HKHealthStore.isHealthDataAvailable() else { return }
-        
-        let readTypes: Set = [HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!]
+        guard HKHealthStore.isHealthDataAvailable(),
+              let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
+
+        let readTypes: Set = [energyType]
         
         // Request authorization to read active energy burned
         healthStore.requestAuthorization(toShare: nil, read: readTypes) { success, error in
@@ -50,9 +51,8 @@ class HealthKitManager: ObservableObject {
     }
     
     func fetchTodayEnergyBurned() {
-        guard HKHealthStore.isHealthDataAvailable() else { return }
-        
-        let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+        guard HKHealthStore.isHealthDataAvailable(),
+              let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
         let now = Date()
         let startOfDay = Calendar.current.startOfDay(for: now)
         let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: .strictStartDate)
@@ -73,9 +73,8 @@ class HealthKitManager: ObservableObject {
     }
     
     func startObserving() {
-        guard HKHealthStore.isHealthDataAvailable() else { return }
-        
-        let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+        guard HKHealthStore.isHealthDataAvailable(),
+              let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
         
         let query = HKObserverQuery(sampleType: type, predicate: nil) { [weak self] _, _, error in
             guard error == nil else { return }
