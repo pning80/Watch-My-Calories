@@ -40,6 +40,7 @@ struct CameraView: View {
                                 .padding(.vertical, 14)
                                 .background(Capsule().fill(Color.white.opacity(0.25)))
                         }
+                        .accessibilityIdentifier(AccessibilityID.Camera.retakeButton)
 
                         // Use Photo
                         Button(action: {
@@ -54,6 +55,7 @@ struct CameraView: View {
                                 .background(Capsule().fill(Color.cwAccent))
                                 .shadow(radius: 4)
                         }
+                        .accessibilityIdentifier(AccessibilityID.Camera.usePhotoButton)
                     }
                     .padding(.bottom, 50)
                 }
@@ -91,6 +93,7 @@ struct CameraView: View {
                                 .frame(width: 68, height: 68)
                         }
                     }
+                    .accessibilityIdentifier(AccessibilityID.Camera.captureButton)
                     .padding(.bottom, 40)
                 }
             }

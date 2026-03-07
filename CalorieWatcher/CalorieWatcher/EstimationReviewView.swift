@@ -32,6 +32,7 @@ struct EstimationReviewView: View {
                         .font(.headline)
                         .foregroundStyle(Color.gray)
                 }
+                .accessibilityIdentifier(AccessibilityID.EstimationReview.loadingView)
             } else if let errorMessage {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -74,14 +75,17 @@ struct EstimationReviewView: View {
                         Button("Try Again") { Task { await estimate() } }
                             .buttonStyle(.borderedProminent)
                             .tint(Color.cwPrimary)
-                        
+                            .accessibilityIdentifier(AccessibilityID.EstimationReview.tryAgainButton)
+
                         Button("Cancel") {
                             dismiss()
                         }
                         .foregroundStyle(Color.gray)
+                        .accessibilityIdentifier(AccessibilityID.EstimationReview.cancelButton)
                     }
                 }
                 .padding()
+                .accessibilityIdentifier(AccessibilityID.EstimationReview.errorView)
             } else if let result {
                 if result.items.isEmpty {
                     // No food detected
@@ -103,16 +107,19 @@ struct EstimationReviewView: View {
                             Button("Try Again") { dismiss() }
                                 .buttonStyle(.borderedProminent)
                                 .tint(Color.cwPrimary)
+                                .accessibilityIdentifier(AccessibilityID.EstimationReview.tryAgainButton)
 
                             Button("Cancel") {
                                 onDone()
                                 dismiss()
                             }
                                 .foregroundStyle(Color.gray)
+                                .accessibilityIdentifier(AccessibilityID.EstimationReview.cancelButton)
                         }
                         .padding(.top, 8)
                     }
                     .padding()
+                    .accessibilityIdentifier(AccessibilityID.EstimationReview.noFoodView)
                 } else {
                     VStack(spacing: 24) {
                         Image(systemName: "checkmark.circle.fill")
@@ -165,9 +172,11 @@ struct EstimationReviewView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(Color.cwPrimary)
                         .padding(.top)
+                        .accessibilityIdentifier(AccessibilityID.EstimationReview.doneButton)
                     }
                     .padding()
                     .transition(.opacity)
+                    .accessibilityIdentifier(AccessibilityID.EstimationReview.successView)
                 }
             }
         }

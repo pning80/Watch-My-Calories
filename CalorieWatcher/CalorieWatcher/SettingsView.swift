@@ -78,6 +78,7 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.menu)
+                    .accessibilityIdentifier(AccessibilityID.Settings.themePicker)
 
                     Picker("Unit System", selection: $store.unitSystem) {
                         ForEach(UnitSystem.allCases) { unit in
@@ -85,6 +86,7 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.menu)
+                    .accessibilityIdentifier(AccessibilityID.Settings.unitPicker)
                 }
 
                 Section(header: Text("Profile")) {
@@ -224,11 +226,13 @@ struct SettingsView: View {
                             Text(gender.rawValue).tag(gender)
                         }
                     }
+                    .accessibilityIdentifier(AccessibilityID.Settings.genderPicker)
                     Picker("Activity", selection: $activityLevel) {
                         ForEach(ActivityLevel.allCases) { level in
                             Text(level.rawValue).tag(level)
                         }
                     }
+                    .accessibilityIdentifier(AccessibilityID.Settings.activityPicker)
                 }
 
                 Section(header: Text("Daily Goals")) {
@@ -239,6 +243,7 @@ struct SettingsView: View {
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .focused($focusedField, equals: .calories)
+                            .accessibilityIdentifier(AccessibilityID.Settings.targetCalories)
                     }
 
                     Button("Calculate Recommended Goal") {
@@ -247,6 +252,7 @@ struct SettingsView: View {
                         isEditingWeight = false
                         isEditingAge = false
                     }
+                    .accessibilityIdentifier(AccessibilityID.Settings.calculateGoal)
                 }
 
                 Section(header: Text("Privacy")) {
@@ -255,6 +261,7 @@ struct SettingsView: View {
                         set: { store.saveAIConsent($0 ? .accepted : .declined) }
                     ))
                     .tint(Color.cwPrimary)
+                    .accessibilityIdentifier(AccessibilityID.Settings.aiConsentToggle)
 
                     Text("When enabled, food photos are sent to Google Gemini, a third-party AI service by Google, for calorie estimation. All other data stays on-device.")
                         .font(.caption)
@@ -269,6 +276,7 @@ struct SettingsView: View {
                         focusedField = nil
                         selectedTab = .dashboard
                     }
+                    .accessibilityIdentifier(AccessibilityID.Settings.saveButton)
                 }
 
                 ToolbarItem(placement: .keyboard) {
@@ -340,25 +348,26 @@ struct SettingsView: View {
     private func checkUnsaved() {
         let target = targetCalories ?? 2000
 
-        let heightCm: Double
-        let weightKg: Double
-        if store.unitSystem == .us {
-            let totalInches = Double(heightFeet * 12 + heightInchesPart)
-            heightCm = totalInches * 2.54
-            weightKg = Double(weightLbs) / 2.20462
-        } else {
-            heightCm = Double(heightCmUI)
-            weightKg = Double(weightKgUI)
-        }
-
         var isUnsaved = false
 
         if store.appTheme != store.savedAppTheme { isUnsaved = true }
         else if store.unitSystem != store.savedUnitSystem { isUnsaved = true }
         else if let p = userProfiles.first {
-            if abs(p.height - heightCm) > 0.1 ||
-               abs(p.weight - weightKg) > 0.1 ||
-               p.age != age ||
+            // Compare in UI units to avoid rounding drift from metric↔imperial conversion
+            if store.unitSystem == .us {
+                let profInches = p.height / 2.54
+                let profFeet = Int(profInches) / 12
+                let profInchPart = Int(profInches) % 12
+                let profLbs = Int((p.weight * 2.20462).rounded())
+                if heightFeet != profFeet || heightInchesPart != profInchPart || weightLbs != profLbs {
+                    isUnsaved = true
+                }
+            } else {
+                if heightCmUI != Int(p.height.rounded()) || weightKgUI != Int(p.weight.rounded()) {
+                    isUnsaved = true
+                }
+            }
+            if p.age != age ||
                p.gender != gender ||
                p.activityLevel != activityLevel ||
                p.targetCalories != target {

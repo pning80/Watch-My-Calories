@@ -97,7 +97,6 @@ struct DashboardView: View {
                                 burnedCalories: healthKitManager.activeEnergyBurned,
                                 entries: todayEntries
                             )
-                            .accessibilityIdentifier(AccessibilityID.Dashboard.heroCard)
                             
                             if todayEntries.isEmpty {
                                 VStack(spacing: 12) {

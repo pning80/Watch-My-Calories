@@ -147,6 +147,8 @@ struct HeroSummaryCard: View {
         }
         .cwCard()
         .padding(.horizontal)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(AccessibilityID.Dashboard.heroCard)
     }
 }
 
@@ -175,10 +177,10 @@ struct StatRow: View {
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundStyle(Color.cwTextPrimary)
-                    .accessibilityLabel(value)
-                    .accessibilityIdentifier(accessibilityID ?? label)
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(accessibilityID ?? label)
     }
 }
 
@@ -581,6 +583,7 @@ struct MealSection: View {
                 }
             }
         }
+        .accessibilityIdentifier(AccessibilityID.Dashboard.mealSection)
     }
 }
 
