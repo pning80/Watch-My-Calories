@@ -43,6 +43,7 @@
 		EA318C380CFDFB6BA70BE023 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078C4F63927D5A8D6A81112C /* DesignSystem.swift */; };
 		F0F19E17C0C271C2AAB15ED2 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE3C142227C5ADEFE091C706 /* HealthKitManager.swift */; };
 		F70651A8376881AE650B78DF /* ImageStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00C6FC40AC8949F9EE0A3E4D /* ImageStorage.swift */; };
+		FA1B2C3D4E5F6A7B8C9D0E1F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = FA1B2C3D4E5F6A7B8C9D0E10 /* PrivacyInfo.xcprivacy */; };
 		FE09C9E77EDF626E9F34C0B5 /* CalorieWatcherUITestBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE320C6FF18E7B8E0C8F149C /* CalorieWatcherUITestBase.swift */; };
 /* End PBXBuildFile section */
 
@@ -95,6 +96,7 @@
 		F0E63508E1FEDEA253C12BA5 /* Ideation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Ideation.md; sourceTree = "<group>"; };
 		F2E2CF99D746B4C2D0FF8592 /* DashboardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardTests.swift; sourceTree = "<group>"; };
 		F9738580D889917CA7840471 /* CalorieWatcher.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CalorieWatcher.entitlements; sourceTree = "<group>"; };
+		FA1B2C3D4E5F6A7B8C9D0E10 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		FDB214709F7770672EE44370 /* Notes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Notes.md; sourceTree = "<group>"; };
 		FFCC51D7731F8014DDA6E383 /* Services.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -134,6 +136,7 @@
 				AB7F6C14F2A88F8872925D5C /* KeychainHelper.swift */,
 				FDB214709F7770672EE44370 /* Notes.md */,
 				0B584F902FFE92CFBB5C6471 /* Persistence.swift */,
+				FA1B2C3D4E5F6A7B8C9D0E10 /* PrivacyInfo.xcprivacy */,
 				1F7728E5BEFE58957326D401 /* Prompt.md */,
 				AE552850BCE8EAE1B4AAFFAD /* README.md */,
 				FFCC51D7731F8014DDA6E383 /* Services.swift */,
@@ -269,6 +272,7 @@
 				B1585764C8B75ED58F771539 /* Notes.md in Resources */,
 				11C6D62446DC94859E75A352 /* Prompt.md in Resources */,
 				A32D2284B39C78CECEEA727B /* README.md in Resources */,
+				FA1B2C3D4E5F6A7B8C9D0E1F /* PrivacyInfo.xcprivacy in Resources */,
 				6115EC2F99428D822A5A1DDB /* SKILL.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
