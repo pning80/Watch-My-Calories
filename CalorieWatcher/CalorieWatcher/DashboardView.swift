@@ -162,7 +162,9 @@ struct DashboardView: View {
             FullScreenImageView(image: wrapper.image)
         }
         .onAppear {
-            healthKitManager.requestAuthorization()
+            if !CalorieWatcherApp.isUITesting {
+                healthKitManager.requestAuthorization()
+            }
         }
         .sheet(isPresented: $showManualEntry, onDismiss: {
             if let entry = pendingManualEntry {
