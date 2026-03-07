@@ -33,6 +33,7 @@ struct HistoryView: View {
                         HStack {
                             Text("History")
                                 .cwTitle()
+                                .accessibilityIdentifier(AccessibilityID.History.title)
                             Spacer()
                         }
                         .padding(.horizontal)
@@ -41,6 +42,7 @@ struct HistoryView: View {
                         if sortedDates.isEmpty {
                             EmptyStateCard()
                                 .padding(.top, 40)
+                                .accessibilityIdentifier(AccessibilityID.History.emptyState)
                         } else {
                             ForEach(sortedDates, id: \.self) { date in
                                 HistoryDayCard(date: date, entries: groupedEntries[date] ?? [], onImageTap: { image in
@@ -246,6 +248,7 @@ struct HistoryDayCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
         .padding(.horizontal)
+        .accessibilityIdentifier(AccessibilityID.History.dayCard)
     }
 }
 

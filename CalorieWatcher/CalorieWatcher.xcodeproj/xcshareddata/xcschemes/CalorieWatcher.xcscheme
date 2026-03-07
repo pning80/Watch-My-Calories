@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2620"
+   LastUpgradeVersion = "1600"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
-      buildArchitectures = "Automatic">
+      runPostActionsOnFailure = "NO">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -15,9 +15,23 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "67F5936C2F3B06B700AEEB9E"
+               BlueprintIdentifier = "7775A27891771BD7E876CF19"
                BuildableName = "CalorieWatcher.app"
                BlueprintName = "CalorieWatcher"
+               ReferencedContainer = "container:CalorieWatcher.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "D3FBE17B616206401CC8C0A9"
+               BuildableName = "CalorieWatcherUITests.xctest"
+               BlueprintName = "CalorieWatcherUITests"
                ReferencedContainer = "container:CalorieWatcher.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -28,7 +42,31 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
-      shouldAutocreateTestPlan = "YES">
+      onlyGenerateCoverageForSpecifiedTargets = "NO">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "7775A27891771BD7E876CF19"
+            BuildableName = "CalorieWatcher.app"
+            BlueprintName = "CalorieWatcher"
+            ReferencedContainer = "container:CalorieWatcher.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
+      <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "D3FBE17B616206401CC8C0A9"
+               BuildableName = "CalorieWatcherUITests.xctest"
+               BlueprintName = "CalorieWatcherUITests"
+               ReferencedContainer = "container:CalorieWatcher.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -44,19 +82,12 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "67F5936C2F3B06B700AEEB9E"
+            BlueprintIdentifier = "7775A27891771BD7E876CF19"
             BuildableName = "CalorieWatcher.app"
             BlueprintName = "CalorieWatcher"
             ReferencedContainer = "container:CalorieWatcher.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <EnvironmentVariables>
-         <EnvironmentVariable
-            key = "IDEPreferLogStreaming"
-            value = "YES"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-      </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -68,7 +99,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "67F5936C2F3B06B700AEEB9E"
+            BlueprintIdentifier = "7775A27891771BD7E876CF19"
             BuildableName = "CalorieWatcher.app"
             BlueprintName = "CalorieWatcher"
             ReferencedContainer = "container:CalorieWatcher.xcodeproj">

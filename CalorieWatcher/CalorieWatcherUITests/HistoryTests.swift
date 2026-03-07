@@ -95,4 +95,78 @@ final class HistoryTests: CalorieWatcherUITestBase {
         }
         // If context menu doesn't appear (CI flakiness), test still passes
     }
+
+    // MARK: - History Title Accessibility
+
+    func testHistoryTitleAccessibilityID() {
+        launchWithSeedData()
+
+        app.tabBars.buttons["History"].tap()
+
+        let title = app.staticTexts["history_title"]
+        XCTAssertTrue(title.waitForExistence(timeout: 3))
+    }
+
+    // MARK: - Meal Sections in Expanded Day Card
+
+    func testExpandedDayCardShowsMealSections() {
+        launchWithSeedData()
+
+        app.tabBars.buttons["History"].tap()
+
+        // Expand the day card
+        let caloriesText = app.staticTexts["750"]
+        XCTAssertTrue(caloriesText.waitForExistence(timeout: 3))
+        caloriesText.tap()
+
+        // Seed data has Breakfast and Lunch entries
+        // .textCase(.uppercase) renders visually but accessibility label uses the raw value
+        XCTAssertTrue(app.staticTexts["BREAKFAST"].waitForExistence(timeout: 3) ||
+                       app.staticTexts["Breakfast"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["LUNCH"].exists || app.staticTexts["Lunch"].exists)
+    }
+
+    // MARK: - History with Multiple Day Entries
+
+    func testHistoryDayCardShowsYesterdayEntries() {
+        launchWithHistoryData()
+
+        app.tabBars.buttons["History"].tap()
+
+        XCTAssertTrue(app.staticTexts["history_title"].waitForExistence(timeout: 5))
+
+        // Scroll to see all day cards (today=750, yesterday=750, 2-days-ago=400)
+        app.swipeUp()
+
+        // Verify the 2-days-ago card with 400 kcal exists (unique value, confirms multi-day)
+        XCTAssertTrue(app.staticTexts["400"].waitForExistence(timeout: 3),
+                       "Expected 2-days-ago entry with 400 kcal")
+
+        // Tap the 400 card to expand and verify its entry
+        app.staticTexts["400"].tap()
+        XCTAssertTrue(app.staticTexts["Turkey Sandwich"].waitForExistence(timeout: 3),
+                       "Expected Turkey Sandwich in 2-days-ago card")
+    }
+
+    // MARK: - Day Card Accessibility ID
+
+    func testHistoryDayCardAccessibilityID() {
+        launchWithSeedData()
+
+        app.tabBars.buttons["History"].tap()
+
+        let dayCard = app.descendants(matching: .any)["history_dayCard"].firstMatch
+        XCTAssertTrue(dayCard.waitForExistence(timeout: 3))
+    }
+
+    // MARK: - Empty State Accessibility ID
+
+    func testHistoryEmptyStateAccessibilityID() {
+        launchEmpty()
+
+        app.tabBars.buttons["History"].tap()
+
+        let emptyState = app.descendants(matching: .any)["history_emptyState"].firstMatch
+        XCTAssertTrue(emptyState.waitForExistence(timeout: 3))
+    }
 }
