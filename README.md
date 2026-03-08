@@ -1,6 +1,6 @@
-# Calorie Watcher
+# Watch My Calories
 
-Calorie Watcher is an app that can help the user estimate the calories of the food they eat, the calories they burn through exercise, and track their daily consumption.
+Watch My Calories is an app that can help the user estimate the calories of the food they eat, the calories they burn through exercise, and track their daily consumption.
 
 There are two versions of the app, one for iOS and one for Android. The iOS version is the original version, and the Android version is meant to mimic the iOS version as much as possible. The initial design and development of both apps were done with AntiGravity using Gemini 3 Pro. However, the actual build and polishing for them were done in XCode and Android Studio, respectively, since AntiGravity cannot build the apps directly.
 

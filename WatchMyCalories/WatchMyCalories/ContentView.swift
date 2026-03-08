@@ -87,7 +87,9 @@ struct ContentView: View {
             // Configure Tab Bar appearance safely once the view is loaded
             let appearance = UITabBarAppearance()
             appearance.configureWithOpaqueBackground()
-            appearance.backgroundColor = UIColor(Color.cwSurface)
+            appearance.backgroundColor = UIColor { tc in
+                tc.userInterfaceStyle == .dark ? .secondarySystemBackground : .white
+            }
             
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance

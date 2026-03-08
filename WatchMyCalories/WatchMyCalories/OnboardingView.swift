@@ -16,7 +16,8 @@ struct OnboardingView: View {
     @State private var age: Int = 30
     @State private var gender: Gender = .male
     @State private var activityLevel: ActivityLevel = .sedentary
-    @State private var targetCalories: Double? = nil
+    @State private var targetCaloriesText: String = ""
+    @FocusState private var isCaloriesFieldFocused: Bool
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -201,9 +202,10 @@ struct OnboardingView: View {
                     HStack {
                         Text("Target Calories")
                         Spacer()
-                        TextField("Not Set", value: $targetCalories, format: .number)
+                        TextField("Not Set", text: $targetCaloriesText)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
+                            .focused($isCaloriesFieldFocused)
                             .accessibilityIdentifier(AccessibilityID.Onboarding.targetCaloriesField)
                     }
                 }
@@ -219,13 +221,11 @@ struct OnboardingView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .onTapGesture {
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-            }
 
             progressDots(current: 2, total: 3)
 
             nextButton {
+                isCaloriesFieldFocused = false
                 withAnimation { currentStep = 3 }
             }
             .padding(.bottom, 40)
@@ -313,6 +313,7 @@ struct OnboardingView: View {
     }
 
     private func calculateRecommended() {
+        isCaloriesFieldFocused = false
         let heightCm: Double
         let weightKg: Double
         if store.unitSystem == .us {
@@ -323,10 +324,11 @@ struct OnboardingView: View {
             heightCm = Double(heightCmUI)
             weightKg = Double(weightKgUI)
         }
-        targetCalories = CalorieCalculator.recommended(
+        let cal = CalorieCalculator.recommended(
             heightCm: heightCm, weightKg: weightKg, age: age,
             gender: gender, activityLevel: activityLevel
         )
+        targetCaloriesText = "\(Int(cal))"
     }
 
     private func saveProfileAndFinish() {
@@ -341,7 +343,7 @@ struct OnboardingView: View {
             weightKg = Double(weightKgUI)
         }
 
-        let target = targetCalories ?? 2000
+        let target = Double(targetCaloriesText) ?? 2000
 
         let profile = UserProfile(
             height: heightCm,

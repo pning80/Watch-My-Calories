@@ -38,7 +38,7 @@ Take a look at the project fold and find the initial ideas from Ideation.md file
 - Plan to publish the app to App Store so that other people can use it. 
 - Used Claude to create the privacy policy and the support page.
 - Published the privacy policy and the support page on GitHub gist.
-- The remaining steps are captured in `AppStore/App-Store-Set-Up.md`.
+- The remaining steps are captured in `AppStore/AppStoreSetUp.md`.
 
   
   
