@@ -1,6 +1,6 @@
 # HealthKit Integration Prompts
 
-This document contains a sequence of prompts designed to guide Xcode Intelligence in adding HealthKit integration to the **Calorie-Watcher** app. The goal is to fetch "Active Energy Burned" and use it to offset the daily calorie intake.
+This document contains a sequence of prompts designed to guide Xcode Intelligence in adding HealthKit integration to the **Watch My Calories** app. The goal is to fetch "Active Energy Burned" and use it to offset the daily calorie intake.
 
 > [!IMPORTANT]
 > **Before Starting**:

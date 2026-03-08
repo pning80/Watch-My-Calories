@@ -1,6 +1,6 @@
-# Calorie-Watcher App Development Prompts
+# Watch-My-Calories App Development Prompts
 
-This document contains a sequence of prompts designed to recreate the **Calorie-Watcher** iPhone app from scratch, incorporating all iterative refinements and design decisions made during development.
+This document contains a sequence of prompts designed to recreate the **Watch My Calories** iPhone app from scratch, incorporating all iterative refinements and design decisions made during development.
 
 ## Phase 1: Foundation & Data Layer
 

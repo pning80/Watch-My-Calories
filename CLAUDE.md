@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Calorie Watcher is a dual-platform native mobile app (iOS + Android) that estimates food calories using Google Gemini AI, tracks daily consumption, and displays calorie history. There is **no shared code** between platforms — each is an independent native project with mirrored features.
+Watch My Calories is a dual-platform native mobile app (iOS + Android) that estimates food calories using Google Gemini AI, tracks daily consumption, and displays calorie history. There is **no shared code** between platforms — each is an independent native project with mirrored features.
 
 ## Build & Run
 

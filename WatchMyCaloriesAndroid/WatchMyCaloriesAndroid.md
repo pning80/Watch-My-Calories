@@ -1,6 +1,6 @@
-# Calorie-Watcher Android App Development Prompts
+# Watch-My-Calories Android App Development Prompts
 
-This document contains a sequence of prompts designed to create the **Calorie-Watcher** Android app from scratch. This project is a port of the existing iOS application, adapted for modern Android development standards using Kotlin and Jetpack Compose.
+This document contains a sequence of prompts designed to create the **Watch-My-Calories** Android app from scratch. This project is a port of the existing iOS application, adapted for modern Android development standards using Kotlin and Jetpack Compose.
 
 ## Design Philosophy & Aesthetics (Frontend-Design Skill)
 
