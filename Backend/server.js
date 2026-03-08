@@ -67,7 +67,7 @@ app.post('/v1beta/models/*', verifyAppToken, express.json({ limit: '50mb' }), as
 
 // Basic Health Check
 app.get('/', (req, res) => {
-    res.send('CalorieWatcher Backend is running.');
+    res.send('WatchMyCalories Backend is running.');
 });
 
 app.listen(PORT, () => {

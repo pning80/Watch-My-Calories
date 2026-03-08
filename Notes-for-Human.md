@@ -20,13 +20,13 @@ Take a look at the project fold and find the initial ideas from Ideation.md file
 
 ## Creating an Android version of the app based on the iOS version
 - **Preparation of the Prompt file for the Android version of the app**
-  - We have built an iOS app called `CalorieWatcher`. The folder `CalorieWatcher` contains the source code for this iOS app. 
-  - Our next job is to create an Android version of the app based on the iOS version. We have already created an empty Android project in the folder `CalorieWatcherAndroid`. Inside this folder, we also have the prompt files that we will use to recreate the app. 
-  - Please analyze the source code files of the iOS app, and carefully  use the prompt files `Prompt.md` and `HealthKit_Integration_Prompt.md` and create a detailed prompt file that can be used to create an Android version of the app. Name the generated prompt file `CalorieWatcherAndroid.md` and save it in the directory `CalorieWatcherAndroid`. Use the agent skill frontend-design to design the UI. Please break down the work into multiple tasks and use multiple short-run agents as needed. 
+  - We have built an iOS app called `WatchMyCalories`. The folder `WatchMyCalories` contains the source code for this iOS app. 
+  - Our next job is to create an Android version of the app based on the iOS version. We have already created an empty Android project in the folder `WatchMyCaloriesAndroid`. Inside this folder, we also have the prompt files that we will use to recreate the app. 
+  - Please analyze the source code files of the iOS app, and carefully  use the prompt files `Prompt.md` and `HealthKit_Integration_Prompt.md` and create a detailed prompt file that can be used to create an Android version of the app. Name the generated prompt file `WatchMyCaloriesAndroid.md` and save it in the directory `WatchMyCaloriesAndroid`. Use the agent skill frontend-design to design the UI. Please break down the work into multiple tasks and use multiple short-run agents as needed. 
 - **Prompt to start the Android app development**
-  - We are going to build the android version of the CalorieWatcher app. We have created an empty Android project in the folder `CalorieWatcherAndroid`. Use the prompt file @`CalorieWatcherAndroid.md` in this folder to design and develop the app. Let's focus all our activities in the CalorieWatcherAndroid folder. 
+  - We are going to build the android version of the WatchMyCalories app. We have created an empty Android project in the folder `WatchMyCaloriesAndroid`. Use the prompt file @`WatchMyCaloriesAndroid.md` in this folder to design and develop the app. Let's focus all our activities in the WatchMyCaloriesAndroid folder. 
   - Use the frontend-design skill to design the UI. During the design, you will create new images using Gemini and other resources required for the app.
-  - Please proceed all actions without asking me, except for those that go out of the CalorieWatcherAndroid folder.
+  - Please proceed all actions without asking me, except for those that go out of the WatchMyCaloriesAndroid folder.
   - Please break down the work into multiple tasks and use multiple short-run agents as needed. 
   - **Note**: Since my personal phone is an iPhone, all the incremental features and bug fixes were done on the iOS version. The Android version hasn't been updated since the it passed the testing on a Pixel 9.
 

@@ -1,4 +1,4 @@
-# App Store Connect Setup — Calorie Watcher
+# App Store Connect Setup — WatchMyCalories
 
 All the content you need to fill in App Store Connect for your first submission.
 
@@ -8,13 +8,14 @@ All the content you need to fill in App Store Connect for your first submission.
 
 | Field | Value |
 |-------|-------|
-| **App Name** | Calorie Watcher: AI-Powered Food Tracker |
-| **Subtitle** | Snap, Track, and Stay Fit with AI. |
-| **Bundle ID** | `com.pning80.CalorieWatcher` |
-| **SKU** | `calorie-watcher-ios-001` |
+| **App Name** | WatchMyCalories |
+| **Subtitle** | Snap, Track, Stay Fit with AI |
+| **Bundle ID** | `com.pning80.WatchMyCalories` |
+| **SKU** | `watch-my-calories-ios-001` |
 | **Primary Category** | Health & Fitness |
 | **Secondary Category** | Food & Drink |
 | **Primary Language** | English (U.S.) |
+| **Copyright** | © 2026 Peng Ning |
 
 ### Content Rights
 
@@ -45,11 +46,11 @@ Answer **None** / **No** to all questions:
 
 ### App Description
 
-> Track your daily calories effortlessly with AI-powered food recognition. Simply snap a photo of your meal and Calorie Watcher instantly identifies each food item, estimates portions in familiar US units, and calculates calories and macronutrients.
+> Track your daily calories effortlessly with AI-powered food recognition. Simply snap a photo of your meal and WatchMyCalories instantly identifies each food item, estimates portions in familiar US units, and calculates calories and macronutrients.
 >
 > KEY FEATURES
 >
-> - AI Food Analysis — Snap a photo of your meal. Calorie Watcher uses Google Gemini AI to identify foods and estimate calories, protein, carbs, and fat.
+> - AI Food Analysis — Snap a photo of your meal. WatchMyCalories uses Google Gemini AI to identify foods and estimate calories, protein, carbs, and fat.
 > - Smart Meal Tracking — Entries are automatically categorized as Breakfast, Lunch, Dinner, or Snack based on the time of day.
 > - Daily Dashboard — See your calorie intake at a glance with a visual progress card showing how close you are to your daily goal.
 > - HealthKit Integration — Reads your active energy burned from Apple Health to dynamically adjust your effective calorie target.
@@ -58,7 +59,7 @@ Answer **None** / **No** to all questions:
 > - Manual Entry — Prefer to log food yourself? Add entries manually with full control over name, calories, and macros.
 > - Privacy First — All your data stays on your device. No accounts, no sign-ups, no analytics. Food photos are sent to Google Gemini solely for analysis and are not stored.
 >
-> Calorie Watcher is designed for anyone who wants a simple, private, and intelligent way to stay on top of their nutrition.
+> WatchMyCalories is designed for anyone who wants a simple, private, and intelligent way to stay on top of their nutrition.
 
 ### Promotional Text
 
@@ -76,7 +77,7 @@ calorie,tracker,food,AI,nutrition,macro,health,diet,meal,camera,fitness,weight,p
 
 ### What's New in This Version
 
-> Initial release of Calorie Watcher — AI-powered calorie tracking with camera-based food recognition, HealthKit integration, and on-device data storage.
+> Initial release of WatchMyCalories — AI-powered calorie tracking with camera-based food recognition, HealthKit integration, and on-device data storage.
 
 ### Support URL
 
@@ -88,18 +89,58 @@ calorie,tracker,food,AI,nutrition,macro,health,diet,meal,camera,fitness,weight,p
 
 ---
 
-## 3. Screenshot Guidance
+## 3. Screenshots & App Previews
 
-### Required Device Sizes
+### Format & Limits
 
-You must provide screenshots for at least one size per device family. Recommended:
+- **Formats**: `.jpeg`, `.jpg`, `.png`
+- **Quantity**: 1–10 screenshots per localized listing
+- **App previews** (optional): Up to 3 per localization, 15–30 seconds, `.mov`/`.mp4`/`.m4v`, max 500 MB. Dimensions must match the corresponding screenshot size for that device.
 
-| Device | Screenshot Size (pixels) | Minimum |
-|--------|-------------------------|---------|
-| **iPhone 6.9"** (iPhone 16 Pro Max) | 1320 × 2868 | Required for "all iPhones" |
-| **iPhone 6.7"** (iPhone 15 Plus / 14 Pro Max) | 1290 × 2796 | Optional (can reuse 6.9") |
-| **iPhone 6.5"** (iPhone 11 Pro Max) | 1242 × 2688 | Optional (can reuse 6.9") |
-| **iPhone 5.5"** (iPhone 8 Plus) | 1242 × 2208 | Only if supporting older devices |
+### Required Screenshot Sizes
+
+You only need to provide screenshots for the **largest device size** per device family. App Store Connect automatically scales them down for smaller sizes.
+
+#### iPhone (required — provide one of these)
+
+| Display | Devices | Portrait (px) | Landscape (px) |
+|---------|---------|---------------|-----------------|
+| **6.9"** | iPhone 16 Pro Max | 1320 × 2868 | 2868 × 1320 |
+| **6.5"** | iPhone XS Max, 11 Pro Max | 1242 × 2688 | 2688 × 1242 |
+
+> Either 6.9" or 6.5" is required. Apple auto-scales for 6.7", 6.1", 5.8", 5.5", and smaller.
+
+#### iPhone (optional — only if you want device-specific screenshots)
+
+| Display | Devices | Portrait (px) | Landscape (px) |
+|---------|---------|---------------|-----------------|
+| **6.7"** | iPhone 16 Plus, 15 Pro Max, 15 Plus, 14 Pro Max | 1290 × 2796 | 2796 × 1290 |
+| **6.1"** | iPhone XR, 11 | 828 × 1792 | 1792 × 828 |
+| **5.8"** | iPhone X, XS, 11 Pro | 1125 × 2436 | 2436 × 1125 |
+| **5.5"** | iPhone 8 Plus, 7 Plus, 6s Plus | 1242 × 2208 | 2208 × 1242 |
+| **4.7"** | iPhone 8, 7, 6s, SE (3rd/2nd gen) | 750 × 1334 | 1334 × 750 |
+| **4"** | iPhone SE (1st gen), 5s | 640 × 1136 | 1136 × 640 |
+
+#### iPad (required if app runs on iPad)
+
+| Display | Devices | Portrait (px) | Landscape (px) |
+|---------|---------|---------------|-----------------|
+| **13"** | iPad Pro (M5/M4), iPad Air (M4/M3/M2) | 2064 × 2752 | 2752 × 2064 |
+| **13" (alt)** | iPad Pro (6th–1st gen) | 2048 × 2732 | 2732 × 2048 |
+
+> Either 13" size is accepted. Apple auto-scales for 11", 10.5", and 9.7".
+
+### Current Screenshots (`AppStore/Screenshots/`)
+
+All screenshots are **1242 × 2688** (iPhone 6.5" portrait):
+
+| File | Screen |
+|------|--------|
+| `L-Dashboard.PNG` | Dashboard — daily summary |
+| `L-Camera-Scan.PNG` | Camera scan view |
+| `L-Analysis-Results.PNG` | AI analysis results |
+| `L-Meal-History.PNG` | Meal history |
+| `L-Settings.PNG` | Settings / profile |
 
 ### Screens to Capture
 
@@ -115,6 +156,8 @@ Capture these in order — they tell the story of the app:
 - Use a real meal photo for screenshots 2 and 3 — staged food looks better than empty states.
 - Light mode is generally preferred for App Store screenshots.
 - You can add text overlays and frames using tools like [Shotbot](https://shotbot.io) or [Screenshots Pro](https://screenshots.pro).
+
+*Reference: [Apple Screenshot Specifications](https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/)*
 
 ---
 

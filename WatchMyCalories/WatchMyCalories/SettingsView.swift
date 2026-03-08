@@ -1,0 +1,488 @@
+import SwiftUI
+import SwiftData
+import os
+
+struct SettingsView: View {
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "WatchMyCalories", category: "Settings")
+    @Environment(\.modelContext) private var modelContext
+    @Query private var userProfiles: [UserProfile]
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var env: AppEnvironment
+
+    @Binding var selectedTab: ContentView.Tab
+    @Binding var hasUnsavedChanges: Bool
+
+    // Use ObservedObject for singletons to avoid lifecycle conflicts
+    @ObservedObject private var store = SettingsStore.shared
+
+    // UI State (Imperial)
+    @State private var heightFeet: Int = 5
+    @State private var heightInchesPart: Int = 8
+    @State private var weightLbs: Int = 150
+
+    // UI State (Metric)
+    @State private var heightCmUI: Int = 173
+    @State private var weightKgUI: Int = 68
+
+    @State private var age: Int = 30
+
+    @State private var gender: Gender = .male
+    @State private var activityLevel: ActivityLevel = .sedentary
+    @State private var targetCalories: Double? = nil
+
+    // Toggle state for inline pickers
+    @State private var isEditingHeight = false
+    @State private var isEditingWeight = false
+    @State private var isEditingAge = false
+
+    @FocusState private var focusedField: Field?
+
+    enum Field {
+        case calories
+    }
+
+    init(selectedTab: Binding<ContentView.Tab> = .constant(.settings), hasUnsavedChanges: Binding<Bool> = .constant(false)) {
+        self._selectedTab = selectedTab
+        self._hasUnsavedChanges = hasUnsavedChanges
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            AppIconView()
+                                .frame(width: 100, height: 100)
+                                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                                .shadow(radius: 5)
+
+                            Text("Watch My Calories")
+                                .font(.headline)
+                                .foregroundStyle(Color.cwPrimary)
+
+                            Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .listRowBackground(Color.clear)
+                }
+
+                Section(header: Text("App Appearance")) {
+                    Picker("Theme", selection: $store.appTheme) {
+                        ForEach(AppTheme.allCases) { theme in
+                            Text(theme.rawValue).tag(theme)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .accessibilityIdentifier(AccessibilityID.Settings.themePicker)
+
+                    Picker("Unit System", selection: $store.unitSystem) {
+                        ForEach(UnitSystem.allCases) { unit in
+                            Text(unit.rawValue).tag(unit)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .accessibilityIdentifier(AccessibilityID.Settings.unitPicker)
+                }
+
+                Section(header: Text("Profile")) {
+                    if store.unitSystem == .us {
+                        HStack {
+                            Text("Height")
+                            Spacer()
+                            Picker("Feet", selection: $heightFeet) {
+                                ForEach(4...8, id: \.self) { ft in
+                                    Text("\(ft)'").tag(ft)
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 60)
+                            .clipped()
+
+                            Picker("Inches", selection: $heightInchesPart) {
+                                ForEach(0...11, id: \.self) { inch in
+                                    Text("\(inch)\"").tag(inch)
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 60)
+                            .clipped()
+                        }
+
+                        DisclosureGroup(isExpanded: $isEditingWeight) {
+                            Picker("Weight", selection: $weightLbs) {
+                                ForEach(50...400, id: \.self) { lbs in
+                                    Text("\(lbs) lbs").tag(lbs)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(height: 150)
+                        } label: {
+                            HStack {
+                                Text("Weight")
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
+                                Text("\(weightLbs) lbs")
+                                    .foregroundStyle(isEditingWeight ? Color.accentColor : Color.secondary)
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation {
+                                    isEditingWeight.toggle()
+                                    isEditingHeight = false
+                                    isEditingAge = false
+                                    focusedField = nil
+                                }
+                            }
+                        }
+                    } else {
+                        DisclosureGroup(isExpanded: $isEditingHeight) {
+                            Picker("Height", selection: $heightCmUI) {
+                                ForEach(100...250, id: \.self) { cm in
+                                    Text("\(cm) cm").tag(cm)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(height: 150)
+                        } label: {
+                            HStack {
+                                Text("Height")
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
+                                Text("\(heightCmUI) cm")
+                                    .foregroundStyle(isEditingHeight ? Color.accentColor : Color.secondary)
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation {
+                                    isEditingHeight.toggle()
+                                    isEditingWeight = false
+                                    isEditingAge = false
+                                    focusedField = nil
+                                }
+                            }
+                        }
+
+                        DisclosureGroup(isExpanded: $isEditingWeight) {
+                            Picker("Weight", selection: $weightKgUI) {
+                                ForEach(20...200, id: \.self) { kg in
+                                    Text("\(kg) kg").tag(kg)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(height: 150)
+                        } label: {
+                            HStack {
+                                Text("Weight")
+                                    .foregroundStyle(Color.primary)
+                                Spacer()
+                                Text("\(weightKgUI) kg")
+                                    .foregroundStyle(isEditingWeight ? Color.accentColor : Color.secondary)
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation {
+                                    isEditingWeight.toggle()
+                                    isEditingHeight = false
+                                    isEditingAge = false
+                                    focusedField = nil
+                                }
+                            }
+                        }
+                    }
+
+                    DisclosureGroup(isExpanded: $isEditingAge) {
+                        Picker("Age", selection: $age) {
+                            ForEach(1...100, id: \.self) { y in
+                                Text("\(y)").tag(y)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(height: 150)
+                    } label: {
+                        HStack {
+                            Text("Age")
+                                .foregroundStyle(Color.primary)
+                            Spacer()
+                            Text("\(age)")
+                                .foregroundStyle(isEditingAge ? Color.accentColor : Color.secondary)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation {
+                                isEditingAge.toggle()
+                                isEditingWeight = false
+                                focusedField = nil
+                            }
+                        }
+                    }
+
+                    Picker("Gender", selection: $gender) {
+                        ForEach(Gender.allCases) { gender in
+                            Text(gender.rawValue).tag(gender)
+                        }
+                    }
+                    .accessibilityIdentifier(AccessibilityID.Settings.genderPicker)
+                    Picker("Activity", selection: $activityLevel) {
+                        ForEach(ActivityLevel.allCases) { level in
+                            Text(level.rawValue).tag(level)
+                        }
+                    }
+                    .accessibilityIdentifier(AccessibilityID.Settings.activityPicker)
+                }
+
+                Section(header: Text("Daily Goals")) {
+                    HStack {
+                        Text("Target Calories")
+                        Spacer()
+                        TextField("Not Set", value: $targetCalories, format: .number)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .focused($focusedField, equals: .calories)
+                            .accessibilityIdentifier(AccessibilityID.Settings.targetCalories)
+                    }
+
+                    Button("Calculate Recommended Goal") {
+                        calculateCalories()
+                        focusedField = nil
+                        isEditingWeight = false
+                        isEditingAge = false
+                    }
+                    .accessibilityIdentifier(AccessibilityID.Settings.calculateGoal)
+                }
+
+                Section(header: Text("Privacy")) {
+                    Toggle("AI Photo Analysis", isOn: Binding(
+                        get: { store.aiConsent == .accepted },
+                        set: { store.saveAIConsent($0 ? .accepted : .declined) }
+                    ))
+                    .tint(Color.cwPrimary)
+                    .accessibilityIdentifier(AccessibilityID.Settings.aiConsentToggle)
+
+                    Text("When enabled, food photos are sent to Google Gemini, a third-party AI service by Google, for calorie estimation. All other data stays on-device.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Link(destination: URL(string: "https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb")!) {
+                        Label("Privacy Policy", systemImage: "hand.raised")
+                    }
+
+                    Link(destination: URL(string: "https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470")!) {
+                        Label("Support", systemImage: "lifepreserver")
+                    }
+                }
+            }
+            .navigationTitle("Settings")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveSettings()
+                        focusedField = nil
+                        selectedTab = .dashboard
+                    }
+                    .accessibilityIdentifier(AccessibilityID.Settings.saveButton)
+                }
+
+                ToolbarItem(placement: .keyboard) {
+                    Button("Done") {
+                        focusedField = nil
+                    }
+                }
+            }
+            .onAppear {
+                loadSettings()
+                focusedField = nil
+                checkUnsaved()
+            }
+            .onChange(of: heightFeet) { _, _ in checkUnsaved() }
+            .onChange(of: heightInchesPart) { _, _ in checkUnsaved() }
+            .onChange(of: weightLbs) { _, _ in checkUnsaved() }
+            .onChange(of: age) { _, _ in checkUnsaved() }
+            .onChange(of: gender) { _, _ in checkUnsaved() }
+            .onChange(of: activityLevel) { _, _ in checkUnsaved() }
+            .onChange(of: targetCalories) { _, _ in checkUnsaved() }
+            .onChange(of: heightCmUI) { _, _ in checkUnsaved() }
+            .onChange(of: weightKgUI) { _, _ in checkUnsaved() }
+            .onChange(of: store.appTheme) { _, _ in checkUnsaved() }
+            .onChange(of: store.unitSystem) { _, _ in
+                // Cross-sync values when user toggles unit system.
+                // Derive from persisted metric profile to avoid rounding drift.
+                if let profile = userProfiles.first {
+                    let heightCm = profile.height
+                    let weightKg = profile.weight
+                    if store.unitSystem == .metric {
+                        heightCmUI = Int(heightCm.rounded())
+                        weightKgUI = Int(weightKg.rounded())
+                    } else {
+                        let totalInches = heightCm / 2.54
+                        heightFeet = Int(totalInches) / 12
+                        heightInchesPart = Int(totalInches) % 12
+                        weightLbs = Int((weightKg * 2.20462).rounded())
+                    }
+                } else {
+                    // No saved profile yet — fall back to cross-converting UI values
+                    if store.unitSystem == .metric {
+                        let totalInches = Double(heightFeet * 12 + heightInchesPart)
+                        heightCmUI = Int((totalInches * 2.54).rounded())
+                        weightKgUI = Int((Double(weightLbs) / 2.20462).rounded())
+                    } else {
+                        let totalInches = Double(heightCmUI) / 2.54
+                        heightFeet = Int(totalInches) / 12
+                        heightInchesPart = Int(totalInches) % 12
+                        weightLbs = Int((Double(weightKgUI) * 2.20462).rounded())
+                    }
+                }
+                isEditingHeight = false
+                isEditingWeight = false
+                isEditingAge = false
+                checkUnsaved()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .saveSettings)) { _ in
+                saveSettings()
+                checkUnsaved()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .discardSettings)) { _ in
+                loadSettings()
+                checkUnsaved()
+            }
+        }
+        .preferredColorScheme(store.appTheme.colorScheme)
+    }
+
+    private func checkUnsaved() {
+        let target = targetCalories ?? 2000
+
+        var isUnsaved = false
+
+        if store.appTheme != store.savedAppTheme { isUnsaved = true }
+        else if store.unitSystem != store.savedUnitSystem { isUnsaved = true }
+        else if let p = userProfiles.first {
+            // Compare in UI units to avoid rounding drift from metric↔imperial conversion
+            if store.unitSystem == .us {
+                let profInches = p.height / 2.54
+                let profFeet = Int(profInches) / 12
+                let profInchPart = Int(profInches) % 12
+                let profLbs = Int((p.weight * 2.20462).rounded())
+                if heightFeet != profFeet || heightInchesPart != profInchPart || weightLbs != profLbs {
+                    isUnsaved = true
+                }
+            } else {
+                if heightCmUI != Int(p.height.rounded()) || weightKgUI != Int(p.weight.rounded()) {
+                    isUnsaved = true
+                }
+            }
+            if p.age != age ||
+               p.gender != gender ||
+               p.activityLevel != activityLevel ||
+               p.targetCalories != target {
+                isUnsaved = true
+            }
+        } else {
+            if heightFeet != 5 || heightInchesPart != 8 || weightLbs != 150 || heightCmUI != 173 || weightKgUI != 68 || age != 30 || gender != .male || activityLevel != .sedentary || targetCalories != nil {
+                isUnsaved = true
+            }
+        }
+
+        if hasUnsavedChanges != isUnsaved {
+            hasUnsavedChanges = isUnsaved
+        }
+    }
+
+    private func loadSettings() {
+        store.appTheme = store.savedAppTheme
+        store.unitSystem = store.savedUnitSystem
+
+        if let profile = userProfiles.first {
+            let heightCm = profile.height
+            let weightKg = profile.weight
+
+            // Metric (Stored) -> Imperial (UI)
+            let heightInchesTotal = heightCm / 2.54
+            if heightInchesTotal > 0 {
+                heightFeet = Int(heightInchesTotal) / 12
+                heightInchesPart = Int(heightInchesTotal) % 12
+            }
+            weightLbs = Int((weightKg * 2.20462).rounded())
+
+            // Metric (Stored) -> Metric (UI)
+            heightCmUI = Int(heightCm.rounded())
+            weightKgUI = Int(weightKg.rounded())
+
+            age = profile.age
+            gender = profile.gender
+            activityLevel = profile.activityLevel
+            targetCalories = profile.targetCalories > 0 ? profile.targetCalories : nil
+        }
+    }
+
+    private func saveSettings() {
+        // 1. Save to Store (UserDefaults)
+        store.save()
+
+        // 2. Prepare Profile Data
+        // Convert from active unit system -> Metric (Storage)
+        let heightCm: Double
+        let weightKg: Double
+        if store.unitSystem == .us {
+            let totalInches = Double(heightFeet * 12 + heightInchesPart)
+            heightCm = totalInches * 2.54
+            weightKg = Double(weightLbs) / 2.20462
+        } else {
+            heightCm = Double(heightCmUI)
+            weightKg = Double(weightKgUI)
+        }
+
+        let userAge = age
+        // Fallback to 2000 if user didn't set a target
+        let target = targetCalories ?? 2000
+
+        // 3. Save to SwiftData
+        if let profile = userProfiles.first {
+            profile.height = heightCm
+            profile.weight = weightKg
+            profile.age = userAge
+            profile.gender = gender
+            profile.activityLevel = activityLevel
+            profile.targetCalories = target
+        } else {
+            let newProfile = UserProfile(
+                height: heightCm,
+                weight: weightKg,
+                age: userAge,
+                gender: gender,
+                activityLevel: activityLevel,
+                targetCalories: target
+            )
+            modelContext.insert(newProfile)
+        }
+
+        // 4. Commit Changes with Error Handling
+        do {
+            try modelContext.save()
+        } catch {
+            Self.logger.error("Failed to save user profile: \(error.localizedDescription)")
+        }
+    }
+
+    private func calculateCalories() {
+        let heightCm: Double
+        let weightKg: Double
+        if store.unitSystem == .us {
+            let totalInches = Double(heightFeet * 12 + heightInchesPart)
+            heightCm = totalInches * 2.54
+            weightKg = Double(weightLbs) / 2.20462
+        } else {
+            heightCm = Double(heightCmUI)
+            weightKg = Double(weightKgUI)
+        }
+
+        targetCalories = CalorieCalculator.recommended(
+            heightCm: heightCm, weightKg: weightKg, age: age,
+            gender: gender, activityLevel: activityLevel
+        )
+    }
+}
