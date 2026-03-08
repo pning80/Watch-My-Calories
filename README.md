@@ -1,16 +1,27 @@
 # Watch My Calories
 
-Watch My Calories is an app that can help the user estimate the calories of the food they eat, the calories they burn through exercise, and track their daily consumption.
-
-There are two versions of the app, one for iOS and one for Android. The iOS version is the original version, and the Android version is meant to mimic the iOS version as much as possible. The initial design and development of both apps were done with AntiGravity using Gemini 3 Pro. However, the actual build and polishing for them were done in XCode and Android Studio, respectively, since AntiGravity cannot build the apps directly.
-
-## Development Notes
-
-To rebuild the app, you will need to use XCode and Android Studio. Due to the mixup of these tools, you may need to fix some errors in the respective IDEs. These can normally be done easily; repeating simple instructions such as "Fix the errors" or "Clean the project" should get you through. 
+> Track your daily calories effortlessly with AI-powered food recognition. Simply snap a photo of your meal and Watch My Calories instantly identifies each food item, estimates portions in familiar US units, and calculates calories and macronutrients.
+>
+> KEY FEATURES
+>
+> - AI Food Analysis — Snap a photo of your meal. Watch My Calories uses Google Gemini AI to identify foods and estimate calories, protein, carbs, and fat.
+> - Smart Meal Tracking — Entries are automatically categorized as Breakfast, Lunch, Dinner, or Snack based on the time of day.
+> - Daily Dashboard — See your calorie intake at a glance with a visual progress card showing how close you are to your daily goal.
+> - HealthKit Integration — Reads your active energy burned from Apple Health to dynamically adjust your effective calorie target.
+> - Personalized Goals — Set your profile (height, weight, age, activity level) and the app calculates a recommended daily calorie target using the Mifflin-St Jeor formula.
+> - Meal History — Browse all past entries organized by date and meal type. View, edit, or delete individual items or entire meal groups.
+> - Manual Entry — Prefer to log food yourself? Add entries manually with full control over name, calories, and macros.
+> - Privacy First — All your data stays on your device. No accounts, no sign-ups, no analytics. Food photos are sent to Google Gemini solely for analysis and are not stored.
+>
+> Watch My Calories is designed for anyone who wants a simple, private, and intelligent way to stay on top of their nutrition.
+>
 
 ### iOS App
-All the source code is located in the WatchMyCalories sub-folder. Just open the WatchMyCalories XCode project and you can get started.
+The source code is located in the WatchMyCalories sub-folder.
 
 ### Android App
-All the source code is located in the WatchMyCaloriesAndroid sub-folder. Open the WatchMyCaloriesAndroid project in Android Studio and you can get started.
+The source code is located in the WatchMyCaloriesAndroid sub-folder. This version is stale and probably doesn't compile.
+
+### Backend
+The backend is a simple proxy on Google Cloud Run to protect the API key for Google Gemini AI. The backend source code is located in the backend sub-folder.
 
