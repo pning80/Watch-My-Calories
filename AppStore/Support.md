@@ -1,4 +1,4 @@
-# WatchMyCalories — Support
+# Watch My Calories — Support
 
 ## Contact
 
@@ -15,10 +15,10 @@ We aim to respond within 7 days.
 - Try taking a clearer, well-lit photo of your food.
 
 ### Camera permission denied
-- Go to **Settings > WatchMyCalories > Camera** on your device and enable camera access.
+- Go to **Settings > Watch My Calories > Camera** on your device and enable camera access.
 
 ### HealthKit data not showing
-- Go to **Settings > Health > Data Access & Devices > WatchMyCalories** and ensure Active Energy is enabled.
+- Go to **Settings > Health > Data Access & Devices > Watch My Calories** and ensure Active Energy is enabled.
 - HealthKit is optional — the app works without it, but your calorie goal won't adjust for activity.
 
 ### Deleting your data

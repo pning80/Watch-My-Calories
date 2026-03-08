@@ -1,8 +1,8 @@
-# Privacy Policy — WatchMyCalories
+# Privacy Policy — Watch My Calories
 
 **Last Updated: March 7, 2026**
 
-WatchMyCalories ("the App") is a mobile application that helps you track your daily calorie intake using AI-powered food recognition. This Privacy Policy explains what data the App collects, how it is used, and your choices.
+Watch My Calories ("the App") is a mobile application that helps you track your daily calorie intake using AI-powered food recognition. This Privacy Policy explains what data the App collects, how it is used, and your choices.
 
 ## Data We Collect
 

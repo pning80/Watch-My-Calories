@@ -198,14 +198,9 @@ class CameraManager: NSObject, ObservableObject {
     }
     
     private func simulatePhotoCapture() {
-        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 300, height: 300))
-        let image = renderer.image { ctx in
-            UIColor.darkGray.setFill()
-            ctx.fill(CGRect(x: 0, y: 0, width: 300, height: 300))
-            let attrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 24), .foregroundColor: UIColor.white]
-            "Mock Food Photo".draw(at: CGPoint(x: 50, y: 130), withAttributes: attrs)
+        if let image = UIImage(named: "FoodPhoto") {
+            self.capturedImages.append(image)
         }
-        self.capturedImages.append(image)
     }
 
     // MARK: - Error Handling

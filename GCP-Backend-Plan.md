@@ -1,6 +1,6 @@
 # Initial Prompt to create the GCP backend
 
-- This folder contains both the iOS version and the Andriod version of the Carolie Watcher app. The iOS version is in the folder `WatchMyCalories` and the Android version is in the folder `WatchMyCaloriesAndroid`.
+- This folder contains both the iOS version and the Andriod version of the Watch My Calories app. The iOS version is in the folder `WatchMyCalories` and the Android version is in the folder `WatchMyCaloriesAndroid`.
 - Next we will add a backend for the iOS version of the app stored in `WatchMyCalories`. Please ignore the Android version of the app stored in `WatchMyCaloriesAndroid`. We will refactor the Android version later. Please don't make any changes to the Android version until you receive an explicit instruction to do so.
 - The goal of this backend is to protect the Gemini API key so that it is not exposed in the app installed on the end users' devices. 
 - We will use Cloud Run on Google Cloud Platform (GCP) to host the backend. 

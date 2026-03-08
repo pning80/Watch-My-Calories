@@ -1,4 +1,4 @@
-# App Store Connect Setup — WatchMyCalories
+# App Store Connect Setup — Watch My Calories
 
 All the content you need to fill in App Store Connect for your first submission.
 
@@ -8,7 +8,7 @@ All the content you need to fill in App Store Connect for your first submission.
 
 | Field | Value |
 |-------|-------|
-| **App Name** | WatchMyCalories |
+| **App Name** | Watch My Calories |
 | **Subtitle** | Snap, Track, Stay Fit with AI |
 | **Bundle ID** | `com.pning80.WatchMyCalories` |
 | **SKU** | `watch-my-calories-ios-001` |
@@ -46,11 +46,11 @@ Answer **None** / **No** to all questions:
 
 ### App Description
 
-> Track your daily calories effortlessly with AI-powered food recognition. Simply snap a photo of your meal and WatchMyCalories instantly identifies each food item, estimates portions in familiar US units, and calculates calories and macronutrients.
+> Track your daily calories effortlessly with AI-powered food recognition. Simply snap a photo of your meal and Watch My Calories instantly identifies each food item, estimates portions in familiar US units, and calculates calories and macronutrients.
 >
 > KEY FEATURES
 >
-> - AI Food Analysis — Snap a photo of your meal. WatchMyCalories uses Google Gemini AI to identify foods and estimate calories, protein, carbs, and fat.
+> - AI Food Analysis — Snap a photo of your meal. Watch My Calories uses Google Gemini AI to identify foods and estimate calories, protein, carbs, and fat.
 > - Smart Meal Tracking — Entries are automatically categorized as Breakfast, Lunch, Dinner, or Snack based on the time of day.
 > - Daily Dashboard — See your calorie intake at a glance with a visual progress card showing how close you are to your daily goal.
 > - HealthKit Integration — Reads your active energy burned from Apple Health to dynamically adjust your effective calorie target.
@@ -59,7 +59,7 @@ Answer **None** / **No** to all questions:
 > - Manual Entry — Prefer to log food yourself? Add entries manually with full control over name, calories, and macros.
 > - Privacy First — All your data stays on your device. No accounts, no sign-ups, no analytics. Food photos are sent to Google Gemini solely for analysis and are not stored.
 >
-> WatchMyCalories is designed for anyone who wants a simple, private, and intelligent way to stay on top of their nutrition.
+> Watch My Calories is designed for anyone who wants a simple, private, and intelligent way to stay on top of their nutrition.
 
 ### Promotional Text
 
@@ -70,14 +70,14 @@ Answer **None** / **No** to all questions:
 ### Keywords
 
 ```
-calorie,tracker,food,AI,nutrition,macro,health,diet,meal,camera,fitness,weight,protein,carbs,HealthKit
+calorie,tracker,food,AI,nutrition,macro,health,diet,meal,camera,fitness,weight,protein,carbs
 ```
 
 *(100 characters max, comma-separated, no spaces after commas.)*
 
 ### What's New in This Version
 
-> Initial release of WatchMyCalories — AI-powered calorie tracking with camera-based food recognition, HealthKit integration, and on-device data storage.
+> Initial release of Watch My Calories — AI-powered calorie tracking with camera-based food recognition, HealthKit integration, and on-device data storage.
 
 ### Support URL
 
@@ -136,25 +136,24 @@ All screenshots are **1242 × 2688** (iPhone 6.5" portrait):
 
 | File | Screen |
 |------|--------|
-| `L-Dashboard.PNG` | Dashboard — daily summary |
-| `L-Camera-Scan.PNG` | Camera scan view |
-| `L-Analysis-Results.PNG` | AI analysis results |
-| `L-Meal-History.PNG` | Meal history |
-| `L-Settings.PNG` | Settings / profile |
-
-### Screens to Capture
-
-Capture these in order — they tell the story of the app:
-
-1. **Dashboard** — Show the daily summary hero card with calorie progress, active energy, and a few meal entries below. This is your lead screenshot.
-2. **Camera Scan** — The live camera view with the shutter button, or the photo review screen showing "Retake" and "Use Photo" options.
-3. **Analysis Results** — The estimation review screen showing identified food items with calories, quantities, and macros.
-4. **Meal History** — The history tab showing entries grouped by date and meal type.
-5. **Settings / Profile** — The settings screen with user profile fields and calorie goal.
+| `Onboarding-1.png` | Onboarding — Welcome screen |
+| `Onboarding-2.png` | Onboarding — Profile setup |
+| `Onboarding-3.png` | Onboarding — Goals & calorie target |
+| `Onboarding-4.png` | Onboarding — Permissions |
+| `Dashboard.png` | Dashboard — daily summary (light) |
+| `Dashboard-Dark.png` | Dashboard — daily summary (dark) |
+| `Camera-Scan.png` | Camera scan view |
+| `Analysis-in-progress.png` | AI analysis in progress |
+| `Analysis-Result.png` | AI analysis results |
+| `Meal-History.png` | Meal history (light) |
+| `Meal-History-Dark.png` | Meal history (dark) |
+| `Settings.png` | Settings / profile (light) |
+| `Settings-Dark.png` | Settings / profile (dark) |
+| `View-Meal.png` | Individual meal detail view |
 
 **Tips:**
-- Use a real meal photo for screenshots 2 and 3 — staged food looks better than empty states.
-- Light mode is generally preferred for App Store screenshots.
+- Light mode screenshots are generally preferred as lead images for the App Store listing.
+- Dark mode variants are included for optional use or marketing materials.
 - You can add text overlays and frames using tools like [Shotbot](https://shotbot.io) or [Screenshots Pro](https://screenshots.pro).
 
 *Reference: [Apple Screenshot Specifications](https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/)*
@@ -237,7 +236,7 @@ Paste this into the **Notes for Review** field:
 > **Network dependency:** Food analysis requires an internet connection. The app sends food photos to a backend service that uses Google Gemini AI for nutritional analysis. If the device is offline, analysis will fail with an error message.
 >
 > **Demo flow:**
-> 1. Open the app → Dashboard tab shows daily summary (empty on first launch)
+> 1. Open the app → Complete 4-step onboarding (Welcome → Profile → Goals → Permissions) → Dashboard tab shows daily summary
 > 2. Tap the Camera tab → grant camera permission → take a photo of food → tap "Use Photo"
 > 3. The app automatically analyzes the photo and displays estimated food items, calories, and macros → tap "Done" to save
 > 4. Return to Dashboard to see the logged entry
@@ -271,7 +270,6 @@ When prompted about export compliance:
 
 No CCATS or ERN number is needed. Apple's standard HTTPS exemption applies.
 
-~~*Tip: You can set the `ITSAppUsesNonExemptEncryption` key to `NO` in your Info.plist to skip this question on future submissions.*~~ **Done** — already added to the Xcode project build settings.
 
 ---
 
@@ -305,12 +303,13 @@ Complete these items before clicking **Submit for Review**:
 
 - [x] **Privacy Policy URL** — https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb
 - [x] **Support URL** — https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470
-- [ ] **Screenshots** — Take screenshots using iPhone 16 Pro Max simulator (see Section 3 above).
+- [x] **Screenshots** — 14 screenshots taken (light/dark variants, onboarding, analysis, meal detail). See Section 3.
 - [x] **App Icon** — 1024×1024 icon is in the Xcode asset catalog (`AppIcon.png` also copied to `AppStore/`).
 - [ ] **Upload Build** — Archive and upload via Xcode (see Section 7).
 - [ ] **Select Build** — Choose the uploaded build in App Store Connect.
 - [ ] **Fill in Privacy Details** — Complete the App Privacy section (see Section 4).
 - [x] **Export Compliance** — `ITSAppUsesNonExemptEncryption = NO` added to Xcode project build settings.
+- [x] **NSHealthUpdateUsageDescription** — Required by App Store validation even though the app only reads HealthKit. Added with message: "This app does not write data to Apple Health."
 - [ ] **Review Contact Info** — Add your name, email (pning80.git@gmail.com), and phone for App Review.
 
 ### Recommended

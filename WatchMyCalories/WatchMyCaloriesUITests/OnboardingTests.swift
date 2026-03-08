@@ -132,6 +132,45 @@ final class OnboardingTests: XCTestCase {
         XCTAssertFalse(app.keyboards.firstMatch.waitForExistence(timeout: 2))
     }
 
+    // MARK: - Calculate Recommended Goal
+
+    func testCalculateRecommendedGoalPopulatesTargetCalories() {
+        app.launch()
+
+        // Step 0: Welcome → tap Get Started
+        let getStarted = app.buttons["onboarding_getStartedButton"]
+        XCTAssertTrue(getStarted.waitForExistence(timeout: 5))
+        getStarted.tap()
+
+        // Step 1: Profile → tap Next
+        let nextButton = app.buttons["onboarding_nextButton"]
+        XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
+        nextButton.tap()
+
+        // Step 2: Goals
+        XCTAssertTrue(app.staticTexts["Your Goals"].waitForExistence(timeout: 5))
+
+        // Verify target calories field is initially empty
+        let caloriesField = app.textFields["onboarding_targetCalories"]
+        XCTAssertTrue(caloriesField.waitForExistence(timeout: 3))
+        XCTAssertEqual(caloriesField.value as? String, "Not Set")
+
+        // Tap Calculate Recommended Goal
+        let calculateButton = app.buttons["onboarding_calculateGoal"]
+        XCTAssertTrue(calculateButton.waitForExistence(timeout: 3))
+        calculateButton.tap()
+
+        // Wait for the target calories field value to change from placeholder
+        let predicate = NSPredicate(format: "value != %@", "Not Set")
+        expectation(for: predicate, evaluatedWith: caloriesField, handler: nil)
+        waitForExpectations(timeout: 5, handler: nil)
+
+        // Target calories field should now have a numeric value
+        let fieldValue = caloriesField.value as? String ?? ""
+        XCTAssertFalse(fieldValue.isEmpty, "Target calories should be populated after calculation")
+        XCTAssertNotNil(Int(fieldValue), "Target calories should be a valid number, got: \(fieldValue)")
+    }
+
     // MARK: - Skip Button
 
     func testSkipButtonCompletesOnboarding() {
