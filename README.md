@@ -1,6 +1,6 @@
 # Watch My Calories
 
-> Track your daily calories effortlessly with AI-powered food recognition. Simply snap a photo of your meal and Watch My Calories instantly identifies each food item, estimates portions in familiar US units, and calculates calories and macronutrients.
+> Track your daily calories effortlessly with AI-powered food recognition. Simply snap a photo of your meal and Watch My Calories instantly identifies each food item, estimates portions, and calculates calories and macronutrients.
 >
 > KEY FEATURES
 >
