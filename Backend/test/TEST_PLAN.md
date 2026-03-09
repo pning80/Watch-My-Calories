@@ -31,6 +31,8 @@ Claude will execute `npm test` in the `Backend/` directory and report results.
 | `test/attestation-verify.test.js` | HTTP | `POST /attest/verify` — cert chain, nonce, RP ID verification |
 | `test/assertion-verify.test.js` | HTTP + Unit | Assertion middleware — signature, counter, Firestore fallback |
 | `test/legacy-auth.test.js` | HTTP | `x-backend-key` fallback authentication |
+| `test/legacy-key-limiter.test.js` | HTTP | `legacyKeyLimiter` rate limiting for legacy `x-backend-key` auth |
+| `test/key-preload.test.js` | Unit | Cold-start key preload from Firestore (`loadKeysFromFirestore`) |
 | `test/raw-body.test.js` | HTTP | `captureRawBody` middleware |
 | `test/health-cors.test.js` | HTTP | Health check endpoint + CORS headers |
 | `test/gemini-proxy.test.js` | HTTP | Gemini API proxy relay, error handling, fetch mocking |
@@ -54,8 +56,11 @@ Uses `@peculiar/x509` (dev dependency) for X.509 cert generation with custom OID
 
 ```js
 { app, attestedKeys, challenges, extractNonceFromCert, parseDerLength,
-  setAppleRootCa, setDb, captureRawBody, verifyRequest }
+  setAppleRootCa, setDb, captureRawBody, verifyRequest,
+  globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter, loadKeysFromFirestore }
 ```
 
 - `setAppleRootCa(pem)` — inject test root CA
 - `setDb(mockDb)` — inject mock Firestore
+- `legacyKeyLimiter` — rate limiter for legacy `x-backend-key` auth (15 req/15min global bucket)
+- `loadKeysFromFirestore()` — preload attested keys from Firestore on cold start

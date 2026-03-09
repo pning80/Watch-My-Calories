@@ -254,4 +254,58 @@ describe('App Attest assertion verification', () => {
         const res = await makeAssertedRequest(keyID, privateKey, 1);
         assert.equal(res.status, 401);
     });
+
+    it('succeeds even when Firestore counter update fails', async () => {
+        const keyID = 'test-key-fs-update-fail';
+        const { publicKey, privateKey } = generateP256KeyPair();
+        registerKey(keyID, publicKey, 0);
+
+        const mockDb = {
+            collection: () => ({
+                doc: () => ({
+                    update: async () => { throw new Error('Firestore update failed'); },
+                }),
+            }),
+        };
+        setDb(mockDb);
+
+        const res = await makeAssertedRequest(keyID, privateKey, 1);
+        assert.notEqual(res.status, 401);
+        // In-memory counter should still be updated
+        assert.equal(attestedKeys.get(keyID).counter, 1);
+    });
+
+    // --- RP ID hash check when APPLE_TEAM_ID is not set ---
+
+    it('skips RP ID hash check when APPLE_TEAM_ID is not set', async () => {
+        const savedTeamId = process.env.APPLE_TEAM_ID;
+        delete process.env.APPLE_TEAM_ID;
+
+        const keyID = 'test-key-no-teamid';
+        const { publicKey, privateKey } = generateP256KeyPair();
+        registerKey(keyID, publicKey, 0);
+
+        // Build assertion with wrong RP ID hash but sign correctly
+        const body = { contents: [] };
+        const bodyStr = JSON.stringify(body);
+        const bodyBuf = Buffer.from(bodyStr);
+        const clientDataHash = crypto.createHash('sha256').update(bodyBuf).digest();
+
+        const wrongRpIdHash = crypto.randomBytes(32);
+        const authData = buildAssertionAuthData(wrongRpIdHash, 1);
+        const signature = signAssertion(privateKey, authData, clientDataHash);
+        const assertionBase64 = buildAssertionObject(authData, signature);
+
+        const res = await request(app)
+            .post('/v1beta/models/test:generateContent')
+            .set('x-app-attest-assertion', assertionBase64)
+            .set('x-app-attest-key-id', keyID)
+            .set('Content-Type', 'application/json')
+            .send(bodyStr);
+
+        // Should NOT be 401 because RP ID check is skipped when APPLE_TEAM_ID is absent
+        assert.notEqual(res.status, 401);
+
+        process.env.APPLE_TEAM_ID = savedTeamId;
+    });
 });

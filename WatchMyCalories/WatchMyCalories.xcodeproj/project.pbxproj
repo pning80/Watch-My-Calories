@@ -45,10 +45,23 @@
 		FA1B2C3D4E5F6A7B8C9D0E1F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = FA1B2C3D4E5F6A7B8C9D0E10 /* PrivacyInfo.xcprivacy */; };
 		FE09C9E77EDF626E9F34C0B5 /* WatchMyCaloriesUITestBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE320C6FF18E7B8E0C8F149C /* WatchMyCaloriesUITestBase.swift */; };
 		A1B2C3D4E5F6A7B80000001A /* OnboardingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B80000001B /* OnboardingTests.swift */; };
+		C1A2B3D4E5F6A7B800000011 /* CalorieCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3D4E5F6A7B800000001 /* CalorieCalculatorTests.swift */; };
+		C1A2B3D4E5F6A7B800000012 /* MealTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3D4E5F6A7B800000002 /* MealTypeTests.swift */; };
+		C1A2B3D4E5F6A7B800000013 /* UnitConversionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3D4E5F6A7B800000003 /* UnitConversionTests.swift */; };
+		C1A2B3D4E5F6A7B800000014 /* EstimationModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3D4E5F6A7B800000004 /* EstimationModelTests.swift */; };
+		C1A2B3D4E5F6A7B800000015 /* SettingsEnumTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3D4E5F6A7B800000005 /* SettingsEnumTests.swift */; };
+		C1A2B3D4E5F6A7B800000016 /* FoodEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3D4E5F6A7B800000006 /* FoodEntryTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		F32B8ADCB81422634D644675 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7BDB35E485BB79B8A1EF9ABB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7775A27891771BD7E876CF19;
+			remoteInfo = WatchMyCalories;
+		};
+		C1A2B3D4E5F6A7B800000050 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7BDB35E485BB79B8A1EF9ABB /* Project object */;
 			proxyType = 1;
@@ -99,6 +112,13 @@
 		FDB214709F7770672EE44370 /* Notes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Notes.md; sourceTree = "<group>"; };
 		FFCC51D7731F8014DDA6E383 /* Services.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B80000001B /* OnboardingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTests.swift; sourceTree = "<group>"; };
+		C1A2B3D4E5F6A7B800000001 /* CalorieCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieCalculatorTests.swift; sourceTree = "<group>"; };
+		C1A2B3D4E5F6A7B800000002 /* MealTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealTypeTests.swift; sourceTree = "<group>"; };
+		C1A2B3D4E5F6A7B800000003 /* UnitConversionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitConversionTests.swift; sourceTree = "<group>"; };
+		C1A2B3D4E5F6A7B800000004 /* EstimationModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstimationModelTests.swift; sourceTree = "<group>"; };
+		C1A2B3D4E5F6A7B800000005 /* SettingsEnumTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsEnumTests.swift; sourceTree = "<group>"; };
+		C1A2B3D4E5F6A7B800000006 /* FoodEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodEntryTests.swift; sourceTree = "<group>"; };
+		C1A2B3D4E5F6A7B800000030 /* WatchMyCaloriesTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = WatchMyCaloriesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -107,6 +127,7 @@
 			children = (
 				2FBBDDBE19F4729603E6745D /* WatchMyCalories.app */,
 				AFEA7EB0DDA0E6D3660C26DC /* WatchMyCaloriesUITests.xctest */,
+				C1A2B3D4E5F6A7B800000030 /* WatchMyCaloriesTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -171,12 +192,26 @@
 			path = WatchMyCaloriesUITests;
 			sourceTree = "<group>";
 		};
+		C1A2B3D4E5F6A7B800000020 /* WatchMyCaloriesTests */ = {
+			isa = PBXGroup;
+			children = (
+				C1A2B3D4E5F6A7B800000001 /* CalorieCalculatorTests.swift */,
+				C1A2B3D4E5F6A7B800000004 /* EstimationModelTests.swift */,
+				C1A2B3D4E5F6A7B800000006 /* FoodEntryTests.swift */,
+				C1A2B3D4E5F6A7B800000002 /* MealTypeTests.swift */,
+				C1A2B3D4E5F6A7B800000005 /* SettingsEnumTests.swift */,
+				C1A2B3D4E5F6A7B800000003 /* UnitConversionTests.swift */,
+			);
+			path = WatchMyCaloriesTests;
+			sourceTree = "<group>";
+		};
 		AC0A8C004DBE68AA8AB11795 = {
 			isa = PBXGroup;
 			children = (
 				00C6FC40AC8949F9EE0A3E4D /* ImageStorage.swift */,
 				77A122780F78327DA6BF267A /* WatchMyCalories */,
 				952FDEFB24FCA4F382A60D06 /* WatchMyCaloriesUITests */,
+				C1A2B3D4E5F6A7B800000020 /* WatchMyCaloriesTests */,
 				2814600DBAE72CB55AA657EA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -220,6 +255,24 @@
 			productReference = AFEA7EB0DDA0E6D3660C26DC /* WatchMyCaloriesUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		C1A2B3D4E5F6A7B800000090 /* WatchMyCaloriesTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C1A2B3D4E5F6A7B800000080 /* Build configuration list for PBXNativeTarget "WatchMyCaloriesTests" */;
+			buildPhases = (
+				C1A2B3D4E5F6A7B800000040 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C1A2B3D4E5F6A7B800000060 /* PBXTargetDependency */,
+			);
+			name = WatchMyCaloriesTests;
+			packageProductDependencies = (
+			);
+			productName = WatchMyCaloriesTests;
+			productReference = C1A2B3D4E5F6A7B800000030 /* WatchMyCaloriesTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -234,6 +287,11 @@
 						ProvisioningStyle = Automatic;
 					};
 					D3FBE17B616206401CC8C0A9 = {
+						DevelopmentTeam = G63KVDL36L;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 7775A27891771BD7E876CF19;
+					};
+					C1A2B3D4E5F6A7B800000090 = {
 						DevelopmentTeam = G63KVDL36L;
 						ProvisioningStyle = Automatic;
 						TestTargetID = 7775A27891771BD7E876CF19;
@@ -256,6 +314,7 @@
 			targets = (
 				7775A27891771BD7E876CF19 /* WatchMyCalories */,
 				D3FBE17B616206401CC8C0A9 /* WatchMyCaloriesUITests */,
+				C1A2B3D4E5F6A7B800000090 /* WatchMyCaloriesTests */,
 			);
 		};
 /* End PBXProject section */
@@ -323,6 +382,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C1A2B3D4E5F6A7B800000040 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1A2B3D4E5F6A7B800000011 /* CalorieCalculatorTests.swift in Sources */,
+				C1A2B3D4E5F6A7B800000014 /* EstimationModelTests.swift in Sources */,
+				C1A2B3D4E5F6A7B800000016 /* FoodEntryTests.swift in Sources */,
+				C1A2B3D4E5F6A7B800000012 /* MealTypeTests.swift in Sources */,
+				C1A2B3D4E5F6A7B800000015 /* SettingsEnumTests.swift in Sources */,
+				C1A2B3D4E5F6A7B800000013 /* UnitConversionTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -330,6 +402,11 @@
 			isa = PBXTargetDependency;
 			target = 7775A27891771BD7E876CF19 /* WatchMyCalories */;
 			targetProxy = F32B8ADCB81422634D644675 /* PBXContainerItemProxy */;
+		};
+		C1A2B3D4E5F6A7B800000060 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7775A27891771BD7E876CF19 /* WatchMyCalories */;
+			targetProxy = C1A2B3D4E5F6A7B800000050 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -553,6 +630,42 @@
 			};
 			name = Release;
 		};
+		C1A2B3D4E5F6A7B800000070 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.pning80.WatchMyCalories.Tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WatchMyCalories.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WatchMyCalories";
+			};
+			name = Debug;
+		};
+		C1A2B3D4E5F6A7B800000071 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.pning80.WatchMyCalories.Tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WatchMyCalories.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WatchMyCalories";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -579,6 +692,15 @@
 			buildConfigurations = (
 				674E2C3D537FB1016DD00884 /* Debug */,
 				0C302994B7F20863269305C4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C1A2B3D4E5F6A7B800000080 /* Build configuration list for PBXNativeTarget "WatchMyCaloriesTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C1A2B3D4E5F6A7B800000070 /* Debug */,
+				C1A2B3D4E5F6A7B800000071 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
