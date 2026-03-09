@@ -34,6 +34,7 @@ struct SettingsView: View {
     @State private var isEditingHeight = false
     @State private var isEditingWeight = false
     @State private var isEditingAge = false
+    @State private var attestStatus: AttestStatus = .notAvailable
 
     @FocusState private var focusedField: Field?
 
@@ -275,6 +276,20 @@ struct SettingsView: View {
                         Label("Support", systemImage: "lifepreserver")
                     }
                 }
+
+                Section(header: Text("Device Attestation")) {
+                    switch attestStatus {
+                    case .verified:
+                        Label("Verified", systemImage: "checkmark.shield.fill")
+                            .foregroundStyle(.green)
+                    case .notVerified:
+                        Label("Not Verified", systemImage: "shield.slash")
+                            .foregroundStyle(.secondary)
+                    case .notAvailable:
+                        Label("Not Available", systemImage: "shield.slash")
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
             .navigationTitle("Settings")
             .toolbar {
@@ -297,6 +312,7 @@ struct SettingsView: View {
                 loadSettings()
                 focusedField = nil
                 checkUnsaved()
+                updateAttestStatus()
             }
             .onChange(of: heightFeet) { _, _ in checkUnsaved() }
             .onChange(of: heightInchesPart) { _, _ in checkUnsaved() }
@@ -468,6 +484,15 @@ struct SettingsView: View {
         }
     }
 
+    private func updateAttestStatus() {
+        let manager = AppAttestManager.shared
+        if manager.isSupported {
+            attestStatus = manager.isAttested() ? .verified : .notVerified
+        } else {
+            attestStatus = .notAvailable
+        }
+    }
+
     private func calculateCalories() {
         let heightCm: Double
         let weightKg: Double
@@ -485,4 +510,8 @@ struct SettingsView: View {
             gender: gender, activityLevel: activityLevel
         )
     }
+}
+
+private enum AttestStatus {
+    case verified, notVerified, notAvailable
 }
