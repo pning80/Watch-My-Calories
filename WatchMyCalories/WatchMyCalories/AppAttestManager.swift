@@ -162,7 +162,7 @@ final class AppAttestManager {
 
     // MARK: - Keychain Helpers
 
-    private func isAttested() -> Bool {
+    func isAttested() -> Bool {
         return loadKeychainString(account: keychainAttestedAccount) == "true"
     }
 
