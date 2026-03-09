@@ -32,6 +32,7 @@
 		B1585764C8B75ED58F771539 /* Notes.md in Resources */ = {isa = PBXBuildFile; fileRef = FDB214709F7770672EE44370 /* Notes.md */; };
 		B33BAEE655F0F1E0128E1A84 /* HealthKit_Integration_Prompt.md in Resources */ = {isa = PBXBuildFile; fileRef = 8D5D19035CA7FD57F979A93C /* HealthKit_Integration_Prompt.md */; };
 		BAE35A1EED92D4EC9D7C88AB /* TabNavigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C9879A2AD69A7F890BC403A /* TabNavigationTests.swift */; };
+		B8A1C2D3E4F5A6B7C8D9E0F1 /* AppAttestManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A1C2D3E4F5A6B7C8D9E0F2 /* AppAttestManager.swift */; };
 		BC46214C42DC49FC8C973B60 /* Services.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFCC51D7731F8014DDA6E383 /* Services.swift */; };
 		BF9460C89475543B5620FD9B /* WatchMyCaloriesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F790C15597A0B824EC401B6 /* WatchMyCaloriesApp.swift */; };
 		C52E4E542361E54F98A0E562 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = EAF4F7147826372C490A5411 /* LICENSE.txt */; };
@@ -58,6 +59,7 @@
 
 /* Begin PBXFileReference section */
 		00C6FC40AC8949F9EE0A3E4D /* ImageStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageStorage.swift; sourceTree = "<group>"; };
+		B8A1C2D3E4F5A6B7C8D9E0F2 /* AppAttestManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttestManager.swift; sourceTree = "<group>"; };
 		078C4F63927D5A8D6A81112C /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		129B3EB78946EE7FA82860AA /* SettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTests.swift; sourceTree = "<group>"; };
 		1B4B92842F4835DA3A782A74 /* SKILL.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SKILL.md; sourceTree = "<group>"; };
@@ -113,6 +115,7 @@
 			isa = PBXGroup;
 			children = (
 				CECB70F7A2F79F56B97FCCCD /* AccessibilityIdentifiers.swift */,
+				B8A1C2D3E4F5A6B7C8D9E0F2 /* AppAttestManager.swift */,
 				5A98662715351B5567229215 /* AppEnvironment.swift */,
 				DF12792B590AE63F675A49C4 /* AppIconView.swift */,
 				A09E72D21B9ED27793EA9DB0 /* Assets.xcassets */,
@@ -282,6 +285,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1EC517F3EE83FE1E1C582344 /* AccessibilityIdentifiers.swift in Sources */,
+				B8A1C2D3E4F5A6B7C8D9E0F1 /* AppAttestManager.swift in Sources */,
 				56049A686C7538090EEFF741 /* AppEnvironment.swift in Sources */,
 				3346D739A1DEA31FDBEAF427 /* AppIconView.swift in Sources */,
 				CE4AE3CF3AB24DDA554D811C /* BackendConfig.swift in Sources */,

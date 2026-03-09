@@ -35,6 +35,18 @@ cd WatchMyCaloriesAndroid
 - Test device: Pixel 9a
 - Tests are boilerplate only (ExampleUnitTest, ExampleInstrumentedTest) — no real test coverage yet
 
+### Backend (`Backend/`)
+```bash
+cd Backend
+npm install                      # Install dependencies
+npm test                         # Run all tests (42+ tests, no network/env vars needed)
+npm start                        # Start server (requires .env)
+npm run dev                      # Start with --watch for development
+```
+- Requires Node.js 20+
+- Tests are fully self-contained — no network, Firestore, or environment variables needed
+- See `Backend/test/TEST_PLAN.md` for test coverage details
+
 ## Architecture
 
 ### iOS — SwiftUI + SwiftData (iOS 17+)
