@@ -84,6 +84,10 @@ final class GeminiService: EstimationService {
             throw GeminiError.missingBackendConfig
         }
 
+        // Ensure App Attest key is generated and attested (no-op on simulator)
+        let attestManager = AppAttestManager.shared
+        try await attestManager.ensureAttested()
+
         // Model name in the path is ignored by the backend — it always uses its configured model
         let urlString = "\(backendURL)/v1beta/models/default:generateContent"
         guard let url = URL(string: urlString) else { throw GeminiError.networkError(URLError(.badURL)) }
@@ -91,7 +95,11 @@ final class GeminiService: EstimationService {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(backendKey, forHTTPHeaderField: "x-backend-key")
+
+        // Use legacy key as fallback when App Attest is unavailable (simulator, pre-A12 devices)
+        if !attestManager.isSupported {
+            request.addValue(backendKey, forHTTPHeaderField: "x-backend-key")
+        }
 
         // Construct Request Body
         let unitInstruction: String
@@ -143,10 +151,23 @@ final class GeminiService: EstimationService {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 30
 
+        // Attach App Attest assertion headers (signs the request body)
+        if attestManager.isSupported, let httpBody = request.httpBody {
+            let headers = try await attestManager.assertionHeaders(for: httpBody)
+            for (key, value) in headers {
+                request.addValue(value, forHTTPHeaderField: key)
+            }
+        }
+
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw GeminiError.networkError(URLError(.badServerResponse))
+        }
+
+        // If backend rejects our attestation, clear local state so we re-attest next time
+        if httpResponse.statusCode == 401 && attestManager.isSupported {
+            attestManager.handleAttestationRejected()
         }
 
         guard httpResponse.statusCode == 200 else {

@@ -12,6 +12,7 @@ RUN npm ci --only=production
 
 # Copy the actual application files
 COPY server.js ./
+COPY apple_attest_root_ca.pem ./
 
 # Expose the port Cloud Run expects
 EXPOSE 8080
