@@ -2,7 +2,7 @@ const { describe, it, before, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
 const request = require('supertest');
-const { app, attestedKeys, challenges, setAppleRootCa, setDb } = require('../server');
+const { app, attestedKeys, challenges, setAppleRootCa, setDb, globalLimiter, attestLimiter } = require('../server');
 const {
     getTestRootCaPem,
     buildAuthData,
@@ -30,6 +30,11 @@ describe('POST /attest/verify', () => {
         challenges.clear();
         attestedKeys.clear();
         setDb(null); // Prevent real Firestore from interfering
+        // Reset rate limiters to avoid 429s from prior tests
+        for (const ip of ['::ffff:127.0.0.1', '127.0.0.1', '::1']) {
+            globalLimiter.resetKey(ip);
+            attestLimiter.resetKey(ip);
+        }
     });
 
     after(() => {
@@ -258,6 +263,59 @@ describe('POST /attest/verify', () => {
         assert.ok(res.body.error);
     });
 
+    // --- Firestore persistence ---
+
+    it('writes key to Firestore on successful attestation', async () => {
+        let firestoreWrite = null;
+        const mockDb = {
+            collection: (name) => ({
+                doc: (id) => ({
+                    set: async (data) => { firestoreWrite = { collection: name, id, data }; },
+                }),
+            }),
+        };
+        setDb(mockDb);
+
+        const { keyID, attestation, challenge } = await validAttestation();
+        await request(app)
+            .post('/attest/verify')
+            .send({ keyID, attestation, challenge })
+            .expect(200);
+
+        assert.ok(firestoreWrite, 'Firestore set() should have been called');
+        assert.equal(firestoreWrite.collection, 'attestedKeys');
+        assert.equal(firestoreWrite.id, keyID);
+        assert.equal(firestoreWrite.data.counter, 0);
+        assert.ok(firestoreWrite.data.publicKeyPem);
+        assert.ok(firestoreWrite.data.hmac);
+        assert.ok(firestoreWrite.data.createdAt instanceof Date);
+        assert.ok(firestoreWrite.data.lastUsedAt instanceof Date);
+
+        setDb(null);
+    });
+
+    it('succeeds even when Firestore write fails', async () => {
+        const mockDb = {
+            collection: () => ({
+                doc: () => ({
+                    set: async () => { throw new Error('Firestore unavailable'); },
+                }),
+            }),
+        };
+        setDb(mockDb);
+
+        const { keyID, attestation, challenge } = await validAttestation();
+        const res = await request(app)
+            .post('/attest/verify')
+            .send({ keyID, attestation, challenge })
+            .expect(200);
+
+        assert.ok(res.body.success);
+        assert.ok(attestedKeys.has(keyID), 'Key should still be in memory');
+
+        setDb(null);
+    });
+
     // --- Server config errors ---
 
     it('returns 500 when no Apple root CA configured', async () => {
@@ -290,5 +348,40 @@ describe('POST /attest/verify', () => {
         assert.match(res.body.error, /configuration/i);
 
         process.env.APPLE_TEAM_ID = savedTeamId;
+    });
+
+    it('returns 500 when ATTEST_HMAC_SECRET missing but APPLE_TEAM_ID present', async () => {
+        const savedHmacSecret = process.env.ATTEST_HMAC_SECRET;
+        delete process.env.ATTEST_HMAC_SECRET;
+
+        const chalRes = await request(app).get('/attest/challenge').expect(200);
+        const res = await request(app)
+            .post('/attest/verify')
+            .send({
+                keyID: 'abc',
+                attestation: 'xyz',
+                challenge: chalRes.body.challenge,
+            })
+            .expect(500);
+        assert.match(res.body.error, /configuration/i);
+
+        process.env.ATTEST_HMAC_SECRET = savedHmacSecret;
+    });
+
+    // --- Garbled attestation data ---
+
+    it('returns 400 for garbled (non-CBOR) attestation data', async () => {
+        const chalRes = await request(app).get('/attest/challenge').expect(200);
+        const challenge = chalRes.body.challenge;
+
+        const res = await request(app)
+            .post('/attest/verify')
+            .send({
+                keyID: crypto.randomBytes(32).toString('base64'),
+                attestation: Buffer.from('garbage').toString('base64'),
+                challenge,
+            })
+            .expect(400);
+        assert.match(res.body.error, /Attestation verification failed/i);
     });
 });

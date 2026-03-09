@@ -1,7 +1,7 @@
 const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
-const { app, globalLimiter, geminiLimiter, attestLimiter } = require('../server');
+const { app, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter } = require('../server');
 
 // supertest connects via loopback — with trust proxy the IP may vary
 const POSSIBLE_IPS = ['::ffff:127.0.0.1', '127.0.0.1', '::1'];
@@ -12,6 +12,7 @@ function resetAllLimiters() {
         geminiLimiter.resetKey(ip);
         attestLimiter.resetKey(ip);
     }
+    legacyKeyLimiter.resetKey('legacy-key-global');
 }
 
 describe('Rate Limiting', () => {
