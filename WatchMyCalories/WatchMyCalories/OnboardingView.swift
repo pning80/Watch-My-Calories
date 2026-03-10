@@ -221,6 +221,7 @@ struct OnboardingView: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .scrollDismissesKeyboard(.immediately)
 
             progressDots(current: 2, total: 3)
 
