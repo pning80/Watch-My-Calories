@@ -62,8 +62,10 @@ final class OnboardingTests: XCTestCase {
         XCTAssertTrue(app.buttons["US Customary"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.buttons["Metric"].exists)
 
-        // Section header text should exist
-        XCTAssertTrue(app.staticTexts["UNIT SYSTEM"].exists)
+        // Section header text should exist (SwiftUI may render as "UNIT SYSTEM" or "Unit System")
+        XCTAssertTrue(
+            app.staticTexts["UNIT SYSTEM"].exists || app.staticTexts["Unit System"].exists
+        )
     }
 
     // MARK: - Keyboard Dismissal
@@ -91,9 +93,11 @@ final class OnboardingTests: XCTestCase {
         // Keyboard should be visible
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
 
-        // Tap on the Activity Level row (inside the form) to dismiss the keyboard
+        // Tap on the title area to dismiss the keyboard
         app.swipeDown()
-        app.staticTexts["Activity Level"].tap()
+        let goalsTitle = app.staticTexts["Your Goals"]
+        XCTAssertTrue(goalsTitle.waitForExistence(timeout: 3))
+        goalsTitle.tap()
 
         // Keyboard should be dismissed
         XCTAssertFalse(app.keyboards.firstMatch.waitForExistence(timeout: 2))

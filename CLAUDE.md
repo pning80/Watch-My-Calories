@@ -20,7 +20,14 @@ Watch My Calories is a dual-platform native mobile app (iOS + Android) that esti
   xcrun devicectl device install app --device <YOUR_DEVICE_ID> $(PWD)/build/Debug-iphoneos/WatchMyCalories.app
   xcrun devicectl device process launch --device <YOUR_DEVICE_ID> com.pning80.WatchMyCalories
   ```
-- No test targets currently configured
+- **Run all iOS tests (parallel)**:
+  ```bash
+  scripts/run-parallel-uitests.sh              # Auto-detect resources, run all tests
+  scripts/run-parallel-uitests.sh --dry-run    # Preview plan without executing
+  scripts/run-parallel-uitests.sh --simulators 2 --skip-unit-tests  # Override sim count
+  ```
+  The script auto-detects CPU/RAM, clones simulators, distributes 7 UI test classes across them via greedy bin-packing, and runs tests in parallel. Results go to `WatchMyCalories/test-results/`. See `scripts/run-parallel-uitests.sh --help` for all options (`--base-simulator`, `--keep-simulators`, etc.).
+- **Claude Code instruction**: When the user asks to "run all XCUI tests", "run all UI tests", "run iOS tests", or similar, execute `scripts/run-parallel-uitests.sh` instead of running xcodebuild directly
 
 ### Android (`WatchMyCaloriesAndroid/`)
 ```bash
