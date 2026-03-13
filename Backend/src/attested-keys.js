@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { getDb } = require('./firestore');
 const { ATTESTED_KEYS_COLLECTION, KEY_PRELOAD_MAX_AGE_MS } = require('./constants');
+const { getHmacSecret } = require('./hmac-secret');
 
 const attestedKeys = new Map(); // keyID -> { publicKey (KeyObject), counter, hmac }
 
@@ -11,9 +12,9 @@ async function loadKeysFromFirestore() {
         return 0;
     }
 
-    const hmacSecret = process.env.ATTEST_HMAC_SECRET;
+    const hmacSecret = getHmacSecret();
     if (!hmacSecret) {
-        console.warn('Key preload: ATTEST_HMAC_SECRET not set — skipping.');
+        console.warn('Key preload: HMAC secret not available — skipping.');
         return 0;
     }
 

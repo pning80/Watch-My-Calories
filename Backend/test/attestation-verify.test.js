@@ -2,7 +2,7 @@ const { describe, it, before, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
 const request = require('supertest');
-const { app, attestedKeys, challenges, setAppleRootCa, setDb, globalLimiter, attestLimiter } = require('../server');
+const { app, attestedKeys, challenges, setAppleRootCa, setDb, setHmacSecret, globalLimiter, attestLimiter } = require('../server');
 const {
     getTestRootCaPem,
     buildAuthData,
@@ -17,13 +17,12 @@ const TEST_TEAM_ID = 'TESTTEAMID';
 describe('POST /attest/verify', () => {
     let rootCaPem;
     const origTeamId = process.env.APPLE_TEAM_ID;
-    const origHmacSecret = process.env.ATTEST_HMAC_SECRET;
 
     before(async () => {
         rootCaPem = await getTestRootCaPem();
         setAppleRootCa(rootCaPem);
         process.env.APPLE_TEAM_ID = TEST_TEAM_ID;
-        process.env.ATTEST_HMAC_SECRET = 'test-hmac-secret';
+        setHmacSecret('test-hmac-secret');
     });
 
     beforeEach(() => {
@@ -40,8 +39,7 @@ describe('POST /attest/verify', () => {
     after(() => {
         if (origTeamId !== undefined) process.env.APPLE_TEAM_ID = origTeamId;
         else delete process.env.APPLE_TEAM_ID;
-        if (origHmacSecret !== undefined) process.env.ATTEST_HMAC_SECRET = origHmacSecret;
-        else delete process.env.ATTEST_HMAC_SECRET;
+        setHmacSecret(null);
     });
 
     async function validAttestation(challengeOverride) {
@@ -283,7 +281,7 @@ describe('POST /attest/verify', () => {
             .expect(200);
 
         assert.ok(firestoreWrite, 'Firestore set() should have been called');
-        assert.equal(firestoreWrite.collection, 'attestedKeys');
+        assert.equal(firestoreWrite.collection, 'attestedKeys-dev');
         assert.equal(firestoreWrite.id, keyID);
         assert.equal(firestoreWrite.data.counter, 0);
         assert.ok(firestoreWrite.data.publicKeyPem);
@@ -350,9 +348,8 @@ describe('POST /attest/verify', () => {
         process.env.APPLE_TEAM_ID = savedTeamId;
     });
 
-    it('returns 500 when ATTEST_HMAC_SECRET missing but APPLE_TEAM_ID present', async () => {
-        const savedHmacSecret = process.env.ATTEST_HMAC_SECRET;
-        delete process.env.ATTEST_HMAC_SECRET;
+    it('returns 500 when HMAC secret missing but APPLE_TEAM_ID present', async () => {
+        setHmacSecret(null);
 
         const chalRes = await request(app).get('/attest/challenge').expect(200);
         const res = await request(app)
@@ -365,7 +362,7 @@ describe('POST /attest/verify', () => {
             .expect(500);
         assert.match(res.body.error, /configuration/i);
 
-        process.env.ATTEST_HMAC_SECRET = savedHmacSecret;
+        setHmacSecret('test-hmac-secret');
     });
 
     // --- Garbled attestation data ---
