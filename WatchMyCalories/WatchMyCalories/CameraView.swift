@@ -18,8 +18,9 @@ struct CameraView: View {
 
                 Image(uiImage: image)
                     .resizable()
-                    .scaledToFit()
+                    .scaledToFill()
                     .ignoresSafeArea()
+                    .clipped()
 
                 VStack {
                     Spacer()
