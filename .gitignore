@@ -43,3 +43,4 @@ test-results/
 # Security
 #
 .env
+.env.*

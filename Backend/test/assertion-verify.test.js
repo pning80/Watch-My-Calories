@@ -2,7 +2,7 @@ const { describe, it, before, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
 const request = require('supertest');
-const { app, attestedKeys, setAppleRootCa, setDb } = require('../server');
+const { app, attestedKeys, setAppleRootCa, setDb, setHmacSecret } = require('../server');
 const {
     generateP256KeyPair,
     buildAssertionObject,
@@ -16,13 +16,12 @@ const TEST_TEAM_ID = 'TESTTEAMID';
 describe('App Attest assertion verification', () => {
     const origTeamId = process.env.APPLE_TEAM_ID;
     const origApiKey = process.env.APP_BACKEND_API_KEY;
-    const origHmacSecret = process.env.ATTEST_HMAC_SECRET;
     let rpIdHash;
 
     before(() => {
         process.env.APPLE_TEAM_ID = TEST_TEAM_ID;
         process.env.APP_BACKEND_API_KEY = 'test-key';
-        process.env.ATTEST_HMAC_SECRET = 'test-hmac-secret';
+        setHmacSecret('test-hmac-secret');
         rpIdHash = computeRpIdHash(TEST_TEAM_ID);
     });
 
@@ -36,8 +35,7 @@ describe('App Attest assertion verification', () => {
         else delete process.env.APPLE_TEAM_ID;
         if (origApiKey !== undefined) process.env.APP_BACKEND_API_KEY = origApiKey;
         else delete process.env.APP_BACKEND_API_KEY;
-        if (origHmacSecret !== undefined) process.env.ATTEST_HMAC_SECRET = origHmacSecret;
-        else delete process.env.ATTEST_HMAC_SECRET;
+        setHmacSecret(null);
     });
 
     function registerKey(keyID, publicKey, counter = 0) {

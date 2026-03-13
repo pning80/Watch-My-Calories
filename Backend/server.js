@@ -9,6 +9,7 @@ const { attestedKeys, loadKeysFromFirestore } = require('./src/attested-keys');
 const { challenges } = require('./src/challenge');
 const { getAppleRootCa, setAppleRootCa } = require('./src/apple-root-ca');
 const { setDb } = require('./src/firestore');
+const { initHmacSecret, setHmacSecret } = require('./src/hmac-secret');
 const { extractNonceFromCert, parseDerLength } = require('./src/cert-utils');
 
 // Apply global rate limiter
@@ -26,6 +27,7 @@ const PORT = process.env.PORT || 8080;
 
 if (require.main === module) {
     (async () => {
+        await initHmacSecret();
         await loadKeysFromFirestore();
         app.listen(PORT, () => {
             const appleRootCaPem = getAppleRootCa();
@@ -37,4 +39,4 @@ if (require.main === module) {
     })();
 }
 
-module.exports = { app, attestedKeys, challenges, extractNonceFromCert, parseDerLength, setAppleRootCa, setDb, captureRawBody, verifyRequest, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter, loadKeysFromFirestore };
+module.exports = { app, attestedKeys, challenges, extractNonceFromCert, parseDerLength, setAppleRootCa, setDb, setHmacSecret, captureRawBody, verifyRequest, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter, loadKeysFromFirestore };

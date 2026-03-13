@@ -1,15 +1,13 @@
 const { describe, it, before, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
-const { attestedKeys, setDb, loadKeysFromFirestore } = require('../server');
+const { attestedKeys, setDb, setHmacSecret, loadKeysFromFirestore } = require('../server');
 
 const TEST_HMAC_SECRET = 'test-hmac-secret';
 
 describe('Cold-start key preload from Firestore', () => {
-    const origHmacSecret = process.env.ATTEST_HMAC_SECRET;
-
     before(() => {
-        process.env.ATTEST_HMAC_SECRET = TEST_HMAC_SECRET;
+        setHmacSecret(TEST_HMAC_SECRET);
     });
 
     beforeEach(() => {
@@ -18,8 +16,7 @@ describe('Cold-start key preload from Firestore', () => {
     });
 
     after(() => {
-        if (origHmacSecret !== undefined) process.env.ATTEST_HMAC_SECRET = origHmacSecret;
-        else delete process.env.ATTEST_HMAC_SECRET;
+        setHmacSecret(null);
         setDb(null);
     });
 
@@ -168,9 +165,8 @@ describe('Cold-start key preload from Firestore', () => {
 
     // --- Missing HMAC secret ---
 
-    it('returns 0 when ATTEST_HMAC_SECRET is not set', async () => {
-        const saved = process.env.ATTEST_HMAC_SECRET;
-        delete process.env.ATTEST_HMAC_SECRET;
+    it('returns 0 when HMAC secret is not available', async () => {
+        setHmacSecret(null);
 
         setDb(createMockDb([makeKeyDoc('key-orphan')]));
 
@@ -178,6 +174,6 @@ describe('Cold-start key preload from Firestore', () => {
 
         assert.equal(loaded, 0);
 
-        process.env.ATTEST_HMAC_SECRET = saved;
+        setHmacSecret(TEST_HMAC_SECRET);
     });
 });

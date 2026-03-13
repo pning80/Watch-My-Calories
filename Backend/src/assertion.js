@@ -3,6 +3,7 @@ const { decode } = require('cbor-x');
 const { attestedKeys } = require('./attested-keys');
 const { getDb } = require('./firestore');
 const { BUNDLE_ID, ATTESTED_KEYS_COLLECTION } = require('./constants');
+const { getHmacSecret } = require('./hmac-secret');
 
 async function verifyAppAttestAssertion(req, assertionBase64, keyID) {
     const db = getDb();
@@ -16,14 +17,16 @@ async function verifyAppAttestAssertion(req, assertionBase64, keyID) {
         if (doc.exists) {
             const data = doc.data();
 
-            // Verify HMAC (tamper detection)
-            if (process.env.ATTEST_HMAC_SECRET) {
-                const expectedHmac = crypto.createHmac('sha256', process.env.ATTEST_HMAC_SECRET)
-                    .update(data.publicKeyPem + keyID)
-                    .digest('hex');
-                if (!crypto.timingSafeEqual(Buffer.from(expectedHmac), Buffer.from(data.hmac))) {
-                    throw new Error('HMAC verification failed — possible tampering.');
-                }
+            // Verify HMAC (tamper detection) — hard-fail if secret unavailable
+            const hmacSecret = getHmacSecret();
+            if (!hmacSecret) {
+                throw new Error('HMAC secret unavailable — cannot verify Firestore key integrity.');
+            }
+            const expectedHmac = crypto.createHmac('sha256', hmacSecret)
+                .update(data.publicKeyPem + keyID)
+                .digest('hex');
+            if (!crypto.timingSafeEqual(Buffer.from(expectedHmac), Buffer.from(data.hmac))) {
+                throw new Error('HMAC verification failed — possible tampering.');
             }
 
             const publicKey = crypto.createPublicKey({

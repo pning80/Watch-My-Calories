@@ -1,75 +1,94 @@
 #!/bin/bash
 set -e
 
+ENV="${1:-}"
+if [ "$ENV" != "prod" ] && [ "$ENV" != "dev" ]; then
+  echo "Usage: ./deploy.sh <prod|dev>"
+  exit 1
+fi
+
+if [ "$ENV" = "prod" ]; then
+  ENV_FILE=".env.prod"
+  SERVICE_NAME="watchmycalories-backend"
+  SECRET_PREFIX="watchmycalories"
+  ATTESTED_KEYS_COLLECTION="attestedKeys-prod"
+else
+  ENV_FILE=".env.dev"
+  SERVICE_NAME="watchmycalories-backend-dev"
+  SECRET_PREFIX="watchmycalories-dev"
+  ATTESTED_KEYS_COLLECTION="attestedKeys-dev"
+fi
+
 # Load environment variables
-if [ -f .env ]; then
+if [ -f "$ENV_FILE" ]; then
   set -a
-  source .env
+  source "$ENV_FILE"
   set +a
 else
-  echo "Error: .env file not found."
-  exit 1
-fi
-
-if [ -z "$GEMINI_API_KEY" ]; then
-  echo "Error: GEMINI_API_KEY is not set in .env"
-  exit 1
-fi
-
-if [ -z "$APP_BACKEND_API_KEY" ]; then
-  echo "Error: APP_BACKEND_API_KEY is not set in .env"
+  echo "Error: $ENV_FILE not found."
   exit 1
 fi
 
 if [ -z "$APPLE_TEAM_ID" ]; then
-  echo "Error: APPLE_TEAM_ID is not set in .env"
+  echo "Error: APPLE_TEAM_ID is not set in $ENV_FILE"
   exit 1
 fi
 
-if [ -z "$ATTEST_HMAC_SECRET" ]; then
-  echo "Error: ATTEST_HMAC_SECRET is not set in .env"
-  exit 1
+# Prod safety prompt
+if [ "$ENV" = "prod" ]; then
+  echo "WARNING: Deploying to PRODUCTION ($SERVICE_NAME)."
+  read -p "Continue? (y/N) " confirm
+  [ "$confirm" = "y" ] || [ "$confirm" = "Y" ] || { echo "Cancelled."; exit 0; }
 fi
 
 PROJECT_ID=$(gcloud config get-value project)
-echo "Deploying to Project: $PROJECT_ID"
+echo "Deploying $ENV to Project: $PROJECT_ID (service: $SERVICE_NAME)"
 REGION="us-central1"
 
 echo "Enabling necessary Google Cloud APIs..."
 gcloud services enable run.googleapis.com secretmanager.googleapis.com cloudbuild.googleapis.com firestore.googleapis.com --project $PROJECT_ID
 
-# Store GEMINI_API_KEY in Secret Manager
-echo "Setting up Secret Manager for GEMINI_API_KEY..."
-if gcloud secrets describe watchmycalories-gemini-api-key --project $PROJECT_ID >/dev/null 2>&1; then
-  echo "Updating existing secret version..."
-  echo -n "$GEMINI_API_KEY" | gcloud secrets versions add watchmycalories-gemini-api-key --data-file=- --project $PROJECT_ID
-else
-  echo "Creating new secret..."
-  echo -n "$GEMINI_API_KEY" | gcloud secrets create watchmycalories-gemini-api-key --data-file=- --replication-policy="automatic" --project $PROJECT_ID
-fi
+# Upsert a secret: push to Secret Manager if provided locally, otherwise verify it exists.
+# Usage: upsert_secret <VAR_VALUE> <SECRET_NAME> <VAR_NAME>
+upsert_secret() {
+  local value="$1" secret_name="$2" var_name="$3"
+  if [ -n "$value" ]; then
+    echo "Setting up Secret Manager for $var_name..."
+    if gcloud secrets describe "$secret_name" --project $PROJECT_ID >/dev/null 2>&1; then
+      echo "Updating existing secret version..."
+      echo -n "$value" | gcloud secrets versions add "$secret_name" --data-file=- --project $PROJECT_ID
+    else
+      echo "Creating new secret..."
+      echo -n "$value" | gcloud secrets create "$secret_name" --data-file=- --replication-policy="automatic" --project $PROJECT_ID
+    fi
+  else
+    echo "$var_name not in $ENV_FILE — checking Secret Manager..."
+    if ! gcloud secrets describe "$secret_name" --project $PROJECT_ID >/dev/null 2>&1; then
+      echo "Error: $secret_name not found in Secret Manager. Set $var_name in $ENV_FILE for initial setup."
+      exit 1
+    fi
+    echo "$secret_name already exists in Secret Manager."
+  fi
+}
 
-# Store APP_BACKEND_API_KEY in Secret Manager
-echo "Setting up Secret Manager for APP_BACKEND_API_KEY..."
-if gcloud secrets describe watchmycalories-app-backend-api-key --project $PROJECT_ID >/dev/null 2>&1; then
-  echo "Updating existing secret version..."
-  echo -n "$APP_BACKEND_API_KEY" | gcloud secrets versions add watchmycalories-app-backend-api-key --data-file=- --project $PROJECT_ID
-else
-  echo "Creating new secret..."
-  echo -n "$APP_BACKEND_API_KEY" | gcloud secrets create watchmycalories-app-backend-api-key --data-file=- --replication-policy="automatic" --project $PROJECT_ID
-fi
+upsert_secret "$GEMINI_API_KEY"      "${SECRET_PREFIX}-gemini-api-key"       "GEMINI_API_KEY"
+upsert_secret "$APP_BACKEND_API_KEY" "${SECRET_PREFIX}-app-backend-api-key"  "APP_BACKEND_API_KEY"
 
-# Store ATTEST_HMAC_SECRET in Secret Manager
-echo "Setting up Secret Manager for ATTEST_HMAC_SECRET..."
-if gcloud secrets describe watchmycalories-attest-hmac-secret --project $PROJECT_ID >/dev/null 2>&1; then
-  echo "Updating existing secret version..."
-  echo -n "$ATTEST_HMAC_SECRET" | gcloud secrets versions add watchmycalories-attest-hmac-secret --data-file=- --project $PROJECT_ID
-else
-  echo "Creating new secret..."
-  echo -n "$ATTEST_HMAC_SECRET" | gcloud secrets create watchmycalories-attest-hmac-secret --data-file=- --replication-policy="automatic" --project $PROJECT_ID
+# Ensure the HMAC secret resource exists with at least one version
+HMAC_SECRET_NAME="${SECRET_PREFIX}-attest-hmac-secret"
+if ! gcloud secrets describe "$HMAC_SECRET_NAME" --project $PROJECT_ID >/dev/null 2>&1; then
+  echo "Creating HMAC secret resource ($HMAC_SECRET_NAME)..."
+  gcloud secrets create "$HMAC_SECRET_NAME" --replication-policy="automatic" --project $PROJECT_ID
+fi
+# Auto-generate a value if no version exists yet
+if ! gcloud secrets versions access latest --secret="$HMAC_SECRET_NAME" --project $PROJECT_ID >/dev/null 2>&1; then
+  echo "Generating HMAC secret value..."
+  node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))" \
+    | gcloud secrets versions add "$HMAC_SECRET_NAME" --data-file=- --project $PROJECT_ID
 fi
 
 # Grant the Cloud Run service account access to Secret Manager
-SERVICE_ACCOUNT=$(gcloud run services describe watchmycalories-backend --region $REGION --project $PROJECT_ID --format="value(spec.template.spec.serviceAccountName)" 2>/dev/null || echo "${PROJECT_NUMBER}-compute@developer.gserviceaccount.com")
+SERVICE_ACCOUNT=$(gcloud run services describe $SERVICE_NAME --region $REGION --project $PROJECT_ID --format="value(spec.template.spec.serviceAccountName)" 2>/dev/null || echo "")
 if [ -z "$SERVICE_ACCOUNT" ]; then
   PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
   SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
@@ -89,13 +108,13 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --condition=None \
   --quiet
 
-echo "Deploying to Cloud Run..."
-gcloud run deploy watchmycalories-backend \
+echo "Deploying to Cloud Run ($SERVICE_NAME)..."
+gcloud run deploy $SERVICE_NAME \
   --source . \
   --region $REGION \
   --project $PROJECT_ID \
   --allow-unauthenticated \
-  --set-env-vars="GEMINI_MODEL_NAME=${GEMINI_MODEL_NAME},APPLE_TEAM_ID=${APPLE_TEAM_ID}" \
-  --set-secrets="GEMINI_API_KEY=watchmycalories-gemini-api-key:latest,APP_BACKEND_API_KEY=watchmycalories-app-backend-api-key:latest,ATTEST_HMAC_SECRET=watchmycalories-attest-hmac-secret:latest"
+  --set-env-vars="GEMINI_MODEL_NAME=${GEMINI_MODEL_NAME},APPLE_TEAM_ID=${APPLE_TEAM_ID},ATTESTED_KEYS_COLLECTION=${ATTESTED_KEYS_COLLECTION},ATTEST_HMAC_SECRET_NAME=${HMAC_SECRET_NAME},RATE_LIMIT_GLOBAL_WINDOW_MS=${RATE_LIMIT_GLOBAL_WINDOW_MS:-900000},RATE_LIMIT_GLOBAL_MAX=${RATE_LIMIT_GLOBAL_MAX:-100},RATE_LIMIT_GEMINI_WINDOW_MS=${RATE_LIMIT_GEMINI_WINDOW_MS:-900000},RATE_LIMIT_GEMINI_MAX=${RATE_LIMIT_GEMINI_MAX:-100},RATE_LIMIT_ATTEST_WINDOW_MS=${RATE_LIMIT_ATTEST_WINDOW_MS:-900000},RATE_LIMIT_ATTEST_MAX=${RATE_LIMIT_ATTEST_MAX:-30},RATE_LIMIT_LEGACY_KEY_WINDOW_MS=${RATE_LIMIT_LEGACY_KEY_WINDOW_MS:-900000},RATE_LIMIT_LEGACY_KEY_MAX=${RATE_LIMIT_LEGACY_KEY_MAX:-15}" \
+  --set-secrets="GEMINI_API_KEY=${SECRET_PREFIX}-gemini-api-key:latest,APP_BACKEND_API_KEY=${SECRET_PREFIX}-app-backend-api-key:latest"
 
-echo "Deployment complete."
+echo "Deployment complete ($ENV → $SERVICE_NAME)."

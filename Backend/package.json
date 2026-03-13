@@ -6,10 +6,13 @@
     "scripts": {
         "start": "node server.js",
         "dev": "node --watch server.js",
-        "test": "node --test test/**/*.test.js"
+        "test": "node --test test/*.test.js",
+        "test:smoke": "TARGET_ENV=dev node --test test/deployment/*.test.js",
+        "test:smoke:prod": "TARGET_ENV=prod node --test test/deployment/*.test.js"
     },
     "dependencies": {
         "@google-cloud/firestore": "^7.11.0",
+        "@google-cloud/secret-manager": "^5.6.0",
         "cbor-x": "^1.6.0",
         "cors": "^2.8.5",
         "dotenv": "^16.4.5",

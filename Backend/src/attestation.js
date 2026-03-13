@@ -8,6 +8,7 @@ const { extractNonceFromCert } = require('./cert-utils');
 const { attestedKeys } = require('./attested-keys');
 const { getDb } = require('./firestore');
 const { BUNDLE_ID, ATTESTED_KEYS_COLLECTION, CHALLENGE_TTL_MS } = require('./constants');
+const { getHmacSecret } = require('./hmac-secret');
 
 function registerRoutes(app, attestLimiter) {
     // POST /attest/verify — verifies attestation and stores the public key
@@ -24,7 +25,7 @@ function registerRoutes(app, attestLimiter) {
                 return res.status(500).json({ error: 'App Attest root CA not configured.' });
             }
 
-            if (!process.env.APPLE_TEAM_ID || !process.env.ATTEST_HMAC_SECRET) {
+            if (!process.env.APPLE_TEAM_ID || !getHmacSecret()) {
                 return res.status(500).json({ error: 'App Attest server configuration incomplete.' });
             }
 
@@ -133,7 +134,7 @@ function registerRoutes(app, attestLimiter) {
             const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' });
 
             // Compute HMAC for tamper detection
-            const hmac = crypto.createHmac('sha256', process.env.ATTEST_HMAC_SECRET)
+            const hmac = crypto.createHmac('sha256', getHmacSecret())
                 .update(publicKeyPem + keyID)
                 .digest('hex');
 
