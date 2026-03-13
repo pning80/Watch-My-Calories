@@ -183,6 +183,7 @@ struct OnboardingView: View {
                 .font(.title.bold())
                 .foregroundStyle(Color.cwPrimary)
                 .padding(.top, 40)
+                .onTapGesture { isCaloriesFieldFocused = false }
 
             Form {
                 Section {
