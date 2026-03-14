@@ -1,13 +1,13 @@
-const { describe, it } = require('node:test');
-const assert = require('node:assert/strict');
-const express = require('express');
-const request = require('supertest');
-const { captureRawBody } = require('../dist/server');
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import express from 'express';
+import request from 'supertest';
+import { captureRawBody } from '../dist/server';
 
 // Create a small express app that uses captureRawBody
 function createTestApp() {
     const testApp = express();
-    testApp.post('/test', captureRawBody, (req, res) => {
+    testApp.post('/test', captureRawBody, (req: any, res: any) => {
         res.json({
             rawBodyLength: req.rawBody.length,
             rawBodyHex: req.rawBody.toString('hex'),

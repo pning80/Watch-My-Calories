@@ -1,7 +1,7 @@
-const { describe, it, beforeEach } = require('node:test');
-const assert = require('node:assert/strict');
-const request = require('supertest');
-const { app, challenges } = require('../dist/server');
+import { describe, it, beforeEach } from 'node:test';
+import assert from 'node:assert/strict';
+import request from 'supertest';
+import { app, challenges } from '../dist/server';
 
 describe('GET /attest/challenge', () => {
     beforeEach(() => {

@@ -7,9 +7,9 @@
         "build": "tsc",
         "start": "node dist/server.js",
         "dev": "tsx --watch server.ts",
-        "test": "npm run build && node --test test/*.test.js",
-        "test:smoke": "TARGET_ENV=dev node --test test/deployment/*.test.js",
-        "test:smoke:prod": "TARGET_ENV=prod node --test test/deployment/*.test.js"
+        "test": "npm run build && tsx --test test/*.test.ts",
+        "test:smoke": "TARGET_ENV=dev tsx --test test/deployment/*.test.ts",
+        "test:smoke:prod": "TARGET_ENV=prod tsx --test test/deployment/*.test.ts"
     },
     "dependencies": {
         "@google-cloud/firestore": "^7.11.0",
@@ -27,6 +27,7 @@
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
         "@types/node": "^25.5.0",
+        "@types/supertest": "^7.2.0",
         "supertest": "^7.0.0",
         "tsx": "^4.21.0",
         "typescript": "^5.9.3"

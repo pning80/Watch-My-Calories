@@ -1,7 +1,7 @@
-const { describe, it, before, beforeEach, after } = require('node:test');
-const assert = require('node:assert/strict');
-const crypto = require('crypto');
-const { attestedKeys, setDb, setHmacSecret, loadKeysFromFirestore, keyIdToDocId } = require('../dist/server');
+import { describe, it, before, beforeEach, after } from 'node:test';
+import assert from 'node:assert/strict';
+import crypto from 'crypto';
+import { attestedKeys, setDb, setHmacSecret, loadKeysFromFirestore, keyIdToDocId } from '../dist/server';
 
 const TEST_HMAC_SECRET = 'test-hmac-secret';
 
@@ -20,9 +20,9 @@ describe('Cold-start key preload from Firestore', () => {
         setDb(null);
     });
 
-    function makeKeyDoc(keyID, opts = {}) {
+    function makeKeyDoc(keyID: string, opts: { counter?: number; hmac?: string; createdAt?: Date; lastUsedAt?: Date } = {}) {
         const { publicKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
-        const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' });
+        const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
         const hmac = crypto.createHmac('sha256', TEST_HMAC_SECRET)
             .update(publicKeyPem + keyID)
             .digest('hex');
@@ -40,7 +40,7 @@ describe('Cold-start key preload from Firestore', () => {
         };
     }
 
-    function createMockDb(docs) {
+    function createMockDb(docs: ReturnType<typeof makeKeyDoc>[]) {
         return {
             collection: () => ({
                 where: () => ({
@@ -51,7 +51,7 @@ describe('Cold-start key preload from Firestore', () => {
                         })),
                     }),
                 }),
-                doc: (id) => ({
+                doc: (id: string) => ({
                     set: async () => {},
                     update: async () => {},
                     get: async () => {

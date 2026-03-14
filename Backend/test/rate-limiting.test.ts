@@ -1,7 +1,7 @@
-const { describe, it, beforeEach } = require('node:test');
-const assert = require('node:assert/strict');
-const request = require('supertest');
-const { app, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter } = require('../dist/server');
+import { describe, it, beforeEach } from 'node:test';
+import assert from 'node:assert/strict';
+import request from 'supertest';
+import { app, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter } from '../dist/server';
 
 // supertest connects via loopback — with trust proxy the IP may vary
 const POSSIBLE_IPS = ['::ffff:127.0.0.1', '127.0.0.1', '::1'];
@@ -53,7 +53,7 @@ describe('Rate Limiting', () => {
     });
 
     it('returns 429 when attest limit exceeded', async () => {
-        const max = attestLimiter.getMaxFromOptions ? attestLimiter.max : 30;
+        const max = (attestLimiter as any).getMaxFromOptions ? (attestLimiter as any).max : 30;
         // Send max requests (should all succeed)
         for (let i = 0; i < max; i++) {
             await request(app).get('/attest/challenge');

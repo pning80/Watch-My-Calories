@@ -1,9 +1,10 @@
-const { describe, it, before } = require('node:test');
-const assert = require('node:assert/strict');
-const crypto = require('crypto');
-const { parseDerLength, extractNonceFromCert } = require('../dist/server');
-const { getTestRootCaPem, generateLeafCert } = require('./helpers/crypto-fixtures');
-const { X509Certificate } = require('crypto');
+import { describe, it, before } from 'node:test';
+import assert from 'node:assert/strict';
+import crypto, { X509Certificate } from 'crypto';
+import { parseDerLength, extractNonceFromCert } from '../dist/server';
+import { getTestRootCaPem, generateLeafCert } from './helpers/crypto-fixtures';
+import { Crypto } from '@peculiar/webcrypto';
+import * as x509 from '@peculiar/x509';
 
 describe('parseDerLength', () => {
     it('parses single-byte length', () => {
@@ -72,12 +73,7 @@ describe('extractNonceFromCert', () => {
     });
 
     it('returns null for cert without Apple OID', async () => {
-        // Generate a self-signed cert without the Apple OID
-        const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
-        const { X509Certificate: PeculiarX509 } = require('@peculiar/x509');
-        const { Crypto } = require('@peculiar/webcrypto');
         const peculiarCrypto = new Crypto();
-        const x509 = require('@peculiar/x509');
         x509.cryptoProvider.set(peculiarCrypto);
 
         const keys = await peculiarCrypto.subtle.generateKey(
@@ -122,7 +118,7 @@ describe('extractNonceFromCert', () => {
         ]);
 
         // Mock cert object with raw property
-        const mockCert = { raw: truncated };
+        const mockCert = { raw: truncated } as any;
         const result = extractNonceFromCert(mockCert);
         assert.equal(result, null);
     });
@@ -142,7 +138,7 @@ describe('extractNonceFromCert', () => {
             outerOctetString,
         ]);
 
-        const mockCert = { raw: certDer };
+        const mockCert = { raw: certDer } as any;
         const result = extractNonceFromCert(mockCert);
         assert.equal(result, null);
     });

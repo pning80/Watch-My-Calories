@@ -1,22 +1,22 @@
-const { describe, it, before, beforeEach, after } = require('node:test');
-const assert = require('node:assert/strict');
-const crypto = require('crypto');
-const request = require('supertest');
-const { app, attestedKeys, setAppleRootCa, setDb, setHmacSecret } = require('../dist/server');
-const {
+import { describe, it, before, beforeEach, after } from 'node:test';
+import assert from 'node:assert/strict';
+import crypto from 'crypto';
+import request from 'supertest';
+import { app, attestedKeys, setAppleRootCa, setDb, setHmacSecret } from '../dist/server';
+import {
     generateP256KeyPair,
     buildAssertionObject,
     buildAssertionAuthData,
     signAssertion,
     computeRpIdHash,
-} = require('./helpers/crypto-fixtures');
+} from './helpers/crypto-fixtures';
 
 const TEST_TEAM_ID = 'TESTTEAMID';
 
 describe('App Attest assertion verification', () => {
     const origTeamId = process.env.APPLE_TEAM_ID;
     const origApiKey = process.env.APP_BACKEND_API_KEY;
-    let rpIdHash;
+    let rpIdHash: Buffer;
 
     before(() => {
         process.env.APPLE_TEAM_ID = TEST_TEAM_ID;
@@ -38,15 +38,15 @@ describe('App Attest assertion verification', () => {
         setHmacSecret(null);
     });
 
-    function registerKey(keyID, publicKey, counter = 0) {
-        const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' });
+    function registerKey(keyID: string, publicKey: crypto.KeyObject, counter: number = 0) {
+        const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
         const hmac = crypto.createHmac('sha256', 'test-hmac-secret')
             .update(publicKeyPem + keyID)
             .digest('hex');
         attestedKeys.set(keyID, { publicKey, counter, hmac });
     }
 
-    async function makeAssertedRequest(keyID, privateKey, counter, body = { contents: [] }) {
+    async function makeAssertedRequest(keyID: string, privateKey: crypto.KeyObject, counter: number, body = { contents: [] as unknown[] }) {
         const bodyStr = JSON.stringify(body);
         const bodyBuf = Buffer.from(bodyStr);
         const clientDataHash = crypto.createHash('sha256').update(bodyBuf).digest();
@@ -102,7 +102,7 @@ describe('App Attest assertion verification', () => {
     });
 
     it('rejects unknown key ID', async () => {
-        const { publicKey, privateKey } = generateP256KeyPair();
+        const { privateKey } = generateP256KeyPair();
         const res = await makeAssertedRequest('unknown-key', privateKey, 1);
         assert.equal(res.status, 401);
     });
@@ -112,7 +112,7 @@ describe('App Attest assertion verification', () => {
         const { publicKey } = generateP256KeyPair();
         registerKey(keyID, publicKey, 0);
 
-        const { encode } = require('cbor-x');
+        const { encode } = await import('cbor-x');
         const malformedAssertion = encode({ signature: Buffer.alloc(64) }).toString('base64');
 
         const res = await request(app)
@@ -129,7 +129,7 @@ describe('App Attest assertion verification', () => {
         const { publicKey } = generateP256KeyPair();
         registerKey(keyID, publicKey, 0);
 
-        const { encode } = require('cbor-x');
+        const { encode } = await import('cbor-x');
         const authData = buildAssertionAuthData(rpIdHash, 1);
         const malformedAssertion = encode({ authenticatorData: authData }).toString('base64');
 
@@ -157,7 +157,7 @@ describe('App Attest assertion verification', () => {
         const { publicKey, privateKey } = generateP256KeyPair();
         registerKey(keyID, publicKey, 0);
 
-        const body = { contents: [] };
+        const body = { contents: [] as unknown[] };
         const bodyBuf = Buffer.from(JSON.stringify(body));
         const clientDataHash = crypto.createHash('sha256').update(bodyBuf).digest();
 
@@ -181,7 +181,7 @@ describe('App Attest assertion verification', () => {
     it('fetches key from Firestore when not in memory', async () => {
         const keyID = 'test-firestore-key';
         const { publicKey, privateKey } = generateP256KeyPair();
-        const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' });
+        const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
         const hmac = crypto.createHmac('sha256', 'test-hmac-secret')
             .update(publicKeyPem + keyID)
             .digest('hex');
@@ -214,7 +214,7 @@ describe('App Attest assertion verification', () => {
     it('rejects Firestore key with tampered HMAC', async () => {
         const keyID = 'test-firestore-tampered';
         const { publicKey, privateKey } = generateP256KeyPair();
-        const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' });
+        const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
 
         const mockDb = {
             collection: () => ({
@@ -284,7 +284,7 @@ describe('App Attest assertion verification', () => {
         registerKey(keyID, publicKey, 0);
 
         // Build assertion with wrong RP ID hash but sign correctly
-        const body = { contents: [] };
+        const body = { contents: [] as unknown[] };
         const bodyStr = JSON.stringify(body);
         const bodyBuf = Buffer.from(bodyStr);
         const clientDataHash = crypto.createHash('sha256').update(bodyBuf).digest();

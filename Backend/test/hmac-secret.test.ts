@@ -1,9 +1,9 @@
-const { describe, it, beforeEach, afterEach, mock } = require('node:test');
-const assert = require('node:assert/strict');
+import { describe, it, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
 
 describe('hmac-secret module', () => {
-    let initHmacSecret, getHmacSecret, setHmacSecret;
-    const savedEnv = {};
+    let initHmacSecret: any, getHmacSecret: any, setHmacSecret: any;
+    const savedEnv: Record<string, string | undefined> = {};
 
     beforeEach(() => {
         // Save and clean env vars
@@ -51,7 +51,7 @@ describe('hmac-secret module', () => {
             const origResolve = Module._resolveFilename;
             const fakeModulePath = '__mock_secret_manager__';
 
-            Module._resolveFilename = function (request, ...args) {
+            Module._resolveFilename = function (request: string, ...args: any[]) {
                 if (request === '@google-cloud/secret-manager') return fakeModulePath;
                 return origResolve.call(this, request, ...args);
             };
@@ -66,7 +66,7 @@ describe('hmac-secret module', () => {
                         getProjectId = async () => 'test-project';
                     },
                 },
-            };
+            } as any;
 
             try {
                 await initHmacSecret();
@@ -92,7 +92,7 @@ describe('hmac-secret module', () => {
             const origResolve = Module._resolveFilename;
             const fakeModulePath = '__mock_secret_manager_err__';
 
-            Module._resolveFilename = function (request, ...args) {
+            Module._resolveFilename = function (request: string, ...args: any[]) {
                 if (request === '@google-cloud/secret-manager') return fakeModulePath;
                 return origResolve.call(this, request, ...args);
             };
@@ -107,7 +107,7 @@ describe('hmac-secret module', () => {
                         getProjectId = async () => 'test-project';
                     },
                 },
-            };
+            } as any;
 
             try {
                 await initHmacSecret();
@@ -130,7 +130,7 @@ describe('hmac-secret module', () => {
             const origResolve = Module._resolveFilename;
             const fakeModulePath = '__mock_secret_manager_priority__';
 
-            Module._resolveFilename = function (request, ...args) {
+            Module._resolveFilename = function (request: string, ...args: any[]) {
                 if (request === '@google-cloud/secret-manager') return fakeModulePath;
                 return origResolve.call(this, request, ...args);
             };
@@ -145,7 +145,7 @@ describe('hmac-secret module', () => {
                         getProjectId = async () => 'test-project';
                     },
                 },
-            };
+            } as any;
 
             try {
                 await initHmacSecret();
