@@ -69,4 +69,28 @@ describe('captureRawBody middleware', () => {
         const rawBytes = Buffer.from(res.body.rawBodyHex, 'hex');
         assert.deepEqual(JSON.parse(rawBytes.toString()), largePayload);
     });
+
+    it('rejects body exceeding 12 MB limit', async () => {
+        const testApp = createTestApp();
+        const oversizedPayload = Buffer.alloc(12 * 1024 * 1024 + 1, 'x');
+        const res = await request(testApp)
+            .post('/test')
+            .set('Content-Type', 'application/octet-stream')
+            .send(oversizedPayload);
+
+        assert.equal(res.status, 413);
+        assert.equal(res.body.error, 'Request message body too large.');
+    });
+
+    it('accepts body just under 12 MB limit', async () => {
+        const testApp = createTestApp();
+        const payload = Buffer.alloc(1024 * 1024, 'x'); // 1 MB — well under limit
+        const res = await request(testApp)
+            .post('/test')
+            .set('Content-Type', 'application/octet-stream')
+            .send(payload)
+            .expect(200);
+
+        assert.equal(res.body.rawBodyLength, payload.length);
+    });
 });
