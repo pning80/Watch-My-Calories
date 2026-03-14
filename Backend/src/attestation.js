@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const express = require('express');
-const { decode } = require('cbor-x');
+const { decode, Decoder } = require('cbor-x');
 const { X509Certificate } = require('crypto');
 const { getAppleRootCa } = require('./apple-root-ca');
 const { challenges } = require('./challenge');
@@ -109,7 +109,10 @@ function registerRoutes(app, attestLimiter) {
             const credIdLen = authDataBuf.readUInt16BE(53); // offset 32+1+4+16 = 53
             const coseKeyOffset = 55 + credIdLen; // 53 + 2 + credIdLen
             const coseKeyData = authDataBuf.subarray(coseKeyOffset);
-            const coseKey = decode(coseKeyData);
+            // COSE keys use negative integer map keys (-1, -2, -3) which cbor-x
+            // can only represent as a Map, not a plain object.
+            const coseDecoder = new Decoder({ mapsAsObjects: false });
+            const coseKey = coseDecoder.decode(coseKeyData);
 
             // COSE EC2 key: -1 = curve (1 = P-256), -2 = x, -3 = y
             const x = coseKey.get(-2);

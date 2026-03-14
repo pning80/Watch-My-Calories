@@ -32,6 +32,7 @@ if (require.main === module) {
         app.listen(PORT, () => {
             const appleRootCaPem = getAppleRootCa();
             console.log(`Backend server listening on port ${PORT}`);
+            console.log(`Environment: ${process.env.BACKEND_ENV || 'development (local)'}`);
             console.log(`Enforcing Model: ${process.env.GEMINI_MODEL_NAME || 'NOT SET'}`);
             console.log(`App Attest: ${appleRootCaPem ? 'enabled' : 'disabled (no root CA)'}`);
             console.log(`Firestore: ${require('./src/firestore').getDb() ? 'connected' : 'unavailable (in-memory only)'}`);

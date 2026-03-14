@@ -106,10 +106,23 @@ final class AppAttestManager {
 
         // Step 3: Attest the key with Apple
         let challengeHash = Data(SHA256.hash(data: Data(challenge.utf8)))
-        let attestation = try await service.attestKey(keyID, clientDataHash: challengeHash)
+        let attestation: Data
+        do {
+            attestation = try await service.attestKey(keyID, clientDataHash: challengeHash)
+        } catch {
+            // Key may be permanently invalid (e.g. already attested) — clear it so next retry generates a fresh key
+            deleteKeychainItem(account: keychainKeyIDAccount)
+            throw error
+        }
 
         // Step 4: Register the attested key with the backend
-        try await registerAttestation(keyID: keyID, attestation: attestation, challenge: challenge)
+        do {
+            try await registerAttestation(keyID: keyID, attestation: attestation, challenge: challenge)
+        } catch {
+            // Apple already attested this key but backend rejected it — key is now unusable, clear it
+            deleteKeychainItem(account: keychainKeyIDAccount)
+            throw error
+        }
 
         // Mark as attested
         saveAttested(true)
