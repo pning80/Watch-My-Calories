@@ -10,6 +10,7 @@ import { BUNDLE_ID, ATTESTED_KEYS_COLLECTION, CHALLENGE_TTL_MS } from './constan
 import { getHmacSecret } from './hmac-secret';
 import { createLogger } from './logger';
 import { counters } from './metrics';
+import { keyIdToDocId } from './firestore-key';
 
 const log = createLogger('attestation');
 
@@ -158,7 +159,7 @@ export function registerRoutes(app: Express, attestLimiter: any): void {
             const db = getDb();
             if (db) {
                 try {
-                    await db.collection(ATTESTED_KEYS_COLLECTION).doc(keyID).set({
+                    await db.collection(ATTESTED_KEYS_COLLECTION).doc(keyIdToDocId(keyID)).set({
                         publicKeyPem,
                         counter: 0,
                         hmac,

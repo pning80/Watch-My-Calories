@@ -2,7 +2,7 @@ const { describe, it, before, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
 const request = require('supertest');
-const { app, attestedKeys, challenges, setAppleRootCa, setDb, setHmacSecret, globalLimiter, attestLimiter } = require('../dist/server');
+const { app, attestedKeys, challenges, setAppleRootCa, setDb, setHmacSecret, globalLimiter, attestLimiter, keyIdToDocId } = require('../dist/server');
 const {
     getTestRootCaPem,
     buildAuthData,
@@ -282,7 +282,7 @@ describe('POST /attest/verify', () => {
 
         assert.ok(firestoreWrite, 'Firestore set() should have been called');
         assert.equal(firestoreWrite.collection, 'attestedKeys-dev');
-        assert.equal(firestoreWrite.id, keyID);
+        assert.equal(firestoreWrite.id, keyIdToDocId(keyID));
         assert.equal(firestoreWrite.data.counter, 0);
         assert.ok(firestoreWrite.data.publicKeyPem);
         assert.ok(firestoreWrite.data.hmac);

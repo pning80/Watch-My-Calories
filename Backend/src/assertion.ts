@@ -6,6 +6,7 @@ import { BUNDLE_ID, ATTESTED_KEYS_COLLECTION } from './constants';
 import { getHmacSecret } from './hmac-secret';
 import { createLogger } from './logger';
 import { counters } from './metrics';
+import { keyIdToDocId } from './firestore-key';
 import { RawBodyRequest } from './types';
 import { Request } from 'express';
 
@@ -24,7 +25,7 @@ export async function verifyAppAttestAssertion(req: Request, assertionBase64: st
     if (!keyData && db) {
         counters.increment('key_cache_total', { result: 'firestore_fallback' });
         // Fetch from Firestore
-        const doc = await db.collection(ATTESTED_KEYS_COLLECTION).doc(keyID).get();
+        const doc = await db.collection(ATTESTED_KEYS_COLLECTION).doc(keyIdToDocId(keyID)).get();
         if (doc.exists) {
             const data = doc.data()!;
 
@@ -119,7 +120,7 @@ export async function verifyAppAttestAssertion(req: Request, assertionBase64: st
 
     // Async Firestore counter update (fire-and-forget)
     if (db) {
-        db.collection(ATTESTED_KEYS_COLLECTION).doc(keyID).update({
+        db.collection(ATTESTED_KEYS_COLLECTION).doc(keyIdToDocId(keyID)).update({
             counter,
             lastUsedAt: new Date(),
         }).catch((err: any) => log.error({ keyId: keyID.substring(0, 8), error: err.message }, 'Firestore counter update error'));

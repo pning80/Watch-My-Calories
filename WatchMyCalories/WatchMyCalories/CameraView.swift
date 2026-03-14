@@ -3,9 +3,9 @@ import AVFoundation
 import UIKit
 
 struct CameraView: View {
-    @StateObject private var model = CameraManager()
+    @ObservedObject var model: CameraManager
     @Environment(\.dismiss) private var dismiss
-    
+
     var onImagesCaptured: ([UIImage]) -> Void
 
     @State private var photoToReview: UIImage?
@@ -16,11 +16,14 @@ struct CameraView: View {
                 // Photo review
                 Color.black.ignoresSafeArea()
 
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-                    .clipped()
+                GeometryReader { geometry in
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                }
+                .ignoresSafeArea()
 
                 VStack {
                     Spacer()
@@ -104,6 +107,8 @@ struct CameraView: View {
         .onChange(of: model.capturedImages.count) {
             if let image = model.capturedImages.first {
                 withAnimation { photoToReview = image }
+            } else {
+                withAnimation { photoToReview = nil }
             }
         }
         .alert(isPresented: Binding<Bool>(

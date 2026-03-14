@@ -36,7 +36,7 @@ class CameraManager: NSObject, ObservableObject {
     
     override init() {
         super.init()
-        
+
         // Handle Runtime Errors (iOS 18+ and legacy support)
         let notificationName: NSNotification.Name
         if #available(iOS 18.0, *) {
@@ -44,13 +44,22 @@ class CameraManager: NSObject, ObservableObject {
         } else {
             notificationName = .AVCaptureSessionRuntimeError
         }
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(sessionRuntimeError),
             name: notificationName,
             object: nil
         )
+
+        // Pre-configure session if already authorized so first tab visit only needs startRunning()
+        #if !targetEnvironment(simulator)
+        if AVCaptureDevice.authorizationStatus(for: .video) == .authorized {
+            CameraManager.sessionQueue.async {
+                self.configureSession()
+            }
+        }
+        #endif
     }
     
     deinit {
@@ -120,15 +129,17 @@ class CameraManager: NSObject, ObservableObject {
         } catch {
             // Audio session configuration failed — camera still usable
         }
-        
+
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
-            self.configureAndStart()
+            self.configureSession()
+            if !self.session.isRunning { self.session.startRunning() }
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { granted in
                 if granted {
                     CameraManager.sessionQueue.async {
-                        self.configureAndStart()
+                        self.configureSession()
+                        if !self.session.isRunning { self.session.startRunning() }
                     }
                 }
             }
@@ -138,28 +149,21 @@ class CameraManager: NSObject, ObservableObject {
             break
         }
     }
-    
-    nonisolated private func configureAndStart() {
-        // Check if already configured by inspecting inputs.
-        // This replaces the 'isConfigured' state variable.
-        if !session.inputs.isEmpty {
-            if !session.isRunning { session.startRunning() }
-            return
-        }
-        
+
+    /// Configures inputs/outputs on the session. Safe to call multiple times — skips if already configured.
+    nonisolated private func configureSession() {
+        // Already configured — nothing to do
+        if !session.inputs.isEmpty { return }
+
         session.beginConfiguration()
         session.sessionPreset = .photo
-        
-        // Cleanup existing inputs/outputs
-        session.inputs.forEach { session.removeInput($0) }
-        session.outputs.forEach { session.removeOutput($0) }
-        
+
         guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
             Task { @MainActor in self.alert = .configurationFailed }
             session.commitConfiguration()
             return
         }
-        
+
         do {
             let input = try AVCaptureDeviceInput(device: device)
             if session.canAddInput(input) {
@@ -174,7 +178,7 @@ class CameraManager: NSObject, ObservableObject {
             session.commitConfiguration()
             return
         }
-        
+
         if session.canAddOutput(output) {
             session.addOutput(output)
         } else {
@@ -182,12 +186,8 @@ class CameraManager: NSObject, ObservableObject {
             session.commitConfiguration()
             return
         }
-        
+
         session.commitConfiguration()
-        
-        if !session.isRunning {
-            session.startRunning()
-        }
     }
     
     nonisolated private func performCapture() {
