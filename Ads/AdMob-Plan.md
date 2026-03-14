@@ -1,4 +1,6 @@
-# Plan to add mobile ads to Watch My Calories
+# AdMob Plan for Watch My Calories
+
+We start with the iOS version of the app. Hopefully all the design decisions here can be easily extended to the Android version of the app.
 
 ## 1. Ads Platform & SDK
 
