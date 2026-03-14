@@ -3,6 +3,7 @@ import { getDb } from './firestore';
 import { ATTESTED_KEYS_COLLECTION, KEY_PRELOAD_MAX_AGE_MS } from './constants';
 import { getHmacSecret } from './hmac-secret';
 import { createLogger } from './logger';
+import { docIdToKeyId } from './firestore-key';
 import { AttestedKeyData } from './types';
 
 const log = createLogger('attested-keys');
@@ -33,7 +34,7 @@ export async function loadKeysFromFirestore(): Promise<number> {
 
         for (const doc of snapshot.docs) {
             const data = doc.data();
-            const keyID = doc.id;
+            const keyID = docIdToKeyId(doc.id);
 
             // Verify HMAC before trusting Firestore data
             const expectedHmacBuf = Buffer.from(

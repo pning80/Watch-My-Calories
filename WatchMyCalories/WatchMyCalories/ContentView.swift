@@ -101,24 +101,23 @@ struct ContentView: View {
 struct CameraRootView: View {
     @Binding var selectedTab: ContentView.Tab
     @Binding var scrollToMeal: MealType?
+    @StateObject private var cameraManager = CameraManager()
     @State private var capturedImages: [UIImage] = []
     @State private var reviewData: [Data]?
     @State private var capturedDate: Date? = nil
-    @State private var resetID = UUID()
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
-                CameraView { images in
+                CameraView(model: cameraManager) { images in
                     self.capturedImages = images
                     self.reviewData = images.compactMap { $0.jpegData(compressionQuality: 0.8) }
                     self.capturedDate = Date()
                 }
-                .id(resetID)
             }
             .navigationDestination(isPresented: Binding(
                 get: { reviewData != nil },
-                set: { if !$0 { reviewData = nil; capturedImages.removeAll(); capturedDate = nil; resetID = UUID() } }
+                set: { if !$0 { reviewData = nil; capturedImages.removeAll(); capturedDate = nil; cameraManager.reset() } }
             )) {
                 if let data = reviewData, let date = capturedDate {
                     EstimationReviewView(images: data, captureDate: date, onDone: {
@@ -133,7 +132,7 @@ struct CameraRootView: View {
         .onAppear {
             capturedImages.removeAll()
             reviewData = nil
-            resetID = UUID()
+            cameraManager.reset()
         }
     }
 }

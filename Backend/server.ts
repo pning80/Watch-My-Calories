@@ -12,6 +12,7 @@ import { getAppleRootCa, setAppleRootCa } from './src/apple-root-ca';
 import { getDb, setDb } from './src/firestore';
 import { initHmacSecret, setHmacSecret } from './src/hmac-secret';
 import { extractNonceFromCert, parseDerLength } from './src/cert-utils';
+import { keyIdToDocId, docIdToKeyId } from './src/firestore-key';
 import { counters, Counter, timer } from './src/metrics';
 import { registerRoutes as registerAttestationRoutes } from './src/attestation';
 import { registerRoutes as registerMainRoutes } from './src/routes';
@@ -50,4 +51,4 @@ if (require.main === module) {
     })();
 }
 
-export { app, attestedKeys, challenges, extractNonceFromCert, parseDerLength, setAppleRootCa, setDb, setHmacSecret, setLogger, captureRawBody, verifyRequest, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter, loadKeysFromFirestore, counters, Counter, timer };
+export { app, attestedKeys, challenges, extractNonceFromCert, parseDerLength, setAppleRootCa, setDb, setHmacSecret, setLogger, captureRawBody, verifyRequest, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter, loadKeysFromFirestore, counters, Counter, timer, keyIdToDocId, docIdToKeyId };
