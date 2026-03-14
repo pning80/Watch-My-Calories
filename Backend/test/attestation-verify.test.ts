@@ -1,21 +1,21 @@
-const { describe, it, before, beforeEach, after } = require('node:test');
-const assert = require('node:assert/strict');
-const crypto = require('crypto');
-const request = require('supertest');
-const { app, attestedKeys, challenges, setAppleRootCa, setDb, setHmacSecret, globalLimiter, attestLimiter, keyIdToDocId } = require('../dist/server');
-const {
+import { describe, it, before, beforeEach, after } from 'node:test';
+import assert from 'node:assert/strict';
+import crypto from 'crypto';
+import request from 'supertest';
+import { app, attestedKeys, challenges, setAppleRootCa, setDb, setHmacSecret, globalLimiter, attestLimiter, keyIdToDocId } from '../dist/server';
+import {
     getTestRootCaPem,
     buildAuthData,
     buildAttestationObject,
     generateP256KeyPair,
     buildCoseKey,
     computeRpIdHash,
-} = require('./helpers/crypto-fixtures');
+} from './helpers/crypto-fixtures';
 
 const TEST_TEAM_ID = 'TESTTEAMID';
 
 describe('POST /attest/verify', () => {
-    let rootCaPem;
+    let rootCaPem: string;
     const origTeamId = process.env.APPLE_TEAM_ID;
 
     before(async () => {
@@ -42,7 +42,7 @@ describe('POST /attest/verify', () => {
         setHmacSecret(null);
     });
 
-    async function validAttestation(challengeOverride) {
+    async function validAttestation(challengeOverride?: string) {
         // Get a challenge
         let challenge = challengeOverride;
         if (!challenge) {
@@ -57,9 +57,9 @@ describe('POST /attest/verify', () => {
         const credId = Buffer.from(keyID, 'base64');
 
         const authData = buildAuthData(rpIdHash, coseKey, { credId });
-        const attest = await buildAttestationObject(authData, challenge);
+        const attest = await buildAttestationObject(authData, challenge!);
 
-        return { challenge, keyID, attestation: attest.base64, keyPair };
+        return { challenge: challenge!, keyID, attestation: attest.base64, keyPair };
     }
 
     // --- Happy path ---
@@ -245,7 +245,7 @@ describe('POST /attest/verify', () => {
 
         const rpIdHash = computeRpIdHash(TEST_TEAM_ID);
         // COSE key with no x/y
-        const badCoseKey = new Map();
+        const badCoseKey = new Map<number, number>();
         badCoseKey.set(1, 2); // kty: EC2
         const authData = buildAuthData(rpIdHash, badCoseKey);
         const attest = await buildAttestationObject(authData, challenge);
@@ -264,11 +264,11 @@ describe('POST /attest/verify', () => {
     // --- Firestore persistence ---
 
     it('writes key to Firestore on successful attestation', async () => {
-        let firestoreWrite = null;
+        let firestoreWrite: { collection: string; id: string; data: any } | null = null;
         const mockDb = {
-            collection: (name) => ({
-                doc: (id) => ({
-                    set: async (data) => { firestoreWrite = { collection: name, id, data }; },
+            collection: (name: string) => ({
+                doc: (id: string) => ({
+                    set: async (data: any) => { firestoreWrite = { collection: name, id, data }; },
                 }),
             }),
         };
@@ -281,13 +281,13 @@ describe('POST /attest/verify', () => {
             .expect(200);
 
         assert.ok(firestoreWrite, 'Firestore set() should have been called');
-        assert.equal(firestoreWrite.collection, 'attestedKeys-dev');
-        assert.equal(firestoreWrite.id, keyIdToDocId(keyID));
-        assert.equal(firestoreWrite.data.counter, 0);
-        assert.ok(firestoreWrite.data.publicKeyPem);
-        assert.ok(firestoreWrite.data.hmac);
-        assert.ok(firestoreWrite.data.createdAt instanceof Date);
-        assert.ok(firestoreWrite.data.lastUsedAt instanceof Date);
+        assert.equal(firestoreWrite!.collection, 'attestedKeys-dev');
+        assert.equal(firestoreWrite!.id, keyIdToDocId(keyID));
+        assert.equal(firestoreWrite!.data.counter, 0);
+        assert.ok(firestoreWrite!.data.publicKeyPem);
+        assert.ok(firestoreWrite!.data.hmac);
+        assert.ok(firestoreWrite!.data.createdAt instanceof Date);
+        assert.ok(firestoreWrite!.data.lastUsedAt instanceof Date);
 
         setDb(null);
     });

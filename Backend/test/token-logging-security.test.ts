@@ -1,14 +1,13 @@
-const { describe, it, before, after, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert/strict');
-const request = require('supertest');
-const { app, setLogger } = require('../dist/server');
-const pino = require('pino');
+import { describe, it, before, after, beforeEach, afterEach } from 'node:test';
+import assert from 'node:assert/strict';
+import request from 'supertest';
+import { app, setLogger } from '../dist/server';
+import pino from 'pino';
 
 describe('Token logging security', () => {
     const originalKey = process.env.APP_BACKEND_API_KEY;
     const originalEnv = process.env.BACKEND_ENV;
-    let logOutput;
-    let originalStream;
+    let logOutput: string[];
 
     before(() => {
         process.env.APP_BACKEND_API_KEY = 'super-secret-api-key-12345';
@@ -32,7 +31,7 @@ describe('Token logging security', () => {
         logOutput = [];
         // Create a pino logger that writes to our capture array
         const stream = {
-            write(chunk) {
+            write(chunk: string) {
                 logOutput.push(chunk);
             },
         };

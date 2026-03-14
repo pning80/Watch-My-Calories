@@ -1,7 +1,7 @@
-const { describe, it, before, beforeEach, after } = require('node:test');
-const assert = require('node:assert/strict');
-const request = require('supertest');
-const { app, globalLimiter, geminiLimiter, legacyKeyLimiter } = require('../dist/server');
+import { describe, it, before, beforeEach, after } from 'node:test';
+import assert from 'node:assert/strict';
+import request from 'supertest';
+import { app, globalLimiter, geminiLimiter, legacyKeyLimiter } from '../dist/server';
 
 const POSSIBLE_IPS = ['::ffff:127.0.0.1', '127.0.0.1', '::1'];
 

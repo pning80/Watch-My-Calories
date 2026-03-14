@@ -1,7 +1,7 @@
-const { describe, it, before, after, afterEach, mock } = require('node:test');
-const assert = require('node:assert/strict');
-const request = require('supertest');
-const { app, Counter, timer, counters } = require('../dist/server');
+import { describe, it, before, after, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import request from 'supertest';
+import { app, Counter, timer, counters } from '../dist/server';
 
 describe('Counter', () => {
     it('increments and retrieves counts', () => {

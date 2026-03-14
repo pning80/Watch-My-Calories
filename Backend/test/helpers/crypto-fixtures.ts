@@ -5,10 +5,10 @@
  * and builds synthetic CBOR attestation/assertion objects.
  */
 
-const crypto = require('crypto');
-const { Crypto } = require('@peculiar/webcrypto');
-const x509 = require('@peculiar/x509');
-const { encode } = require('cbor-x');
+import crypto from 'crypto';
+import { Crypto } from '@peculiar/webcrypto';
+import * as x509 from '@peculiar/x509';
+import { encode } from 'cbor-x';
 
 // Use @peculiar/webcrypto for cert generation
 const peculiarCrypto = new Crypto();
@@ -18,8 +18,8 @@ const APPLE_OID = '1.2.840.113635.100.8.2';
 const BUNDLE_ID = 'com.pning80.WatchMyCalories';
 
 // Cache the root CA so we generate it only once per test run
-let _rootCa = null;
-let _intermediateCa = null;
+let _rootCa: x509.X509Certificate | null = null;
+let _intermediateCa: { cert: x509.X509Certificate; keys: CryptoKeyPair } | null = null;
 
 async function _ensureRootCa() {
     if (_rootCa) return;
@@ -71,7 +71,7 @@ async function _ensureRootCa() {
  */
 async function getTestRootCaPem() {
     await _ensureRootCa();
-    return _rootCa.toString('pem');
+    return _rootCa!.toString('pem');
 }
 
 /**
@@ -80,7 +80,7 @@ async function getTestRootCaPem() {
  * The extension structure is:
  *   OCTET STRING { SEQUENCE { [1] { OCTET STRING { nonce } } } }
  */
-async function generateLeafCert(nonce) {
+async function generateLeafCert(nonce: Buffer) {
     await _ensureRootCa();
 
     const leafKeys = await peculiarCrypto.subtle.generateKey(
@@ -113,11 +113,11 @@ async function generateLeafCert(nonce) {
     const cert = await x509.X509CertificateGenerator.create({
         serialNumber: crypto.randomBytes(8).toString('hex'),
         subject: 'CN=Test Leaf',
-        issuer: _intermediateCa.cert.subject,
+        issuer: _intermediateCa!.cert.subject,
         notBefore: new Date('2020-01-01'),
         notAfter: new Date('2030-01-01'),
         publicKey: leafKeys.publicKey,
-        signingKey: _intermediateCa.keys.privateKey,
+        signingKey: _intermediateCa!.keys.privateKey,
         signingAlgorithm: { name: 'ECDSA', hash: 'SHA-256' },
         extensions: [nonceExtension],
     });
@@ -130,7 +130,7 @@ async function generateLeafCert(nonce) {
  *
  * Format: rpIdHash(32) + flags(1) + counter(4) + aaguid(16) + credIdLen(2) + credId + COSE_key
  */
-function buildAuthData(rpIdHash, credentialPublicKey, opts = {}) {
+function buildAuthData(rpIdHash: Buffer, credentialPublicKey: Map<number, unknown>, opts: { flags?: number; counter?: number; aaguid?: Buffer; credId?: Buffer } = {}) {
     const flags = Buffer.from([opts.flags ?? 0x41]); // AT flag set
     const counter = Buffer.alloc(4);
     counter.writeUInt32BE(opts.counter ?? 0);
@@ -158,13 +158,8 @@ function buildAuthData(rpIdHash, credentialPublicKey, opts = {}) {
 
 /**
  * Build a CBOR-encoded attestation object.
- *
- * @param {Buffer} authData - authenticator data bytes
- * @param {string} challenge - the challenge string
- * @param {object} opts - options: { fmt, skipCert }
- * @returns {{ base64: string, leafCert: object }} base64-encoded CBOR attestation
  */
-async function buildAttestationObject(authData, challenge, opts = {}) {
+async function buildAttestationObject(authData: Buffer, challenge: string, opts: { fmt?: string; shortChain?: boolean } = {}) {
     // Compute nonce: SHA256(authData || SHA256(challenge))
     const challengeHash = crypto.createHash('sha256').update(challenge).digest();
     const nonceData = Buffer.concat([authData, challengeHash]);
@@ -175,7 +170,7 @@ async function buildAttestationObject(authData, challenge, opts = {}) {
     const leafCert = await generateLeafCert(nonce);
 
     const leafDer = Buffer.from(leafCert.rawData);
-    const intermediateDer = Buffer.from(_intermediateCa.cert.rawData);
+    const intermediateDer = Buffer.from(_intermediateCa!.cert.rawData);
 
     const x5c = opts.shortChain
         ? [leafDer]
@@ -194,7 +189,7 @@ async function buildAttestationObject(authData, challenge, opts = {}) {
 /**
  * Build a CBOR-encoded assertion object.
  */
-function buildAssertionObject(authenticatorData, signature) {
+function buildAssertionObject(authenticatorData: Buffer, signature: Buffer) {
     const obj = { authenticatorData, signature };
     return encode(obj).toString('base64');
 }
@@ -210,8 +205,8 @@ function generateP256KeyPair() {
 
     // Export raw x, y for COSE key
     const jwk = publicKey.export({ format: 'jwk' });
-    const x = Buffer.from(jwk.x, 'base64url');
-    const y = Buffer.from(jwk.y, 'base64url');
+    const x = Buffer.from(jwk.x!, 'base64url');
+    const y = Buffer.from(jwk.y!, 'base64url');
 
     return { publicKey, privateKey, x, y };
 }
@@ -219,8 +214,8 @@ function generateP256KeyPair() {
 /**
  * Build a COSE key Map from x, y coordinates.
  */
-function buildCoseKey(x, y) {
-    const m = new Map();
+function buildCoseKey(x: Buffer, y: Buffer) {
+    const m = new Map<number, number | Buffer>();
     m.set(1, 2);   // kty: EC2
     m.set(3, -7);  // alg: ES256
     m.set(-1, 1);  // crv: P-256
@@ -232,14 +227,14 @@ function buildCoseKey(x, y) {
 /**
  * Compute the RP ID hash for a given team ID and bundle ID.
  */
-function computeRpIdHash(teamId, bundleId = BUNDLE_ID) {
+function computeRpIdHash(teamId: string, bundleId: string = BUNDLE_ID) {
     return crypto.createHash('sha256').update(`${teamId}.${bundleId}`).digest();
 }
 
 /**
  * Sign an assertion (authenticatorData + clientDataHash) with a private key.
  */
-function signAssertion(privateKey, authenticatorData, clientDataHash) {
+function signAssertion(privateKey: crypto.KeyObject, authenticatorData: Buffer, clientDataHash: Buffer) {
     const compositeHash = crypto.createHash('sha256')
         .update(Buffer.concat([authenticatorData, clientDataHash]))
         .digest();
@@ -254,7 +249,7 @@ function signAssertion(privateKey, authenticatorData, clientDataHash) {
  * Build assertion authenticator data (simpler than attestation — no cred ID/COSE key).
  * Format: rpIdHash(32) + flags(1) + counter(4)
  */
-function buildAssertionAuthData(rpIdHash, counter, flags = 0x01) {
+function buildAssertionAuthData(rpIdHash: Buffer, counter: number, flags: number = 0x01) {
     const buf = Buffer.alloc(37);
     rpIdHash.copy(buf, 0);
     buf[32] = flags;
@@ -262,7 +257,7 @@ function buildAssertionAuthData(rpIdHash, counter, flags = 0x01) {
     return buf;
 }
 
-module.exports = {
+export {
     getTestRootCaPem,
     generateLeafCert,
     buildAuthData,

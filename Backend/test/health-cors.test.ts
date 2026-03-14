@@ -1,7 +1,7 @@
-const { describe, it } = require('node:test');
-const assert = require('node:assert/strict');
-const request = require('supertest');
-const { app } = require('../dist/server');
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import request from 'supertest';
+import { app } from '../dist/server';
 
 describe('Health check endpoint', () => {
     it('GET / returns 200 with JSON status', async () => {

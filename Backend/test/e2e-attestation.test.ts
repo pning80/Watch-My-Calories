@@ -1,9 +1,9 @@
-const { describe, it, before, beforeEach, after } = require('node:test');
-const assert = require('node:assert/strict');
-const crypto = require('crypto');
-const request = require('supertest');
-const { app, attestedKeys, challenges, setAppleRootCa, setDb, setHmacSecret, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter } = require('../dist/server');
-const {
+import { describe, it, before, beforeEach, after } from 'node:test';
+import assert from 'node:assert/strict';
+import crypto from 'crypto';
+import request from 'supertest';
+import { app, attestedKeys, challenges, setAppleRootCa, setDb, setHmacSecret, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter } from '../dist/server';
+import {
     getTestRootCaPem,
     buildAuthData,
     buildAttestationObject,
@@ -13,13 +13,13 @@ const {
     buildCoseKey,
     computeRpIdHash,
     signAssertion,
-} = require('./helpers/crypto-fixtures');
+} from './helpers/crypto-fixtures';
 
 const TEST_TEAM_ID = 'TESTTEAMID';
 
 describe('End-to-end attestation → assertion flow', () => {
-    let rootCaPem;
-    let rpIdHash;
+    let rootCaPem: string;
+    let rpIdHash: Buffer;
     const origTeamId = process.env.APPLE_TEAM_ID;
     const origApiKey = process.env.APP_BACKEND_API_KEY;
     const origGeminiKey = process.env.GEMINI_API_KEY;
@@ -88,7 +88,7 @@ describe('End-to-end attestation → assertion flow', () => {
      * Make an asserted request (assertion auth through Gemini proxy).
      * Mock fetch to avoid real Gemini calls.
      */
-    async function makeAssertedRequest(keyID, privateKey, counter, body = { contents: [] }) {
+    async function makeAssertedRequest(keyID: string, privateKey: crypto.KeyObject, counter: number, body = { contents: [] as unknown[] }) {
         const bodyStr = JSON.stringify(body);
         const bodyBuf = Buffer.from(bodyStr);
         const clientDataHash = crypto.createHash('sha256').update(bodyBuf).digest();
@@ -99,11 +99,11 @@ describe('End-to-end attestation → assertion flow', () => {
 
         // Mock globalThis.fetch to avoid real Gemini calls
         const origFetch = globalThis.fetch;
-        globalThis.fetch = async () => ({
+        globalThis.fetch = (async () => ({
             ok: true,
             status: 200,
             json: async () => ({ candidates: [{ content: { parts: [{ text: '[]' }] } }] }),
-        });
+        })) as any;
 
         try {
             return await request(app)
@@ -251,7 +251,7 @@ describe('Assertion HMAC hard-fail', () => {
         const rpIdHash = computeRpIdHash(TEST_TEAM_ID);
         const keyID = 'hmac-hard-fail-key';
         const { publicKey, privateKey } = generateP256KeyPair();
-        const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' });
+        const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
         const hmac = crypto.createHmac('sha256', 'some-secret')
             .update(publicKeyPem + keyID)
             .digest('hex');
@@ -272,7 +272,7 @@ describe('Assertion HMAC hard-fail', () => {
         // HMAC secret is null — assertion.js should hard-fail at line 22-23
         setHmacSecret(null);
 
-        const body = { contents: [] };
+        const body = { contents: [] as unknown[] };
         const bodyStr = JSON.stringify(body);
         const bodyBuf = Buffer.from(bodyStr);
         const clientDataHash = crypto.createHash('sha256').update(bodyBuf).digest();
