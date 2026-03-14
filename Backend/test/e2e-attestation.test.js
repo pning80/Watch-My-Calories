@@ -2,7 +2,7 @@ const { describe, it, before, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
 const request = require('supertest');
-const { app, attestedKeys, challenges, setAppleRootCa, setDb, setHmacSecret, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter } = require('../server');
+const { app, attestedKeys, challenges, setAppleRootCa, setDb, setHmacSecret, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter } = require('../dist/server');
 const {
     getTestRootCaPem,
     buildAuthData,

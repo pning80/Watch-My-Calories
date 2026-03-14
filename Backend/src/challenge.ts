@@ -1,7 +1,12 @@
-const crypto = require('crypto');
-const { CHALLENGE_TTL_MS } = require('./constants');
+import crypto from 'crypto';
+import { Express } from 'express';
+import { CHALLENGE_TTL_MS } from './constants';
 
-const challenges = new Map(); // challenge -> { createdAt }
+interface ChallengeEntry {
+    createdAt: number;
+}
+
+export const challenges = new Map<string, ChallengeEntry>();
 
 // Periodic challenge cleanup (unref so it doesn't prevent process exit in tests)
 const challengeCleanupTimer = setInterval(() => {
@@ -14,7 +19,7 @@ const challengeCleanupTimer = setInterval(() => {
 }, 30_000);
 challengeCleanupTimer.unref();
 
-function registerRoutes(app, attestLimiter) {
+export function registerRoutes(app: Express, attestLimiter: any): void {
     // GET /attest/challenge — returns a one-time challenge
     app.get('/attest/challenge', attestLimiter, (req, res) => {
         const challenge = crypto.randomUUID();
@@ -22,5 +27,3 @@ function registerRoutes(app, attestLimiter) {
         res.json({ challenge });
     });
 }
-
-module.exports = { challenges, registerRoutes };

@@ -47,13 +47,16 @@ describe(`Deployment smoke tests (${TARGET_ENV})`, () => {
         }
     });
 
-    it('GET / returns 200 with health message', async (t) => {
+    it('GET / returns 200 with JSON health status', async (t) => {
         if (!BASE_URL) return t.skip('No Cloud Run URL');
 
         const res = await fetch(`${BASE_URL}/`);
         assert.equal(res.status, 200);
-        const text = await res.text();
-        assert.ok(text.includes('WatchMyCalories Backend is running.'), `Unexpected body: ${text}`);
+        const body = await res.json();
+        assert.equal(body.status, 'ok');
+        assert.equal(typeof body.uptime, 'number');
+        assert.equal(typeof body.attestedKeysCount, 'number');
+        assert.ok(body.env, 'Should include env field');
     });
 
     it('responses include CORS headers', async (t) => {

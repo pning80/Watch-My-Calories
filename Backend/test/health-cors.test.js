@@ -1,12 +1,15 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
-const { app } = require('../server');
+const { app } = require('../dist/server');
 
 describe('Health check endpoint', () => {
-    it('GET / returns 200 with expected message', async () => {
+    it('GET / returns 200 with JSON status', async () => {
         const res = await request(app).get('/').expect(200);
-        assert.equal(res.text, 'WatchMyCalories Backend is running.');
+        assert.equal(res.body.status, 'ok');
+        assert.equal(typeof res.body.uptime, 'number');
+        assert.equal(typeof res.body.attestedKeysCount, 'number');
+        assert.ok(res.body.env);
     });
 
     it('GET / includes CORS header', async () => {

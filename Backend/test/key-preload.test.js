@@ -1,7 +1,7 @@
 const { describe, it, before, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
-const { attestedKeys, setDb, setHmacSecret, loadKeysFromFirestore } = require('../server');
+const { attestedKeys, setDb, setHmacSecret, loadKeysFromFirestore } = require('../dist/server');
 
 const TEST_HMAC_SECRET = 'test-hmac-secret';
 

@@ -7,13 +7,19 @@ WORKDIR /usr/src/app
 # Copy package dependencies first to leverage Docker layer caching
 COPY package*.json ./
 
-# Install dependencies exclusively for production
-RUN npm ci --only=production
+# Install all dependencies (includes TypeScript for build step)
+RUN npm ci
 
-# Copy the actual application files
-COPY server.js ./
+# Copy source files and config
+COPY tsconfig.json server.ts ./
 COPY src/ ./src/
 COPY apple_attest_root_ca.pem ./
+
+# Compile TypeScript
+RUN npx tsc
+
+# Remove dev dependencies to shrink image
+RUN npm prune --production
 
 # Expose the port Cloud Run expects
 EXPOSE 8080

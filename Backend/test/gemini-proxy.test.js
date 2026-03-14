@@ -1,7 +1,7 @@
 const { describe, it, before, after, afterEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
-const { app } = require('../server');
+const { app } = require('../dist/server');
 
 describe('Gemini proxy endpoint', () => {
     const originalKey = process.env.APP_BACKEND_API_KEY;

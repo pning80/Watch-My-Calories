@@ -13,7 +13,7 @@ describe('hmac-secret module', () => {
         delete process.env.ATTEST_HMAC_SECRET_NAME;
 
         // Fresh import each time (cachedSecret is module-level state)
-        ({ initHmacSecret, getHmacSecret, setHmacSecret } = require('../src/hmac-secret'));
+        ({ initHmacSecret, getHmacSecret, setHmacSecret } = require('../dist/src/hmac-secret'));
         setHmacSecret(null);
     });
 
