@@ -1,16 +1,19 @@
-const crypto = require('crypto');
-const express = require('express');
-const { decode, Decoder } = require('cbor-x');
-const { X509Certificate } = require('crypto');
-const { getAppleRootCa } = require('./apple-root-ca');
-const { challenges } = require('./challenge');
-const { extractNonceFromCert } = require('./cert-utils');
-const { attestedKeys } = require('./attested-keys');
-const { getDb } = require('./firestore');
-const { BUNDLE_ID, ATTESTED_KEYS_COLLECTION, CHALLENGE_TTL_MS } = require('./constants');
-const { getHmacSecret } = require('./hmac-secret');
+import crypto, { X509Certificate } from 'crypto';
+import express, { Express } from 'express';
+import { decode, Decoder } from 'cbor-x';
+import { getAppleRootCa } from './apple-root-ca';
+import { challenges } from './challenge';
+import { extractNonceFromCert } from './cert-utils';
+import { attestedKeys } from './attested-keys';
+import { getDb } from './firestore';
+import { BUNDLE_ID, ATTESTED_KEYS_COLLECTION, CHALLENGE_TTL_MS } from './constants';
+import { getHmacSecret } from './hmac-secret';
+import { createLogger } from './logger';
+import { counters } from './metrics';
 
-function registerRoutes(app, attestLimiter) {
+const log = createLogger('attestation');
+
+export function registerRoutes(app: Express, attestLimiter: any): void {
     // POST /attest/verify — verifies attestation and stores the public key
     app.post('/attest/verify', attestLimiter, express.json({ limit: '1mb' }), async (req, res) => {
         try {
@@ -57,8 +60,8 @@ function registerRoutes(app, attestLimiter) {
             }
 
             // Build certificate chain
-            const certs = attStmt.x5c.map(certDer => {
-                const pem = `-----BEGIN CERTIFICATE-----\n${Buffer.from(certDer).toString('base64').match(/.{1,64}/g).join('\n')}\n-----END CERTIFICATE-----`;
+            const certs = attStmt.x5c.map((certDer: Buffer) => {
+                const pem = `-----BEGIN CERTIFICATE-----\n${Buffer.from(certDer).toString('base64').match(/.{1,64}/g)!.join('\n')}\n-----END CERTIFICATE-----`;
                 return new X509Certificate(pem);
             });
 
@@ -106,6 +109,9 @@ function registerRoutes(app, attestLimiter) {
             // Extract credential public key from authData
             // authData format: rpIdHash(32) + flags(1) + counter(4) + aaguid(16) + credIdLen(2) + credId(credIdLen) + credentialPublicKey(CBOR)
             const authDataBuf = Buffer.from(authData);
+            if (authDataBuf.length < 55) {
+                return res.status(400).json({ error: 'authData too short.' });
+            }
             const credIdLen = authDataBuf.readUInt16BE(53); // offset 32+1+4+16 = 53
             const coseKeyOffset = 55 + credIdLen; // 53 + 2 + credIdLen
             const coseKeyData = authDataBuf.subarray(coseKeyOffset);
@@ -115,15 +121,19 @@ function registerRoutes(app, attestLimiter) {
             const coseKey = coseDecoder.decode(coseKeyData);
 
             // COSE EC2 key: -1 = curve (1 = P-256), -2 = x, -3 = y
-            const x = coseKey.get(-2);
-            const y = coseKey.get(-3);
+            const x = coseKey.get(-2) as Buffer | undefined;
+            const y = coseKey.get(-3) as Buffer | undefined;
 
             if (!x || !y) {
                 return res.status(400).json({ error: 'Invalid COSE key in attestation.' });
             }
 
+            // Validate COSE key x/y are 32 bytes each (P-256)
+            if (Buffer.from(x).length !== 32 || Buffer.from(y).length !== 32) {
+                return res.status(400).json({ error: 'Invalid COSE key coordinates.' });
+            }
+
             // Convert to uncompressed point format (0x04 || x || y) and create KeyObject
-            const publicKeyUncompressed = Buffer.concat([Buffer.from([0x04]), Buffer.from(x), Buffer.from(y)]);
             const publicKey = crypto.createPublicKey({
                 key: {
                     kty: 'EC',
@@ -134,10 +144,10 @@ function registerRoutes(app, attestLimiter) {
                 format: 'jwk',
             });
 
-            const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' });
+            const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }) as string;
 
             // Compute HMAC for tamper detection
-            const hmac = crypto.createHmac('sha256', getHmacSecret())
+            const hmac = crypto.createHmac('sha256', getHmacSecret()!)
                 .update(publicKeyPem + keyID)
                 .digest('hex');
 
@@ -155,19 +165,19 @@ function registerRoutes(app, attestLimiter) {
                         createdAt: new Date(),
                         lastUsedAt: new Date(),
                     });
-                } catch (err) {
-                    console.error('Firestore write error (attestation):', err.message);
+                } catch (err: any) {
+                    log.error({ keyId: keyID.substring(0, 8), error: err.message }, 'Firestore write error (attestation)');
                 }
             }
 
-            console.log(`App Attest: Key ${keyID.substring(0, 8)}... attested successfully.`);
+            counters.increment('attestation_total', { result: 'success' });
+            log.info({ keyId: keyID.substring(0, 8) }, 'Key attested successfully');
             res.json({ success: true });
 
-        } catch (err) {
-            console.error('Attestation verification error:', err);
+        } catch (err: any) {
+            counters.increment('attestation_total', { result: 'error' });
+            log.error({ error: err.message }, 'Attestation verification error');
             res.status(400).json({ error: 'Attestation verification failed.' });
         }
     });
 }
-
-module.exports = { registerRoutes };

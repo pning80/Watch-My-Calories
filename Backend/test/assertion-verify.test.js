@@ -2,7 +2,7 @@ const { describe, it, before, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
 const request = require('supertest');
-const { app, attestedKeys, setAppleRootCa, setDb, setHmacSecret } = require('../server');
+const { app, attestedKeys, setAppleRootCa, setDb, setHmacSecret } = require('../dist/server');
 const {
     generateP256KeyPair,
     buildAssertionObject,

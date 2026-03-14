@@ -1,20 +1,24 @@
-const crypto = require('crypto');
-const { getDb } = require('./firestore');
-const { ATTESTED_KEYS_COLLECTION, KEY_PRELOAD_MAX_AGE_MS } = require('./constants');
-const { getHmacSecret } = require('./hmac-secret');
+import crypto from 'crypto';
+import { getDb } from './firestore';
+import { ATTESTED_KEYS_COLLECTION, KEY_PRELOAD_MAX_AGE_MS } from './constants';
+import { getHmacSecret } from './hmac-secret';
+import { createLogger } from './logger';
+import { AttestedKeyData } from './types';
 
-const attestedKeys = new Map(); // keyID -> { publicKey (KeyObject), counter, hmac }
+const log = createLogger('attested-keys');
 
-async function loadKeysFromFirestore() {
+export const attestedKeys = new Map<string, AttestedKeyData>();
+
+export async function loadKeysFromFirestore(): Promise<number> {
     const db = getDb();
     if (!db) {
-        console.log('Key preload: Firestore unavailable — skipping.');
+        log.info('Key preload: Firestore unavailable — skipping');
         return 0;
     }
 
     const hmacSecret = getHmacSecret();
     if (!hmacSecret) {
-        console.warn('Key preload: HMAC secret not available — skipping.');
+        log.warn('Key preload: HMAC secret not available — skipping');
         return 0;
     }
 
@@ -41,7 +45,7 @@ async function loadKeysFromFirestore() {
 
             if (expectedHmacBuf.length !== actualHmacBuf.length ||
                 !crypto.timingSafeEqual(expectedHmacBuf, actualHmacBuf)) {
-                console.warn(`Key preload: Skipping ${keyID.substring(0, 8)}... — HMAC mismatch.`);
+                log.warn({ keyId: keyID.substring(0, 8) }, 'Key preload: Skipping — HMAC mismatch');
                 skipped++;
                 continue;
             }
@@ -53,18 +57,16 @@ async function loadKeysFromFirestore() {
                 });
                 attestedKeys.set(keyID, { publicKey, counter: data.counter, hmac: data.hmac });
                 loaded++;
-            } catch (err) {
-                console.warn(`Key preload: Skipping ${keyID.substring(0, 8)}... — invalid key: ${err.message}`);
+            } catch (err: any) {
+                log.warn({ keyId: keyID.substring(0, 8), error: err.message }, 'Key preload: Skipping — invalid key');
                 skipped++;
             }
         }
 
-        console.log(`Key preload: Loaded ${loaded} key(s) from Firestore${skipped > 0 ? `, skipped ${skipped}` : ''}.`);
+        log.info({ loaded, skipped }, 'Key preload complete');
         return loaded;
-    } catch (err) {
-        console.error('Key preload: Firestore query failed:', err.message);
+    } catch (err: any) {
+        log.error({ error: err.message }, 'Key preload: Firestore query failed');
         return 0;
     }
 }
-
-module.exports = { attestedKeys, loadKeysFromFirestore };

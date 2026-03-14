@@ -1,7 +1,7 @@
 const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
-const { app, challenges } = require('../server');
+const { app, challenges } = require('../dist/server');
 
 describe('GET /attest/challenge', () => {
     beforeEach(() => {

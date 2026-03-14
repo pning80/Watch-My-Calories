@@ -36,6 +36,7 @@ Pods/
 
 # Node
 node_modules/
+dist/
 
 # Test results
 test-results/

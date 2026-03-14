@@ -2,7 +2,7 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const express = require('express');
 const request = require('supertest');
-const { captureRawBody } = require('../server');
+const { captureRawBody } = require('../dist/server');
 
 // Create a small express app that uses captureRawBody
 function createTestApp() {

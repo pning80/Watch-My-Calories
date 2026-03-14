@@ -2,11 +2,12 @@
     "name": "watchmycalories-backend",
     "version": "1.1.0",
     "description": "Backend relay for Gemini API",
-    "main": "server.js",
+    "main": "dist/server.js",
     "scripts": {
-        "start": "node server.js",
-        "dev": "node --watch server.js",
-        "test": "node --test test/*.test.js",
+        "build": "tsc",
+        "start": "node dist/server.js",
+        "dev": "tsx --watch server.ts",
+        "test": "npm run build && node --test test/*.test.js",
         "test:smoke": "TARGET_ENV=dev node --test test/deployment/*.test.js",
         "test:smoke:prod": "TARGET_ENV=prod node --test test/deployment/*.test.js"
     },
@@ -17,12 +18,18 @@
         "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "express": "^4.19.2",
-        "express-rate-limit": "^8.3.0"
+        "express-rate-limit": "^8.3.0",
+        "pino": "^10.3.1"
     },
     "devDependencies": {
         "@peculiar/webcrypto": "^1.5.0",
         "@peculiar/x509": "^1.12.0",
-        "supertest": "^7.0.0"
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.6",
+        "@types/node": "^25.5.0",
+        "supertest": "^7.0.0",
+        "tsx": "^4.21.0",
+        "typescript": "^5.9.3"
     },
     "engines": {
         "node": ">=20.0.0"
