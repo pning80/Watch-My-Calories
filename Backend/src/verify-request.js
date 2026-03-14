@@ -16,7 +16,11 @@ const verifyRequest = async (req, res, next) => {
         }
     }
 
-    // Path 2: Legacy x-backend-key (dev/testing only — strictly rate-limited)
+    // Path 2: Legacy x-backend-key (dev/testing only — disabled in production)
+    if (process.env.BACKEND_ENV === 'prod') {
+        return res.status(401).json({ error: 'Unauthorized: App Attest required.' });
+    }
+
     legacyKeyLimiter(req, res, (err) => {
         if (err) return next(err);
 
