@@ -151,26 +151,46 @@ final class GeminiService: EstimationService {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 30
 
-        // Attach App Attest assertion headers (signs the request body)
-        if attestManager.isSupported, let httpBody = request.httpBody {
-            let headers = try await attestManager.assertionHeaders(for: httpBody)
-            for (key, value) in headers {
-                request.addValue(value, forHTTPHeaderField: key)
+        // Retry loop: automatically re-attest and retry on 401 attestation rejection
+        let maxAttempts = 3
+        var data: Data!
+        var httpResponse: HTTPURLResponse!
+
+        for attempt in 1...maxAttempts {
+            // Attach App Attest assertion headers (signs the request body)
+            if attestManager.isSupported, let httpBody = request.httpBody {
+                // Strip old assertion headers before regenerating
+                request.setValue(nil, forHTTPHeaderField: "X-App-Attest-Assertion")
+                request.setValue(nil, forHTTPHeaderField: "X-App-Attest-KeyID")
+                let headers = try await attestManager.assertionHeaders(for: httpBody)
+                for (key, value) in headers {
+                    request.setValue(value, forHTTPHeaderField: key)
+                }
             }
-        }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+            let (responseData, response) = try await URLSession.shared.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw GeminiError.networkError(URLError(.badServerResponse))
-        }
+            guard let httpResp = response as? HTTPURLResponse else {
+                throw GeminiError.networkError(URLError(.badServerResponse))
+            }
 
-        // If backend rejects our attestation, clear local state so we re-attest next time
-        if httpResponse.statusCode == 401 && attestManager.isSupported {
-            attestManager.handleAttestationRejected()
+            // On 401 with App Attest, re-attest and retry transparently
+            if httpResp.statusCode == 401 && attestManager.isSupported && attempt < maxAttempts {
+                attestManager.handleAttestationRejected()
+                try await attestManager.ensureAttested()
+                continue
+            }
+
+            data = responseData
+            httpResponse = httpResp
+            break
         }
 
         guard httpResponse.statusCode == 200 else {
+            // Clear attestation state on final 401 so next user-initiated retry starts fresh
+            if httpResponse.statusCode == 401 && attestManager.isSupported {
+                attestManager.handleAttestationRejected()
+            }
             if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let errorObj = errorJson["error"] as? [String: Any],
                let message = errorObj["message"] as? String {
