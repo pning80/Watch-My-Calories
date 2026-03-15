@@ -29,6 +29,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "244FB6C856FCFE9F34527D32"
+               BuildableName = "WatchMyCaloriesTests.xctest"
+               BlueprintName = "WatchMyCaloriesTests"
+               ReferencedContainer = "container:WatchMyCalories.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "A58AE37EDC3D8E56868BA191"
                BuildableName = "WatchMyCaloriesUITests.xctest"
                BlueprintName = "WatchMyCaloriesUITests"
@@ -53,6 +67,17 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "244FB6C856FCFE9F34527D32"
+               BuildableName = "WatchMyCaloriesTests.xctest"
+               BlueprintName = "WatchMyCaloriesTests"
+               ReferencedContainer = "container:WatchMyCalories.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
          <TestableReference
             skipped = "NO"
             parallelizable = "NO">
