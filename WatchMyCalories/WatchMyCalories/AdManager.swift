@@ -17,8 +17,8 @@ final class AdManager: ObservableObject {
     static let bannerAdUnitID = "ca-app-pub-3940256099942544/2934735716"
     static let nativeAdUnitID = "ca-app-pub-3940256099942544/3986624511"
     #else
-    static let bannerAdUnitID = "ca-app-pub-FIXME/FIXME"
-    static let nativeAdUnitID = "ca-app-pub-FIXME/FIXME"
+    static let bannerAdUnitID = Bundle.main.infoDictionary!["AdMobBannerAdUnitID"] as! String
+    static let nativeAdUnitID = Bundle.main.infoDictionary!["AdMobNativeAdUnitID"] as! String
     #endif
 
     private init() {
