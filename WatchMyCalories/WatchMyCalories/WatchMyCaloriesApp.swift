@@ -10,6 +10,8 @@ import SwiftData
 
 @main
 struct WatchMyCaloriesApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     static var isUITesting: Bool {
         ProcessInfo.processInfo.arguments.contains("--uitesting")
     }
@@ -67,6 +69,13 @@ struct WatchMyCaloriesApp: App {
                 }
                 .environmentObject(AppEnvironment.shared)
                 .modelContainer(container)
+                .task {
+                    guard !Self.isUITesting else { return }
+                    guard store.hasCompletedOnboarding else { return }
+                    guard AdManager.shared.userAllowedAds else { return }
+                    await AdManager.shared.requestATTPermission()
+                    await AdManager.shared.gatherConsent()
+                }
                 .onAppear {
                     if Self.shouldSeedData {
                         seedTestData(container: container)

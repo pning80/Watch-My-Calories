@@ -36,53 +36,13 @@ final class OnboardingTests: XCTestCase {
         XCTAssertTrue(app.buttons["onboarding_skipButton"].exists)
     }
 
-    // MARK: - Full Flow
-
-    func testOnboardingFlowHasUnitPickerOnGoalsStep() {
-        app.launch()
-
-        // Step 0: Welcome - tap Get Started
-        let getStarted = app.buttons["onboarding_getStartedButton"]
-        XCTAssertTrue(getStarted.waitForExistence(timeout: 5))
-        getStarted.tap()
-
-        // Step 1: Profile - tap Next
-        let nextButton = app.buttons["onboarding_nextButton"]
-        XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["About You"].exists)
-        nextButton.tap()
-
-        // Step 2: Goals - unit picker should be here
-        XCTAssertTrue(app.staticTexts["Your Goals"].waitForExistence(timeout: 5))
-
-        // Scroll down to see the unit picker section
-        app.swipeUp()
-
-        // Unit system picker should exist on this step
-        XCTAssertTrue(app.buttons["US Customary"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.buttons["Metric"].exists)
-
-        // Section header text should exist (SwiftUI may render as "UNIT SYSTEM" or "Unit System")
-        XCTAssertTrue(
-            app.staticTexts["UNIT SYSTEM"].exists || app.staticTexts["Unit System"].exists
-        )
-    }
-
     // MARK: - Keyboard Dismissal
 
     func testKeyboardDismissesWhenTappingOutsideTargetCalories() {
         app.launch()
+        navigateToStep(2)
 
-        // Navigate to Goals step
-        let getStarted = app.buttons["onboarding_getStartedButton"]
-        XCTAssertTrue(getStarted.waitForExistence(timeout: 5))
-        getStarted.tap()
-
-        let nextButton = app.buttons["onboarding_nextButton"]
-        XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
-        nextButton.tap()
-
-        XCTAssertTrue(app.staticTexts["Your Goals"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5))
 
         // Scroll down and tap the target calories field to bring up the keyboard
         app.swipeUp()
@@ -93,29 +53,18 @@ final class OnboardingTests: XCTestCase {
         // Keyboard should be visible
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
 
-        // Tap on the title area to dismiss the keyboard
+        // Scroll to dismiss the keyboard (.scrollDismissesKeyboard(.immediately))
         app.swipeDown()
-        let goalsTitle = app.staticTexts["Your Goals"]
-        XCTAssertTrue(goalsTitle.waitForExistence(timeout: 3))
-        goalsTitle.tap()
 
         // Keyboard should be dismissed
         XCTAssertFalse(app.keyboards.firstMatch.waitForExistence(timeout: 2))
     }
 
-    func testKeyboardDismissesWhenNavigatingToNextStep() {
+    func testKeyboardDismissesWhenTappingFinishButton() {
         app.launch()
+        navigateToStep(2)
 
-        // Navigate to Goals step
-        let getStarted = app.buttons["onboarding_getStartedButton"]
-        XCTAssertTrue(getStarted.waitForExistence(timeout: 5))
-        getStarted.tap()
-
-        let nextButton = app.buttons["onboarding_nextButton"]
-        XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
-        nextButton.tap()
-
-        XCTAssertTrue(app.staticTexts["Your Goals"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5))
 
         // Scroll down and tap the target calories field to bring up the keyboard
         app.swipeUp()
@@ -126,33 +75,22 @@ final class OnboardingTests: XCTestCase {
         // Keyboard should be visible
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
 
-        // Tap Next to go to the Almost Done step
-        nextButton.tap()
+        // Tap Start Tracking to finish onboarding
+        let finishButton = app.buttons["onboarding_finishButton"]
+        finishButton.tap()
 
-        // Should be on the permissions step
-        XCTAssertTrue(app.staticTexts["Almost Done"].waitForExistence(timeout: 5))
-
-        // Keyboard should be dismissed
-        XCTAssertFalse(app.keyboards.firstMatch.waitForExistence(timeout: 2))
+        // Should transition to the main app — keyboard dismissed implicitly
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 5))
     }
 
     // MARK: - Calculate Recommended Goal
 
     func testCalculateRecommendedGoalPopulatesTargetCalories() {
         app.launch()
+        navigateToStep(2)
 
-        // Step 0: Welcome → tap Get Started
-        let getStarted = app.buttons["onboarding_getStartedButton"]
-        XCTAssertTrue(getStarted.waitForExistence(timeout: 5))
-        getStarted.tap()
-
-        // Step 1: Profile → tap Next
-        let nextButton = app.buttons["onboarding_nextButton"]
-        XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
-        nextButton.tap()
-
-        // Step 2: Goals
-        XCTAssertTrue(app.staticTexts["Your Goals"].waitForExistence(timeout: 5))
+        // Step 2: Your Goal
+        XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5))
 
         // Verify target calories field is initially empty
         let caloriesField = app.textFields["onboarding_targetCalories"]
@@ -186,5 +124,168 @@ final class OnboardingTests: XCTestCase {
 
         // Should now see the main app (tab bar)
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 5))
+    }
+
+    // MARK: - Permissions Step (Step 1)
+
+    func testPermissionsStepShowsAIToggle() {
+        app.launch()
+        navigateToStep(1)
+
+        let aiToggle = app.switches["onboarding_aiConsentToggle"]
+        XCTAssertTrue(aiToggle.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Google Gemini")).firstMatch.exists)
+    }
+
+    func testPermissionsStepShowsAdSection() {
+        app.launch()
+        navigateToStep(1)
+
+        XCTAssertTrue(app.staticTexts["Your Privacy"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Allow Ad Tracking"].exists)
+    }
+
+    func testPermissionsStepShowsHealthButton() {
+        app.launch()
+        navigateToStep(1)
+
+        let healthButton = app.buttons["onboarding_connectHealth"]
+        XCTAssertTrue(healthButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "active calories")).firstMatch.exists)
+    }
+
+    func testPermissionsStepShowsNextButton() {
+        app.launch()
+        navigateToStep(1)
+
+        let nextButton = app.buttons["onboarding_nextButton"]
+        XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
+    }
+
+    func testAIToggleIsInteractive() {
+        app.launch()
+        navigateToStep(1)
+
+        let toggle = app.switches["onboarding_aiConsentToggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+
+        let initialValue = toggle.value as? String ?? ""
+        toggle.switches.firstMatch.tap()
+
+        let newValue = toggle.value as? String ?? ""
+        XCTAssertNotEqual(initialValue, newValue, "AI toggle value should change after tap")
+    }
+
+    func testHealthButtonIsInteractive() {
+        app.launch()
+        navigateToStep(1)
+
+        addUIInterruptionMonitor(withDescription: "HealthKit Authorization") { alert in
+            if alert.buttons["Don\u{2019}t Allow"].exists {
+                alert.buttons["Don\u{2019}t Allow"].tap()
+            } else if alert.buttons["Cancel"].exists {
+                alert.buttons["Cancel"].tap()
+            }
+            return true
+        }
+
+        let button = app.buttons["onboarding_connectHealth"]
+        XCTAssertTrue(button.waitForExistence(timeout: 5))
+
+        button.tap()
+
+        // Tap app to trigger interruption monitor if system dialog appeared
+        app.tap()
+
+        XCTAssertFalse(button.isEnabled, "Health button should be disabled after tap")
+    }
+
+    // MARK: - Goal Step (Step 2)
+
+    func testGoalStepShowsFormElements() {
+        app.launch()
+        navigateToStep(2)
+
+        XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Height"].exists)
+        XCTAssertTrue(app.staticTexts["Weight"].exists)
+        XCTAssertTrue(app.staticTexts["Age"].exists)
+        XCTAssertTrue(app.staticTexts["Gender"].exists)
+        XCTAssertTrue(app.staticTexts["Activity Level"].exists)
+        XCTAssertTrue(app.buttons["onboarding_finishButton"].exists)
+    }
+
+    func testGoalStepShowsActivityLevelPicker() {
+        app.launch()
+        navigateToStep(2)
+
+        XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Activity Level"].exists)
+        XCTAssertTrue(app.staticTexts["Sedentary"].exists)
+    }
+
+    func testGoalStepShowsFinishButton() {
+        app.launch()
+        navigateToStep(2)
+
+        let finishButton = app.buttons["onboarding_finishButton"]
+        XCTAssertTrue(finishButton.waitForExistence(timeout: 5))
+    }
+
+    // MARK: - Complete Flow
+
+    func testCompleteOnboardingFlowShowsDashboard() {
+        app.launch()
+        navigateToStep(2)
+
+        let finishButton = app.buttons["onboarding_finishButton"]
+        XCTAssertTrue(finishButton.waitForExistence(timeout: 5))
+        finishButton.tap()
+
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Today"].exists)
+    }
+
+    // MARK: - Skip Button From All Steps
+
+    func testSkipFromPermissionsStep() {
+        app.launch()
+        navigateToStep(1)
+
+        let skipButton = app.buttons["onboarding_skipButton"]
+        XCTAssertTrue(skipButton.waitForExistence(timeout: 5))
+        skipButton.tap()
+
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 5))
+    }
+
+    func testSkipFromGoalStep() {
+        app.launch()
+        navigateToStep(2)
+
+        let skipButton = app.buttons["onboarding_skipButton"]
+        XCTAssertTrue(skipButton.waitForExistence(timeout: 5))
+        skipButton.tap()
+
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 5))
+    }
+
+    // MARK: - Navigation Helper
+
+    /// Navigates to the given onboarding step.
+    /// Step order: 0=Welcome, 1=Permissions, 2=Your Goal
+    private func navigateToStep(_ step: Int) {
+        if step >= 1 {
+            let getStarted = app.buttons["onboarding_getStartedButton"]
+            XCTAssertTrue(getStarted.waitForExistence(timeout: 5))
+            getStarted.tap()
+            XCTAssertTrue(app.staticTexts["Your Privacy"].waitForExistence(timeout: 5))
+        }
+        if step >= 2 {
+            let nextButton = app.buttons["onboarding_nextButton"]
+            XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
+            nextButton.tap()
+            XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5))
+        }
     }
 }

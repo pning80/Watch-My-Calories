@@ -1,0 +1,72 @@
+import SwiftUI
+import GoogleMobileAds
+
+struct BannerAdView: View {
+    @ObservedObject private var adManager = AdManager.shared
+    @State private var adHeight: CGFloat = 0
+
+    var body: some View {
+        Group {
+            if !AdManager.isUITestingMode && adManager.canRequestAds {
+                BannerAdRepresentable(adHeight: $adHeight)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: adHeight)
+                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                    .padding(.horizontal)
+                    .animation(.easeInOut(duration: 0.3), value: adHeight)
+                    .accessibilityIdentifier(AccessibilityID.Ads.banner)
+            }
+        }
+    }
+}
+
+private struct BannerAdRepresentable: UIViewRepresentable {
+    @Binding var adHeight: CGFloat
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    func makeUIView(context: Context) -> BannerView {
+        let bannerView = BannerView()
+        bannerView.adUnitID = AdManager.bannerAdUnitID
+        bannerView.delegate = context.coordinator
+
+        DispatchQueue.main.async {
+            if let windowScene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first,
+                let rootVC = windowScene.windows.first?.rootViewController {
+                bannerView.rootViewController = rootVC
+                let width = rootVC.view.frame.width - 32
+                bannerView.adSize = currentOrientationAnchoredAdaptiveBanner(width: width)
+                bannerView.load(GoogleMobileAds.Request())
+            }
+        }
+
+        return bannerView
+    }
+
+    func updateUIView(_ uiView: BannerView, context: Context) {}
+
+    class Coordinator: NSObject, BannerViewDelegate {
+        let parent: BannerAdRepresentable
+
+        init(parent: BannerAdRepresentable) {
+            self.parent = parent
+        }
+
+        func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+            let height = min(bannerView.adSize.size.height, 90)
+            withAnimation {
+                parent.adHeight = height
+            }
+        }
+
+        func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+            print("[BannerAd] Failed to load: \(error.localizedDescription)")
+        }
+    }
+}
