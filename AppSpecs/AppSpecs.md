@@ -1,2 +1,0 @@
-# Spedification of App Behaviors
-
