@@ -14,7 +14,6 @@ struct EstimationReviewView: View {
 
     @State private var result: EstimationResult? = nil
     @State private var isLoading: Bool = true
-    @State private var errorMessage: String? = nil
     @State private var showDetails: Bool = false
     @State private var showConsentSheet: Bool = false
 
@@ -70,8 +69,8 @@ struct EstimationReviewView: View {
 
                     Spacer()
 
-                    // Bottom: Progress + View Results
-                    VStack(spacing: 16) {
+                    // Bottom: Progress / View Results / Inline Error
+                    VStack(spacing: 10) {
                         if !estimationComplete {
                             ProgressView()
                                 .controlSize(.large)
@@ -79,6 +78,53 @@ struct EstimationReviewView: View {
                             Text("Analyzing food...")
                                 .font(.headline)
                                 .foregroundStyle(Color.gray)
+                        } else if pendingError != nil {
+                            // Inline error UI
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundStyle(Color.orange)
+
+                                Text("Analysis Failed")
+                                    .font(.headline)
+                                    .foregroundStyle(Color.cwTextPrimary)
+                            }
+
+                            Text("We couldn't analyze the image. Please try again.")
+                                .font(.subheadline)
+                                .multilineTextAlignment(.center)
+                                .foregroundStyle(Color.gray)
+
+                            if showDetails, let errorText = pendingError {
+                                ScrollView {
+                                    Text(errorText)
+                                        .font(.caption)
+                                        .fontDesign(.monospaced)
+                                        .foregroundStyle(Color.red)
+                                        .padding()
+                                        .background(Color.red.opacity(0.1))
+                                        .cornerRadius(8)
+                                }
+                                .frame(maxHeight: 120)
+                                .padding(.horizontal)
+                            }
+
+                            Button(showDetails ? "Hide Details" : "Show Details") {
+                                withAnimation { showDetails.toggle() }
+                            }
+                            .font(.footnote)
+                            .foregroundStyle(Color.blue)
+
+                            HStack(spacing: 16) {
+                                Button("Try Again") { Task { await estimate() } }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(Color.cwPrimary)
+                                    .accessibilityIdentifier(AccessibilityID.EstimationReview.tryAgainButton)
+
+                                Button("Cancel") { dismiss() }
+                                    .foregroundStyle(Color.gray)
+                                    .accessibilityIdentifier(AccessibilityID.EstimationReview.cancelButton)
+                            }
                         } else {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 40))
@@ -86,17 +132,10 @@ struct EstimationReviewView: View {
                             Text("Analysis complete!")
                                 .font(.headline)
                                 .foregroundStyle(Color.cwTextPrimary)
-                        }
 
-                        if estimationComplete {
                             Button {
-                                if let error = pendingError {
-                                    errorMessage = error
-                                    isLoading = false
-                                } else {
-                                    result = pendingResult
-                                    isLoading = false
-                                }
+                                result = pendingResult
+                                isLoading = false
                             } label: {
                                 Text("View Results")
                                     .font(.headline)
@@ -111,63 +150,11 @@ struct EstimationReviewView: View {
                             .transition(.opacity.combined(with: .move(edge: .bottom)))
                         }
                     }
+                    .frame(minHeight: 140)
                     .padding(.bottom, 40)
                     .animation(.easeInOut(duration: 0.3), value: estimationComplete)
                 }
                 .accessibilityIdentifier(AccessibilityID.EstimationReview.loadingView)
-            } else if let errorMessage {
-                VStack(spacing: 16) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(Color.orange)
-                        .padding()
-                    
-                    Text("Analysis Failed")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.cwTextPrimary)
-                    
-                    Text("We couldn't analyze the image. Please try again.")
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(Color.gray)
-                    
-                    if showDetails {
-                        ScrollView {
-                            Text(errorMessage)
-                                .font(.caption)
-                                .fontDesign(.monospaced)
-                                .foregroundStyle(Color.red)
-                                .padding()
-                                .background(Color.red.opacity(0.1))
-                                .cornerRadius(8)
-                        }
-                        .frame(maxHeight: 150)
-                    }
-                    
-                    Button(showDetails ? "Hide Details" : "Show Details") {
-                        withAnimation {
-                            showDetails.toggle()
-                        }
-                    }
-                    .font(.footnote)
-                    .foregroundStyle(Color.blue)
-                    .padding(.bottom, 8)
-                    
-                    VStack(spacing: 12) {
-                        Button("Try Again") { Task { await estimate() } }
-                            .buttonStyle(.borderedProminent)
-                            .tint(Color.cwPrimary)
-                            .accessibilityIdentifier(AccessibilityID.EstimationReview.tryAgainButton)
-
-                        Button("Cancel") {
-                            dismiss()
-                        }
-                        .foregroundStyle(Color.gray)
-                        .accessibilityIdentifier(AccessibilityID.EstimationReview.cancelButton)
-                    }
-                }
-                .padding()
-                .accessibilityIdentifier(AccessibilityID.EstimationReview.errorView)
             } else if let result {
                 if result.items.isEmpty {
                     // No food detected
@@ -262,7 +249,7 @@ struct EstimationReviewView: View {
                 }
             }
         }
-        .navigationTitle("Review")
+        .toolbar(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
         .task {
             if AdManager.shared.canRequestAds {
@@ -297,7 +284,6 @@ struct EstimationReviewView: View {
 
     private func estimate() async {
         isLoading = true
-        errorMessage = nil
         pendingError = nil
         estimationComplete = false
         showDetails = false

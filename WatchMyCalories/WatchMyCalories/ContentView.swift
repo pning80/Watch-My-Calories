@@ -51,7 +51,7 @@ struct ContentView: View {
                 }
                 .tag(Tab.camera)
             
-            HistoryView()
+            HistoryView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("History", systemImage: "calendar")
                 }
