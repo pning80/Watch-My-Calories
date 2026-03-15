@@ -38,7 +38,9 @@ struct HistoryView: View {
                         }
                         .padding(.horizontal)
                         .padding(.top)
-                        
+
+                        BannerAdView()
+
                         if sortedDates.isEmpty {
                             EmptyStateCard()
                                 .padding(.top, 40)

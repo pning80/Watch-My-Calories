@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AppTrackingTransparency
 
 struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
@@ -18,6 +19,7 @@ struct DashboardView: View {
     @State private var entryToView: FoodEntry?
     @State private var groupToEdit: FoodEntryGroupEdit?
     @State private var groupToView: FoodEntryGroupEdit?
+    @State private var showAdReminder = false
 
     init(selectedTab: Binding<ContentView.Tab>, scrollToMeal: Binding<MealType?> = .constant(nil)) {
         self._selectedTab = selectedTab
@@ -97,7 +99,9 @@ struct DashboardView: View {
                                 burnedCalories: healthKitManager.activeEnergyBurned,
                                 entries: todayEntries
                             )
-                            
+
+                            BannerAdView()
+
                             if todayEntries.isEmpty {
                                 VStack(spacing: 12) {
                                     Button {
@@ -165,7 +169,75 @@ struct DashboardView: View {
             if !WatchMyCaloriesApp.isUITesting {
                 healthKitManager.requestAuthorization()
             }
+            if AdManager.shared.shouldShowAdReminder {
+                showAdReminder = true
+            }
         }
+        .overlay {
+            if showAdReminder {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture { dismissReminder() }
+
+                VStack(spacing: 20) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 40))
+                        .foregroundStyle(Color.cwAccent)
+
+                    VStack(spacing: 4) {
+                        Text("Support")
+                            .font(.system(.title3, design: .serif, weight: .bold))
+                            .foregroundStyle(Color.cwTextPrimary)
+                        Text("Watch My Calories")
+                            .font(.system(.title3, design: .serif, weight: .bold))
+                            .foregroundStyle(Color.cwTextPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+
+                    Text("This app is free and supported by ads. Enabling ad tracking helps keep it that way.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+
+                    Button {
+                        Task {
+                            await AdManager.shared.requestATTPermission()
+                            let status = ATTrackingManager.trackingAuthorizationStatus
+                            if status == .authorized {
+                                AdManager.shared.userAllowedAds = true
+                                await AdManager.shared.gatherConsent()
+                            }
+                            showAdReminder = false
+                        }
+                    } label: {
+                        Text("Enable Ads")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.cwPrimary)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+
+                    Button {
+                        dismissReminder()
+                    } label: {
+                        Text("Not Now")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(Color.gray)
+                    }
+                }
+                .padding(28)
+                .background(Color.cwSurface)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
+                .padding(.horizontal, 32)
+                .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: showAdReminder)
         .sheet(isPresented: $showManualEntry, onDismiss: {
             if let entry = pendingManualEntry {
                 modelContext.insert(entry)
@@ -192,6 +264,11 @@ struct DashboardView: View {
         .sheet(item: $groupToView) { group in
             ViewMealGroupView(entries: group.items)
         }
+    }
+
+    private func dismissReminder() {
+        AdManager.shared.adReminderDismissedDate = Date()
+        showAdReminder = false
     }
 }
 

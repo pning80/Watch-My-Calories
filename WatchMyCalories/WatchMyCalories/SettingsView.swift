@@ -72,6 +72,12 @@ struct SettingsView: View {
                     .listRowBackground(Color.clear)
                 }
 
+                Section {
+                    BannerAdView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+
                 Section(header: Text("App Appearance")) {
                     Picker("Theme", selection: $store.appTheme) {
                         ForEach(AppTheme.allCases) { theme in

@@ -15,7 +15,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "7775A27891771BD7E876CF19"
+               BlueprintIdentifier = "14060F1C2271F3047099EB52"
                BuildableName = "WatchMyCalories.app"
                BlueprintName = "WatchMyCalories"
                ReferencedContainer = "container:WatchMyCalories.xcodeproj">
@@ -29,7 +29,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D3FBE17B616206401CC8C0A9"
+               BlueprintIdentifier = "A58AE37EDC3D8E56868BA191"
                BuildableName = "WatchMyCaloriesUITests.xctest"
                BlueprintName = "WatchMyCaloriesUITests"
                ReferencedContainer = "container:WatchMyCalories.xcodeproj">
@@ -46,7 +46,7 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "7775A27891771BD7E876CF19"
+            BlueprintIdentifier = "14060F1C2271F3047099EB52"
             BuildableName = "WatchMyCalories.app"
             BlueprintName = "WatchMyCalories"
             ReferencedContainer = "container:WatchMyCalories.xcodeproj">
@@ -58,18 +58,7 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C1A2B3D4E5F6A7B800000090"
-               BuildableName = "WatchMyCaloriesTests.xctest"
-               BlueprintName = "WatchMyCaloriesTests"
-               ReferencedContainer = "container:WatchMyCalories.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D3FBE17B616206401CC8C0A9"
+               BlueprintIdentifier = "A58AE37EDC3D8E56868BA191"
                BuildableName = "WatchMyCaloriesUITests.xctest"
                BlueprintName = "WatchMyCaloriesUITests"
                ReferencedContainer = "container:WatchMyCalories.xcodeproj">
@@ -93,7 +82,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "7775A27891771BD7E876CF19"
+            BlueprintIdentifier = "14060F1C2271F3047099EB52"
             BuildableName = "WatchMyCalories.app"
             BlueprintName = "WatchMyCalories"
             ReferencedContainer = "container:WatchMyCalories.xcodeproj">
@@ -110,7 +99,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "7775A27891771BD7E876CF19"
+            BlueprintIdentifier = "14060F1C2271F3047099EB52"
             BuildableName = "WatchMyCalories.app"
             BlueprintName = "WatchMyCalories"
             ReferencedContainer = "container:WatchMyCalories.xcodeproj">

@@ -60,7 +60,14 @@ enum AccessibilityID {
         static let finishButton = "onboarding_finishButton"
         static let calculateGoalButton = "onboarding_calculateGoal"
         static let targetCaloriesField = "onboarding_targetCalories"
-        static let enableHealthButton = "onboarding_enableHealth"
+        static let connectHealthButton = "onboarding_connectHealth"
+        static let aiConsentToggle = "onboarding_aiConsentToggle"
+    }
+
+    enum Ads {
+        static let banner = "ads_banner"
+        static let native = "ads_native"
+        static let viewResultsButton = "ads_viewResultsButton"
     }
 
     enum EstimationReview {
