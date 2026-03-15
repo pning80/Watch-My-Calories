@@ -5,6 +5,10 @@
 # Detects machine resources, spins up optimal simulator count, distributes
 # test classes via greedy bin-packing, runs UI tests in parallel, and reports results.
 #
+# Simulator reuse: if WMC-ParallelTest-Sim* simulators already exist (e.g., from
+# a previous --keep-simulators run), they are reused instead of cloned fresh.
+# Only missing simulators are cloned; extras are pruned; shutdown ones are booted.
+#
 # Usage:
 #   ./scripts/run-parallel-uitests.sh [options]
 #
@@ -28,9 +32,11 @@ UI_TEST_TARGET="WatchMyCaloriesUITests"
 DERIVED_DATA="$PROJECT_DIR/WatchMyCalories/DerivedData-ParallelTests"
 RESULTS_DIR="$PROJECT_DIR/WatchMyCalories/test-results"
 SIM_NAME_PREFIX="WMC-ParallelTest-Sim"
-MAX_SIMULATORS=6
-RAM_PER_SIM_GB=3
-CORES_PER_SIM=2
+MAX_SIMULATORS=4
+RAM_PER_SIM_GB=4
+CORES_PER_SIM=3
+RESERVED_RAM_GB=4
+RESERVED_CORES=2
 
 # UI test classes ordered by test count (largest first for bin-packing)
 declare -a UI_TEST_CLASSES=(
@@ -106,7 +112,11 @@ CREATED_SIM_UDIDS=()
 
 cleanup() {
     if [[ "$KEEP_SIMULATORS" == true ]]; then
-        warn "Keeping simulators (--keep-simulators). Clean up manually:"
+        if [[ ${#CREATED_SIM_UDIDS[@]} -eq 0 ]]; then
+            return
+        fi
+        warn "Keeping ${#CREATED_SIM_UDIDS[@]} simulator(s) (--keep-simulators)."
+        info "They will be auto-reused on the next run. To clean up manually:"
         for udid in "${CREATED_SIM_UDIDS[@]}"; do
             echo "  xcrun simctl delete $udid"
         done
@@ -124,28 +134,55 @@ cleanup() {
 
 trap cleanup EXIT
 
-# ── Clean up stale simulators from previous interrupted runs ─────────────────
+# ── Discover existing simulators from previous runs ──────────────────────────
 
-cleanup_stale_sims() {
-    local stale_udids
-    stale_udids=$(xcrun simctl list devices -j | python3 -c "
-import json, sys
+# Populated by discover_existing_sims(): parallel arrays of existing sim info
+EXISTING_SIM_NAMES=()
+EXISTING_SIM_UDIDS=()
+EXISTING_SIM_STATES=()
+
+discover_existing_sims() {
+    local sim_data
+    sim_data=$(xcrun simctl list devices -j | python3 -c "
+import json, sys, re
+
 data = json.load(sys.stdin)
+sims = []
+prefix = '$SIM_NAME_PREFIX'
 for runtime, devices in data.get('devices', {}).items():
     for d in devices:
-        if d['name'].startswith('$SIM_NAME_PREFIX'):
-            print(d['udid'])
+        if d['name'].startswith(prefix) and d.get('isAvailable', False):
+            # Extract sim number for sorting
+            suffix = d['name'][len(prefix):]
+            num = int(suffix) if suffix.isdigit() else 999
+            sims.append((num, d['name'], d['udid'], d['state']))
+
+# Sort by sim number for consistent ordering
+sims.sort(key=lambda x: x[0])
+for _, name, udid, state in sims:
+    print(f'{name}\t{udid}\t{state}')
 " 2>/dev/null || true)
 
-    if [[ -n "$stale_udids" ]]; then
-        local count
-        count=$(echo "$stale_udids" | wc -l | tr -d ' ')
-        warn "Found $count stale simulator(s) from previous runs. Cleaning up..."
-        while IFS= read -r udid; do
-            xcrun simctl shutdown "$udid" 2>/dev/null || true
-            xcrun simctl delete "$udid" 2>/dev/null || true
-        done <<< "$stale_udids"
-        success "Stale simulators removed."
+    EXISTING_SIM_NAMES=()
+    EXISTING_SIM_UDIDS=()
+    EXISTING_SIM_STATES=()
+
+    if [[ -n "$sim_data" ]]; then
+        while IFS=$'\t' read -r name udid state; do
+            EXISTING_SIM_NAMES+=("$name")
+            EXISTING_SIM_UDIDS+=("$udid")
+            EXISTING_SIM_STATES+=("$state")
+        done <<< "$sim_data"
+    fi
+
+    local count=${#EXISTING_SIM_NAMES[@]}
+    if [[ $count -gt 0 ]]; then
+        info "Found $count existing simulator(s) from previous runs:"
+        for ((i = 0; i < count; i++)); do
+            echo "    ${EXISTING_SIM_NAMES[$i]} (${EXISTING_SIM_UDIDS[$i]}) — ${EXISTING_SIM_STATES[$i]}"
+        done
+    else
+        info "No existing simulators found — will clone fresh."
     fi
 }
 
@@ -158,8 +195,14 @@ detect_resources() {
     ram_bytes=$(sysctl -n hw.memsize)
     ram_gb=$((ram_bytes / 1073741824))
 
-    max_by_cores=$((cpu_cores / CORES_PER_SIM))
-    max_by_ram=$((ram_gb / RAM_PER_SIM_GB))
+    # Reserve resources for macOS, Xcode, and background processes
+    local avail_cores=$((cpu_cores - RESERVED_CORES))
+    local avail_ram=$((ram_gb - RESERVED_RAM_GB))
+    [[ $avail_cores -lt 1 ]] && avail_cores=1
+    [[ $avail_ram -lt 1 ]] && avail_ram=1
+
+    max_by_cores=$((avail_cores / CORES_PER_SIM))
+    max_by_ram=$((avail_ram / RAM_PER_SIM_GB))
     num_classes=${#UI_TEST_CLASSES[@]}
 
     # Take the minimum of all caps
@@ -170,6 +213,7 @@ detect_resources() {
     [[ $optimal -lt 1 ]] && optimal=1
 
     info "Machine: ${cpu_cores} CPU cores, ${ram_gb} GB RAM"
+    info "Available: ${avail_cores} cores, ${avail_ram} GB RAM (after OS reserve)"
     info "Limits: ${max_by_cores} (by cores), ${max_by_ram} (by RAM), ${MAX_SIMULATORS} (cap), ${num_classes} (classes)"
 
     if [[ -n "$OVERRIDE_SIM_COUNT" ]]; then
@@ -317,6 +361,7 @@ build_for_testing() {
     # Determine destination from base simulator
     local destination="platform=iOS Simulator,id=$BASE_SIM_UDID"
 
+    set +e
     xcodebuild build-for-testing \
         -project "$XCODE_PROJECT" \
         -scheme "$SCHEME" \
@@ -329,44 +374,103 @@ build_for_testing() {
                 echo "  $line"
             fi
         done
+    local build_exit=${PIPESTATUS[0]}
+    set -e
 
-    if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+    if [[ $build_exit -ne 0 ]]; then
         error "Build failed. See output above."
         exit 1
     fi
     success "Build succeeded."
 }
 
-# ── Clone & boot simulators ─────────────────────────────────────────────────
+# ── Provision simulators (reuse existing, clone missing, prune extras) ──────
 
-create_simulators() {
-    header "Creating Simulators"
+provision_simulators() {
+    header "Provisioning Simulators"
+
+    local existing_count=${#EXISTING_SIM_NAMES[@]}
+    local reuse_count=$existing_count
+    [[ $reuse_count -gt $SIM_COUNT ]] && reuse_count=$SIM_COUNT
 
     SIM_UDIDS=()
+    local needs_boot=()
 
-    for ((i = 0; i < SIM_COUNT; i++)); do
-        local sim_name="${SIM_NAME_PREFIX}$((i+1))"
-        info "Cloning: $sim_name from $BASE_SIM_NAME..."
-        local udid
-        udid=$(xcrun simctl clone "$BASE_SIM_UDID" "$sim_name")
-        SIM_UDIDS[$i]="$udid"
-        CREATED_SIM_UDIDS+=("$udid")
-        success "Created $sim_name ($udid)"
+    # Phase 1: Reuse existing sims (up to SIM_COUNT)
+    for ((i = 0; i < reuse_count; i++)); do
+        SIM_UDIDS[$i]="${EXISTING_SIM_UDIDS[$i]}"
+        CREATED_SIM_UDIDS+=("${EXISTING_SIM_UDIDS[$i]}")
+        success "Reusing ${EXISTING_SIM_NAMES[$i]} (${EXISTING_SIM_UDIDS[$i]})"
+        if [[ "${EXISTING_SIM_STATES[$i]}" != "Booted" ]]; then
+            needs_boot+=("${EXISTING_SIM_UDIDS[$i]}")
+        fi
     done
 
-    # Boot all simulators in parallel
-    info "Booting ${SIM_COUNT} simulator(s)..."
-    for ((i = 0; i < SIM_COUNT; i++)); do
-        xcrun simctl boot "${SIM_UDIDS[$i]}" 2>/dev/null &
-    done
-    wait
+    # Phase 2: Prune excess sims
+    if [[ $existing_count -gt $SIM_COUNT ]]; then
+        local excess=$((existing_count - SIM_COUNT))
+        warn "Pruning $excess excess simulator(s)..."
+        for ((i = SIM_COUNT; i < existing_count; i++)); do
+            xcrun simctl shutdown "${EXISTING_SIM_UDIDS[$i]}" 2>/dev/null || true
+            xcrun simctl delete "${EXISTING_SIM_UDIDS[$i]}" 2>/dev/null || true
+            info "Deleted ${EXISTING_SIM_NAMES[$i]}"
+        done
+    fi
 
-    # Wait for all to finish booting
-    for ((i = 0; i < SIM_COUNT; i++)); do
-        xcrun simctl bootstatus "${SIM_UDIDS[$i]}" -b 2>/dev/null || true
-    done
+    # Phase 3: Clone missing sims
+    if [[ $reuse_count -lt $SIM_COUNT ]]; then
+        local clone_count=$((SIM_COUNT - reuse_count))
+        info "Cloning $clone_count new simulator(s)..."
 
-    success "All simulators booted."
+        # Query all existing sim names once for collision checks
+        local all_sim_names
+        all_sim_names=$(xcrun simctl list devices -j | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for runtime, devices in data.get('devices', {}).items():
+    for d in devices:
+        print(d['name'])
+" 2>/dev/null || true)
+
+        # Find the next available sim number (avoid collisions with existing names)
+        for ((i = reuse_count; i < SIM_COUNT; i++)); do
+            # Find a sim number that doesn't collide with any existing sim
+            local sim_num=$((i + 1))
+            local sim_name="${SIM_NAME_PREFIX}${sim_num}"
+
+            # Check for name collision and increment if needed
+            while echo "$all_sim_names" | grep -qx "$sim_name"; do
+                sim_num=$((sim_num + 1))
+                sim_name="${SIM_NAME_PREFIX}${sim_num}"
+            done
+
+            info "Cloning: $sim_name from $BASE_SIM_NAME..."
+            local udid
+            udid=$(xcrun simctl clone "$BASE_SIM_UDID" "$sim_name")
+            all_sim_names="${all_sim_names}"$'\n'"${sim_name}"
+            SIM_UDIDS[$i]="$udid"
+            CREATED_SIM_UDIDS+=("$udid")
+            needs_boot+=("$udid")
+            success "Created $sim_name ($udid)"
+        done
+    fi
+
+    # Phase 4: Boot sims that aren't already booted (in parallel)
+    if [[ ${#needs_boot[@]} -gt 0 ]]; then
+        info "Booting ${#needs_boot[@]} simulator(s)..."
+        for udid in "${needs_boot[@]}"; do
+            xcrun simctl boot "$udid" 2>/dev/null &
+        done
+        wait
+
+        # Wait for all to finish booting
+        for udid in "${needs_boot[@]}"; do
+            xcrun simctl bootstatus "$udid" -b 2>/dev/null || true
+        done
+        success "All simulators booted."
+    else
+        success "All ${SIM_COUNT} simulator(s) already booted — no boot needed."
+    fi
 }
 
 # ── Run unit tests ───────────────────────────────────────────────────────────
@@ -427,7 +531,7 @@ run_ui_tests_parallel() {
     mkdir -p "$RESULTS_DIR"
 
     declare -a PIDS=()
-    declare -a SIM_EXIT_CODES=()
+    SIM_EXIT_CODES=()
 
     for ((i = 0; i < SIM_COUNT; i++)); do
         local sim_num=$((i+1))
@@ -487,8 +591,8 @@ report_results() {
         local unit_log="$RESULTS_DIR/unit-tests.log"
         if [[ -f "$unit_log" ]]; then
             local unit_passed unit_failed
-            unit_passed=$(grep -c "Test Case.*passed" "$unit_log" 2>/dev/null || echo "0")
-            unit_failed=$(grep -c "Test Case.*failed" "$unit_log" 2>/dev/null || echo "0")
+            unit_passed=$(grep -c "Test Case.*passed" "$unit_log" 2>/dev/null || true)
+            unit_failed=$(grep -c "Test Case.*failed" "$unit_log" 2>/dev/null || true)
             if [[ $unit_failed -gt 0 ]]; then
                 echo -e "  ${RED}✗${NC} Unit Tests: ${unit_passed} passed, ${unit_failed} failed"
                 overall_pass=false
@@ -506,8 +610,8 @@ report_results() {
         local classes="${SIM_CLASSES[$i]}"
 
         local passed failed
-        passed=$(grep -c "Test Case.*passed" "$log_file" 2>/dev/null || echo "0")
-        failed=$(grep -c "Test Case.*failed" "$log_file" 2>/dev/null || echo "0")
+        passed=$(grep -c "Test Case.*passed" "$log_file" 2>/dev/null || true)
+        failed=$(grep -c "Test Case.*failed" "$log_file" 2>/dev/null || true)
 
         if [[ $exit_code -eq 0 ]]; then
             echo -e "  ${GREEN}✓${NC} Sim $sim_num [$classes]: ${passed} passed"
@@ -544,6 +648,22 @@ dry_run_output() {
     echo "  Keep sims:     $KEEP_SIMULATORS"
     echo ""
 
+    # Show reuse plan
+    local existing_count=${#EXISTING_SIM_NAMES[@]}
+    local reuse_count=$existing_count
+    [[ $reuse_count -gt $SIM_COUNT ]] && reuse_count=$SIM_COUNT
+    local clone_count=0
+    [[ $reuse_count -lt $SIM_COUNT ]] && clone_count=$((SIM_COUNT - reuse_count))
+    local prune_count=0
+    [[ $existing_count -gt $SIM_COUNT ]] && prune_count=$((existing_count - SIM_COUNT))
+
+    if [[ $existing_count -gt 0 ]]; then
+        info "Simulator plan: reuse $reuse_count, clone $clone_count, prune $prune_count (of $existing_count existing)"
+    else
+        info "Simulator plan: clone $SIM_COUNT (no existing simulators)"
+    fi
+    echo ""
+
     distribute_tests
 
     if [[ "$SKIP_UNIT_TESTS" != true ]]; then
@@ -573,9 +693,9 @@ dry_run_output() {
 main() {
     header "Parallel iOS Simulator XCUI Test Runner"
 
-    cleanup_stale_sims
     detect_resources
     find_base_simulator
+    discover_existing_sims
 
     if [[ "$DRY_RUN" == true ]]; then
         dry_run_output
@@ -584,7 +704,7 @@ main() {
 
     distribute_tests
     build_for_testing
-    create_simulators
+    provision_simulators
 
     local overall_exit=0
 
