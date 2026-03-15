@@ -137,14 +137,6 @@ final class OnboardingTests: XCTestCase {
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Google Gemini")).firstMatch.exists)
     }
 
-    func testPermissionsStepShowsAdSection() {
-        app.launch()
-        navigateToStep(1)
-
-        XCTAssertTrue(app.staticTexts["Your Privacy"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Allow Ad Tracking"].exists)
-    }
-
     func testPermissionsStepShowsHealthButton() {
         app.launch()
         navigateToStep(1)

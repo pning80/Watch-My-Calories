@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import AppTrackingTransparency
 
 struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
@@ -8,7 +7,6 @@ struct OnboardingView: View {
 
     @State private var currentStep = 0
     @State private var isFinishing = false
-    @State private var adTrackingEnabled = false
     @State private var healthRequested = false
     @StateObject private var healthKitManager = HealthKitManager()
 
@@ -237,32 +235,6 @@ struct OnboardingView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                if !AdManager.isUITestingMode {
-                    Section {
-                        Toggle("Allow Ad Tracking", isOn: $adTrackingEnabled)
-                            .tint(Color.cwPrimary)
-                            .onChange(of: adTrackingEnabled) { _, newValue in
-                                if newValue {
-                                    Task {
-                                        await AdManager.shared.requestATTPermission()
-                                        let status = ATTrackingManager.trackingAuthorizationStatus
-                                        adTrackingEnabled = (status == .authorized)
-                                        AdManager.shared.userAllowedAds = adTrackingEnabled
-                                        if adTrackingEnabled {
-                                            await AdManager.shared.gatherConsent()
-                                        }
-                                    }
-                                } else {
-                                    AdManager.shared.userAllowedAds = false
-                                }
-                            }
-
-                        Text("This app is free and supported by ads. Allowing tracking helps show relevant ads and keeps the app free.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
                 Section {
                     Button {
                         healthKitManager.requestAuthorization()
@@ -368,10 +340,8 @@ struct OnboardingView: View {
 
         store.save()
 
-        // Trigger ATT + UMP before completing onboarding
-        if !AdManager.isUITestingMode && AdManager.shared.userAllowedAds {
-            await AdManager.shared.requestATTPermission()
-            await AdManager.shared.gatherConsent()
+        if !AdManager.isUITestingMode {
+            await AdManager.shared.enableAds()
         }
 
         store.completeOnboarding()
