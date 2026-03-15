@@ -1,4 +1,6 @@
-# App Store Connect Setup — Watch My Calories
+# App Store Connect Initial Setup — Watch My Calories
+
+**Date: 2026-03-08**
 
 All the content you need to fill in App Store Connect for your first submission.
 
