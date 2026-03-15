@@ -33,6 +33,8 @@ private struct BannerAdRepresentable: UIViewRepresentable {
         let bannerView = BannerView()
         bannerView.adUnitID = AdManager.bannerAdUnitID
         bannerView.delegate = context.coordinator
+        bannerView.setContentHuggingPriority(.defaultLow, for: .vertical)
+        bannerView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
 
         DispatchQueue.main.async {
             if let windowScene = UIApplication.shared.connectedScenes
@@ -51,6 +53,10 @@ private struct BannerAdRepresentable: UIViewRepresentable {
 
     func updateUIView(_ uiView: BannerView, context: Context) {}
 
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: BannerView, context: Context) -> CGSize? {
+        return CGSize(width: proposal.width ?? UIScreen.main.bounds.width, height: adHeight)
+    }
+
     class Coordinator: NSObject, BannerViewDelegate {
         let parent: BannerAdRepresentable
 
@@ -60,9 +66,7 @@ private struct BannerAdRepresentable: UIViewRepresentable {
 
         func bannerViewDidReceiveAd(_ bannerView: BannerView) {
             let height = min(bannerView.adSize.size.height, 90)
-            withAnimation {
-                parent.adHeight = height
-            }
+            parent.adHeight = height
         }
 
         func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {

@@ -2,9 +2,11 @@ import SwiftUI
 import SwiftData
 
 struct HistoryView: View {
+    @Binding var selectedTab: ContentView.Tab
+
     // Changed order to .forward so items inside the day card are chronological
     @Query(sort: \FoodEntry.timestamp, order: .forward) private var foodEntries: [FoodEntry]
-    
+
     @State private var selectedImage: UIImage?
     @State private var entryToEdit: FoodEntry?
     @State private var entryToView: FoodEntry?
@@ -42,9 +44,14 @@ struct HistoryView: View {
                         BannerAdView()
 
                         if sortedDates.isEmpty {
-                            EmptyStateCard()
-                                .padding(.top, 40)
-                                .accessibilityIdentifier(AccessibilityID.History.emptyState)
+                            Button {
+                                selectedTab = .camera
+                            } label: {
+                                EmptyStateCard()
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.top, 40)
+                            .accessibilityIdentifier(AccessibilityID.History.emptyState)
                         } else {
                             ForEach(sortedDates, id: \.self) { date in
                                 HistoryDayCard(date: date, entries: groupedEntries[date] ?? [], onImageTap: { image in

@@ -50,17 +50,16 @@ final class AppAttestManager {
                 return existing
             }
             let newTask = Task {
-                try await performAttestation()
+                defer {
+                    self.lock.withLock { self.attestationInProgress = nil }
+                }
+                try await self.performAttestation()
             }
             attestationInProgress = newTask
             return newTask
         }
 
         try await task.value
-
-        lock.withLock {
-            attestationInProgress = nil
-        }
     }
 
     /// Generates assertion headers for the given request body.
@@ -72,12 +71,28 @@ final class AppAttestManager {
 
         let clientDataHash = Data(SHA256.hash(data: body))
         let service = DCAppAttestService.shared
-        let assertion = try await service.generateAssertion(keyID, clientDataHash: clientDataHash)
 
-        return [
-            "X-App-Attest-Assertion": assertion.base64EncodedString(),
-            "X-App-Attest-Key-ID": keyID
-        ]
+        do {
+            let assertion = try await service.generateAssertion(keyID, clientDataHash: clientDataHash)
+            return [
+                "X-App-Attest-Assertion": assertion.base64EncodedString(),
+                "X-App-Attest-Key-ID": keyID
+            ]
+        } catch {
+            // Key may be gone from the Secure Enclave (app reinstall, device restore)
+            // while keychain still says "attested" — clear state and re-attest
+            handleAttestationRejected()
+            try await ensureAttested()
+
+            guard let newKeyID = loadKeyID(), isAttested() else {
+                return [:]
+            }
+            let newAssertion = try await service.generateAssertion(newKeyID, clientDataHash: clientDataHash)
+            return [
+                "X-App-Attest-Assertion": newAssertion.base64EncodedString(),
+                "X-App-Attest-Key-ID": newKeyID
+            ]
+        }
     }
 
     /// Clears local attestation state, forcing re-attestation on next call.
@@ -93,8 +108,9 @@ final class AppAttestManager {
         let service = DCAppAttestService.shared
 
         // Step 1: Generate a new key (or reuse existing un-attested key)
-        let keyID: String
-        if let existingKeyID = loadKeyID(), !isAttested() {
+        var keyID: String
+        let existingKeyID = loadKeyID()
+        if let existingKeyID, !isAttested() {
             keyID = existingKeyID
         } else {
             keyID = try await service.generateKey()
@@ -102,17 +118,28 @@ final class AppAttestManager {
         }
 
         // Step 2: Fetch a one-time challenge from the backend
-        let challenge = try await fetchChallenge()
+        var challenge = try await fetchChallenge()
 
         // Step 3: Attest the key with Apple
-        let challengeHash = Data(SHA256.hash(data: Data(challenge.utf8)))
+        var challengeHash = Data(SHA256.hash(data: Data(challenge.utf8)))
         let attestation: Data
         do {
             attestation = try await service.attestKey(keyID, clientDataHash: challengeHash)
         } catch {
-            // Key may be permanently invalid (e.g. already attested) — clear it so next retry generates a fresh key
+            // Key may be permanently invalid (e.g. already attested) — clear it
             deleteKeychainItem(account: keychainKeyIDAccount)
-            throw error
+
+            if existingKeyID != nil {
+                // Stale key — generate a fresh one and retry once
+                let freshKeyID = try await service.generateKey()
+                saveKeyID(freshKeyID)
+                challenge = try await fetchChallenge()
+                challengeHash = Data(SHA256.hash(data: Data(challenge.utf8)))
+                attestation = try await service.attestKey(freshKeyID, clientDataHash: challengeHash)
+                keyID = freshKeyID
+            } else {
+                throw error
+            }
         }
 
         // Step 4: Register the attested key with the backend
