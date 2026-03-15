@@ -68,6 +68,7 @@ enum AccessibilityID {
         static let banner = "ads_banner"
         static let native = "ads_native"
         static let viewResultsButton = "ads_viewResultsButton"
+        static let enableAdsPromo = "ads_enableAdsPromo"
     }
 
     enum EstimationReview {

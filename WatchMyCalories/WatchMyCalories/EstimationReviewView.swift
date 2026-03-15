@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AppTrackingTransparency
 
 struct EstimationReviewView: View {
     @EnvironmentObject private var env: AppEnvironment
@@ -65,6 +66,30 @@ struct EstimationReviewView: View {
                             )
                             .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
                             .padding(.horizontal)
+                    } else if !AdManager.isUITestingMode && !AdManager.shared.userAllowedAds {
+                        EnableAdsPromoCard(
+                            onEnableAds: {
+                                Task {
+                                    let currentStatus = ATTrackingManager.trackingAuthorizationStatus
+                                    if currentStatus == .denied {
+                                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                                            await UIApplication.shared.open(url)
+                                        }
+                                        return
+                                    }
+                                    await AdManager.shared.requestATTPermission()
+                                    let status = ATTrackingManager.trackingAuthorizationStatus
+                                    if status == .authorized {
+                                        AdManager.shared.userAllowedAds = true
+                                    }
+                                    await AdManager.shared.gatherConsent()
+                                    if AdManager.shared.canRequestAds {
+                                        adLoader.loadAd()
+                                    }
+                                }
+                            }
+                        )
+                        .padding(.horizontal)
                     }
 
                     Spacer()
@@ -313,7 +338,7 @@ struct EstimationReviewView: View {
             ImageStorage.shared.save(firstImageData, id: id)
             savedImageID = id
         }
-        
+
         for item in result.items {
             let entry = FoodEntry(
                 name: item.name,
@@ -328,6 +353,54 @@ struct EstimationReviewView: View {
             )
             modelContext.insert(entry)
         }
+    }
+}
+
+private struct EnableAdsPromoCard: View {
+    let onEnableAds: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Gradient accent bar
+            LinearGradient(
+                colors: [Color.cwPrimary, Color.cwAccent],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(height: 4)
+
+            VStack(spacing: 16) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 36))
+                    .foregroundStyle(Color.cwAccent)
+                    .padding(.top, 4)
+
+                Text("Keep Watch My Calories Free")
+                    .font(.system(.headline, design: .serif, weight: .bold))
+                    .foregroundStyle(Color.cwTextPrimary)
+                    .multilineTextAlignment(.center)
+
+                Text("This app is free — no subscriptions, no paywalls. Ads make that possible. Enable them to support continued development.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+
+                Button(action: onEnableAds) {
+                    Text("Keep It Free")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.cwPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+            }
+            .padding()
+        }
+        .background(Color.cwSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        .accessibilityIdentifier(AccessibilityID.Ads.enableAdsPromo)
     }
 }
 

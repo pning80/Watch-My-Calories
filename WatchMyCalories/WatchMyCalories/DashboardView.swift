@@ -202,6 +202,14 @@ struct DashboardView: View {
 
                     Button {
                         Task {
+                            let currentStatus = ATTrackingManager.trackingAuthorizationStatus
+                            if currentStatus == .denied {
+                                if let url = URL(string: UIApplication.openSettingsURLString) {
+                                    await UIApplication.shared.open(url)
+                                }
+                                showAdReminder = false
+                                return
+                            }
                             await AdManager.shared.requestATTPermission()
                             let status = ATTrackingManager.trackingAuthorizationStatus
                             if status == .authorized {
