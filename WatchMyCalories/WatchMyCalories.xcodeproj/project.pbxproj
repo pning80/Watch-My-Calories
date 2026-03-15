@@ -136,6 +136,7 @@
 		F5D81795BAB36159973B2C41 /* BackendConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendConfig.swift; sourceTree = "<group>"; };
 		F790BA5108CE14854D3685A8 /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
 		FB3FC6E262A5412FD9C22B75 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		B4AD1F8E2C3D5A9E7F0B6C12 /* AdMob-iOS.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = "AdMob-iOS.xcconfig"; path = "../Ads/AdMob-iOS.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -153,6 +154,7 @@
 		21A85D665188C64385E5AE39 = {
 			isa = PBXGroup;
 			children = (
+				B4AD1F8E2C3D5A9E7F0B6C12 /* AdMob-iOS.xcconfig */,
 				7379CDA5384B21623141D9A8 /* ImageStorage.swift */,
 				FF3EB9F37659BC63D850AB60 /* WatchMyCalories */,
 				F1F0F93C7BB00443B0A98B67 /* WatchMyCaloriesTests */,
@@ -472,7 +474,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pning80.WatchMyCalories.Tests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WatchMyCalories.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WatchMyCalories";
 				TEST_TARGET_NAME = WatchMyCalories;
 			};
@@ -480,6 +482,7 @@
 		};
 		31FAAA4FEBF5DCB72308BF46 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B4AD1F8E2C3D5A9E7F0B6C12 /* AdMob-iOS.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -491,6 +494,7 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to the camera to scan your meals.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need access to your active energy data to adjust your daily calorie goals.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app does not write data to Apple Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -501,7 +505,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pning80.WatchMyCalories;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -517,7 +521,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pning80.WatchMyCalories.UITests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_TARGET_NAME = WatchMyCalories;
 			};
 			name = Debug;
@@ -534,7 +538,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pning80.WatchMyCalories.Tests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WatchMyCalories.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WatchMyCalories";
 				TEST_TARGET_NAME = WatchMyCalories;
 			};
@@ -575,7 +579,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = G63KVDL36L;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -603,6 +607,7 @@
 		};
 		A092AD36F1108A8A7E375AB6 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B4AD1F8E2C3D5A9E7F0B6C12 /* AdMob-iOS.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -614,6 +619,7 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to the camera to scan your meals.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need access to your active energy data to adjust your daily calorie goals.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app does not write data to Apple Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -624,7 +630,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pning80.WatchMyCalories;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -663,7 +669,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = G63KVDL36L;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -708,7 +714,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pning80.WatchMyCalories.UITests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_TARGET_NAME = WatchMyCalories;
 			};
 			name = Release;
