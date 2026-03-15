@@ -59,7 +59,7 @@ Answer **None** / **No** to all questions:
 > - Personalized Goals — Set your profile (height, weight, age, activity level) and the app calculates a recommended daily calorie target using the Mifflin-St Jeor formula.
 > - Meal History — Browse all past entries organized by date and meal type. View, edit, or delete individual items or entire meal groups.
 > - Manual Entry — Prefer to log food yourself? Add entries manually with full control over name, calories, and macros.
-> - Privacy First — All your data stays on your device. No accounts, no sign-ups, no analytics. Food photos are sent to Google Gemini solely for analysis and are not stored.
+> - Privacy First — All your food and health data stays on your device. No accounts, no sign-ups. Food photos are sent to Google Gemini solely for analysis and are not stored. The app is supported by ads served via Google AdMob.
 >
 > Watch My Calories is designed for anyone who wants a simple, private, and intelligent way to stay on top of their nutrition.
 
@@ -79,7 +79,11 @@ calorie,tracker,food,AI,nutrition,macro,health,diet,meal,camera,fitness,weight,p
 
 ### What's New in This Version
 
-> Initial release of Watch My Calories — AI-powered calorie tracking with camera-based food recognition, HealthKit integration, and on-device data storage.
+> - Enhanced security with Apple App Attest for secure backend communication
+> - Improved camera experience with faster startup and better image framing
+> - Smoother onboarding flow with keyboard handling fixes
+> - Added non-intrusive banner and native ads to support continued development
+> - Various bug fixes and stability improvements
 
 ### Support URL
 
@@ -202,6 +206,42 @@ App Store Connect requires you to disclose all data your app collects. Fill in a
 
 *Note: User-entered profile data used for BMR/calorie goal calculation. Stored only on-device.*
 
+#### 4. Device ID (collected by Google AdMob SDK)
+
+| Field | Value |
+|-------|-------|
+| **Data Type** | Identifiers — Device ID |
+| **Collection** | Yes |
+| **Usage Purpose** | Third-Party Advertising |
+| **Linked to User's Identity** | No |
+| **Used for Tracking** | No |
+
+*Note: Google AdMob may collect device identifiers for ad serving and measurement. This data is handled by Google's SDK and is not accessed by the app itself.*
+
+#### 5. Advertising Data (collected by Google AdMob SDK)
+
+| Field | Value |
+|-------|-------|
+| **Data Type** | Usage Data — Advertising Data |
+| **Collection** | Yes |
+| **Usage Purpose** | Third-Party Advertising |
+| **Linked to User's Identity** | No |
+| **Used for Tracking** | No |
+
+*Note: Ad interaction data (impressions, taps) collected by the AdMob SDK for ad performance measurement.*
+
+#### 6. Diagnostics (collected by Google AdMob SDK)
+
+| Field | Value |
+|-------|-------|
+| **Data Type** | Diagnostics — Performance Data |
+| **Collection** | Yes |
+| **Usage Purpose** | Third-Party Advertising |
+| **Linked to User's Identity** | No |
+| **Used for Tracking** | No |
+
+*Note: The AdMob SDK may collect performance and crash diagnostics related to ad rendering.*
+
 ### Data NOT Collected
 
 Confirm that the following are **not collected**:
@@ -210,11 +250,9 @@ Confirm that the following are **not collected**:
 - Location
 - Contacts
 - User Content (other than photos)
-- Identifiers (user ID, device ID)
+- Identifiers (user ID) — *Device ID is collected by AdMob; see above*
 - Browsing History
 - Search History
-- Diagnostics (crash logs, performance data)
-- Usage Data
 - Purchases
 - Financial Info
 - Sensitive Info
