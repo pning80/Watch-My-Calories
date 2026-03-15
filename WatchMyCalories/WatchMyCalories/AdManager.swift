@@ -1,7 +1,6 @@
 import Foundation
 import GoogleMobileAds
 import UserMessagingPlatform
-import AppTrackingTransparency
 
 final class AdManager: ObservableObject {
     static let shared = AdManager()
@@ -10,33 +9,6 @@ final class AdManager: ObservableObject {
 
     static var isUITestingMode: Bool {
         WatchMyCaloriesApp.isUITesting
-    }
-
-    private static let userAllowedAdsKey = "userAllowedAds"
-    private static let adReminderDismissedDateKey = "adReminderDismissedDate"
-
-    /// Date the user last dismissed the ad tracking reminder.
-    var adReminderDismissedDate: Date? {
-        get { UserDefaults.standard.object(forKey: Self.adReminderDismissedDateKey) as? Date }
-        set { UserDefaults.standard.set(newValue, forKey: Self.adReminderDismissedDateKey) }
-    }
-
-    /// Whether the ad tracking reminder should be shown.
-    /// True when: ads not disabled, user hasn't allowed ads, and 7+ days since last dismissal.
-    var shouldShowAdReminder: Bool {
-        guard !Self.isUITestingMode else { return false }
-        guard !userAllowedAds else { return false }
-        if let lastDismissed = adReminderDismissedDate {
-            return Date().timeIntervalSince(lastDismissed) > 24 * 60 * 60
-        }
-        return true
-    }
-
-    /// Whether the user explicitly allowed ads (persisted across launches).
-    /// Defaults to `false` — ads are opt-in.
-    var userAllowedAds: Bool {
-        get { UserDefaults.standard.bool(forKey: Self.userAllowedAdsKey) }
-        set { UserDefaults.standard.set(newValue, forKey: Self.userAllowedAdsKey) }
     }
 
     // MARK: - Ad Unit IDs
@@ -53,22 +25,10 @@ final class AdManager: ObservableObject {
         guard !Self.isUITestingMode else { return }
     }
 
-    // MARK: - ATT
-
-    func requestATTPermission() async {
-        guard !Self.isUITestingMode else { return }
-        await withCheckedContinuation { continuation in
-            ATTrackingManager.requestTrackingAuthorization { _ in
-                continuation.resume()
-            }
-        }
-    }
-
     // MARK: - UMP Consent
 
     func gatherConsent() async {
         guard !Self.isUITestingMode else { return }
-        guard userAllowedAds else { return }
 
         let params = RequestParameters()
         params.isTaggedForUnderAgeOfConsent = false
@@ -104,6 +64,14 @@ final class AdManager: ObservableObject {
         if canRequest {
             startSDK()
         }
+    }
+
+    // MARK: - Enable Ads
+
+    /// Gathers UMP consent and starts the SDK (non-personalized ads only).
+    func enableAds() async {
+        guard !Self.isUITestingMode else { return }
+        await gatherConsent()
     }
 
     // MARK: - SDK Start

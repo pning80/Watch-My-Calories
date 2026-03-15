@@ -72,9 +72,7 @@ struct WatchMyCaloriesApp: App {
                 .task {
                     guard !Self.isUITesting else { return }
                     guard store.hasCompletedOnboarding else { return }
-                    guard AdManager.shared.userAllowedAds else { return }
-                    await AdManager.shared.requestATTPermission()
-                    await AdManager.shared.gatherConsent()
+                    await AdManager.shared.enableAds()
                 }
                 .onAppear {
                     if Self.shouldSeedData {

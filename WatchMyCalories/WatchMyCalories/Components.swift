@@ -1215,21 +1215,21 @@ struct AIConsentSheet: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Spacer()
-
             Image(systemName: "photo.badge.arrow.up")
                 .font(.system(size: 48))
                 .foregroundStyle(Color.cwPrimary)
+                .padding(.top, 32)
 
             Text("AI Food Analysis")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundStyle(Color.cwTextPrimary)
 
-            Text("Your food photos are sent to Google Gemini, a third-party AI service by Google, for calorie estimation. Photos are not stored permanently.")
+            Text("Your food photos are sent to Google Gemini, a third-party AI service by Google, for calorie estimation. Photos are processed in transit and are not stored by any external service.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal)
 
             Text("You can change this in Settings.")
