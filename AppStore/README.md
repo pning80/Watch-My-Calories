@@ -12,10 +12,10 @@ AppStore/
 │   └── Screenshots/     # App Store screenshots
 ├── V1.2.0/              # Version 1.2.0 (2026-03-15)
 │   ├── Set-Up.md        # App Store Connect update guide
-│   ├── PrivacyPolicy.md # Updated privacy policy
 │   ├── AppIcon.png      # App icon (1024×1024)
 │   └── Screenshots/     # App Store screenshots
 ├── README.md            # This file
+├── PrivacyPolicy.md     # Privacy policy (shared)
 ├── Support.md           # Support page content (shared)
 └── FoodPhoto.HEIC       # Demo food photo (shared)
 ```

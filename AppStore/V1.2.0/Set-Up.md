@@ -85,7 +85,7 @@ No changes needed — the v1.0.0 setup already declared all AdMob-related data t
 
 > https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb
 
-*(Unchanged — but remember to update the Gist content with the fixes made to `AppStore/V1.2.0/PrivacyPolicy.md` before submission.)*
+*(Unchanged. The Gist has already been updated with the corrected privacy policy.)*
 
 ---
 
@@ -99,18 +99,18 @@ Paste this into the **Notes for Review** field:
 >
 > **HealthKit access:** The app requests permission to read Active Energy Burned from Apple Health. This is optional — the app works without it, but the daily calorie goal adjusts based on activity data when granted.
 >
-> **Ads:** The app displays banner and native ads via Google AdMob. On first launch, a consent sheet is presented using Google's User Messaging Platform (UMP) in compliance with GDPR/consent regulations. No App Tracking Transparency prompt is shown — the app does not use the ATT framework.
+> **Ads:** The app displays banner and native ads via Google AdMob. Where required by regional regulations (e.g., GDPR), a consent form is presented using Google's User Messaging Platform (UMP). Users in those regions can later change their privacy choices from Settings → Privacy → "Manage Privacy Choices." No App Tracking Transparency prompt is shown — the app does not use the ATT framework.
 >
 > **Network dependency:** Food analysis requires an internet connection. The app sends food photos to a backend service that uses Google Gemini AI for nutritional analysis. The backend verifies the app's identity using Apple App Attest. If the device is offline, analysis will fail with an error message.
 >
 > **Demo flow:**
-> 1. Open the app → Complete 4-step onboarding (Welcome → Profile → Goals → Permissions) → Consent sheet appears for ad personalization
+> 1. Open the app → Complete 3-step onboarding (Welcome → Your Privacy → Your Goal) → UMP consent form may appear (region-dependent)
 > 2. Dashboard tab shows daily summary with a banner ad
 > 3. Tap the Camera tab → grant camera permission → take a photo of food → tap "Use Photo"
 > 4. The app automatically analyzes the photo and displays estimated food items, calories, and macros → tap "Done" to save
 > 5. Return to Dashboard to see the logged entry
 > 6. Tap History tab to view past entries
-> 7. Tap Settings tab to see profile data, calorie goal, and App Attestation status
+> 7. Tap Settings tab to see profile data, calorie goal, Device Attestation status, and "Manage Privacy Choices" (visible in GDPR regions)
 
 ### Review Contact Information
 
@@ -151,7 +151,7 @@ No changes — remains Free, all territories.
 
 ### Must Do (Blockers)
 
-- [ ] **Update Privacy Policy Gist** — Push the fixes from `AppStore/V1.2.0/PrivacyPolicy.md` to the live Gist before submission.
+- [x] **Update Privacy Policy Gist** — Push the fixes from `AppStore/PrivacyPolicy.md` to the live Gist before submission.
 - [ ] **Update Content Rights** — Change to **Yes** (third-party ad content via AdMob). See Section 1.
 - [ ] **Verify Age Rating** — Confirm still 4+ after Content Rights change. See Section 1.
 - [ ] **New Screenshots** — Capture updated screenshots showing ads and new UI. See Section 3.
