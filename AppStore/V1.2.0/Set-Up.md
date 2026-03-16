@@ -310,14 +310,14 @@ Complete these items before clicking **Submit for Review**:
 - [x] **App Icon** — 1024x1024 icon is in the Xcode asset catalog (`AppIcon.png` also copied to `AppStore/`).
 - [x] **Export Compliance** — `ITSAppUsesNonExemptEncryption = NO` added to Xcode project build settings.
 - [x] **NSHealthUpdateUsageDescription** — Required by App Store validation even though the app only reads HealthKit. Added with message: "This app does not write data to Apple Health."
-- [ ] **Update Content Rights** — Set to **Yes** (third-party ad content via AdMob). See Section 1.
-- [ ] **Verify Age Rating** — Confirm 4+ after Content Rights change. See Section 1.
-- [ ] **Fill in Privacy Details** — Complete the App Privacy section. See Section 4.
-- [ ] **Screenshots** — Capture screenshots and upload. See Section 3.
-- [ ] **Upload Build** — Archive and upload via Xcode. See Section 7.
-- [ ] **Select Build** — Choose the uploaded build in App Store Connect.
-- [ ] **App Review Notes** — Paste the reviewer notes. See Section 5.
-- [ ] **Review Contact Info** — Add your name, email, and phone for App Review. See Section 5.
+- [x] **Update Content Rights** — Set to **Yes** (third-party ad content via AdMob). See Section 1.
+- [x] **Verify Age Rating** — Confirm 4+ after Content Rights change. See Section 1.
+- [x] **Fill in Privacy Details** — Complete the App Privacy section. See Section 4.
+- [x] **Screenshots** — Capture screenshots and upload. See Section 3.
+- [x] **Upload Build** — Archive and upload via Xcode. See Section 7.
+- [x] **Select Build** — Choose the uploaded build in App Store Connect.
+- [x] **App Review Notes** — Paste the reviewer notes. See Section 5.
+- [x] **Review Contact Info** — Add your name, email, and phone for App Review. See Section 5.
 
 ### Recommended
 
