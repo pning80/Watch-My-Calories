@@ -1,5 +1,6 @@
-import SwiftUI
 import GoogleMobileAds
+import os
+import SwiftUI
 
 struct BannerAdView: View {
     @ObservedObject private var adManager = AdManager.shared
@@ -58,6 +59,7 @@ private struct BannerAdRepresentable: UIViewRepresentable {
     }
 
     class Coordinator: NSObject, BannerViewDelegate {
+        private let logger = Logger(subsystem: "com.pning80.WatchMyCalories", category: "BannerAd")
         let parent: BannerAdRepresentable
 
         init(parent: BannerAdRepresentable) {
@@ -70,7 +72,7 @@ private struct BannerAdRepresentable: UIViewRepresentable {
         }
 
         func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
-            print("[BannerAd] Failed to load: \(error.localizedDescription)")
+            logger.error("Failed to load: \(error.localizedDescription)")
         }
     }
 }

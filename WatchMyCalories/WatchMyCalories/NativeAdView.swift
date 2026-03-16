@@ -1,9 +1,11 @@
-import SwiftUI
 import GoogleMobileAds
+import os
+import SwiftUI
 
 // MARK: - Native Ad Loader
 
 final class NativeAdLoader: NSObject, ObservableObject, NativeAdLoaderDelegate {
+    private let logger = Logger(subsystem: "com.pning80.WatchMyCalories", category: "NativeAd")
     @Published var nativeAd: NativeAd?
     private var adLoader: AdLoader?
 
@@ -27,7 +29,7 @@ final class NativeAdLoader: NSObject, ObservableObject, NativeAdLoaderDelegate {
     }
 
     func adLoader(_ adLoader: AdLoader, didFailToReceiveAdWithError error: Error) {
-        print("[NativeAd] Failed to load: \(error.localizedDescription)")
+        logger.error("Failed to load: \(error.localizedDescription)")
     }
 }
 
@@ -77,12 +79,17 @@ struct NativeAdContentView: UIViewRepresentable {
         adView.bodyView = bodyLabel
 
         // Call to action
-        let ctaButton = UIButton(type: .system)
-        ctaButton.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
-        ctaButton.setTitleColor(.white, for: .normal)
-        ctaButton.backgroundColor = UIColor(red: 0.18, green: 0.42, blue: 0.31, alpha: 1.0)
-        ctaButton.layer.cornerRadius = 8
-        ctaButton.contentEdgeInsets = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
+        var ctaConfig = UIButton.Configuration.filled()
+        ctaConfig.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+        ctaConfig.baseBackgroundColor = UIColor(red: 0.18, green: 0.42, blue: 0.31, alpha: 1.0)
+        ctaConfig.baseForegroundColor = .white
+        ctaConfig.cornerStyle = .medium
+        ctaConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+            return outgoing
+        }
+        let ctaButton = UIButton(configuration: ctaConfig)
         ctaButton.isUserInteractionEnabled = false
         ctaButton.translatesAutoresizingMaskIntoConstraints = false
         adView.callToActionView = ctaButton

@@ -14,6 +14,7 @@ struct SettingsView: View {
 
     // Use ObservedObject for singletons to avoid lifecycle conflicts
     @ObservedObject private var store = SettingsStore.shared
+    @ObservedObject private var adManager = AdManager.shared
 
     // UI State (Imperial)
     @State private var heightFeet: Int = 5
@@ -273,6 +274,16 @@ struct SettingsView: View {
                     Text("When enabled, food photos are sent to Google Gemini, a third-party AI service by Google, for calorie estimation. All other data stays on-device.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+
+                    if adManager.isPrivacyOptionsRequired {
+                        Button {
+                            Task {
+                                await adManager.presentPrivacyOptionsForm()
+                            }
+                        } label: {
+                            Label("Manage Privacy Choices", systemImage: "hand.raised.circle")
+                        }
+                    }
 
                     Link(destination: URL(string: "https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb")!) {
                         Label("Privacy Policy", systemImage: "hand.raised")
