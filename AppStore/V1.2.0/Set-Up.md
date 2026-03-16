@@ -1,12 +1,23 @@
-# App Store Connect Update — Watch My Calories v1.2.0
+# App Store Connect Initial Setup — Watch My Calories v1.2.0
 
 **Date: 2026-03-15**
 
-This guide covers what needs to change in App Store Connect for the v1.2.0 update. Sections that carry over unchanged from v1.0.0 are noted but not repeated — see [V1.0.0 Set-Up.md](../V1.0.0/Set-Up.md) for the original setup.
+All the content you need to fill in App Store Connect for your first submission.
 
 ---
 
-## 1. App Information Updates
+## 1. App Information
+
+| Field | Value |
+|-------|-------|
+| **App Name** | Watch My Calories |
+| **Subtitle** | Snap, Track, Stay Fit with AI |
+| **Bundle ID** | `com.pning80.WatchMyCalories` |
+| **SKU** | `watch-my-calories-ios-001` |
+| **Primary Category** | Health & Fitness |
+| **Secondary Category** | Food & Drink |
+| **Primary Language** | English (U.S.) |
+| **Copyright** | © 2026 Peng Ning |
 
 ### Content Rights
 
@@ -16,76 +27,198 @@ This guide covers what needs to change in App Store Connect for the v1.2.0 updat
 
 ### Age Rating Questionnaire
 
-No changes to the questionnaire answers (all None/No). However, verify in App Store Connect that the resulting rating is still **4+** after updating Content Rights above. If you configure child-directed ad treatment in AdMob, this remains appropriate.
+Answer **None** / **No** to all questions:
 
-All other App Information fields (Name, Subtitle, Categories, Copyright, Language) are unchanged.
+| Question | Answer |
+|----------|--------|
+| Cartoon or Fantasy Violence | None |
+| Realistic Violence | None |
+| Prolonged Graphic or Sadistic Realistic Violence | None |
+| Profanity or Crude Humor | None |
+| Mature/Suggestive Themes | None |
+| Horror/Fear Themes | None |
+| Medical/Treatment Information | None |
+| Simulated Gambling | None |
+| Unrestricted Web Access | No |
+| Gambling with Real Currency | No |
+
+**Expected Rating**: 4+ (all ages)
 
 ---
 
 ## 2. Version Information
 
-### What's New in This Version
-
-> - Removed App Tracking Transparency — ads now work without the tracking permission prompt
-> - Improved AI consent flow with a cleaner, more informative consent sheet
-> - Faster camera startup and better image framing on the review screen
-> - Enhanced backend security with App Attest resilience and automatic retry
-> - Fixed keyboard dismissal issues during onboarding
-> - Bug fixes and stability improvements
-
 ### App Description
 
-No changes needed — the v1.0.0 description already mentions AdMob and all current features.
+> Track your daily calories effortlessly with AI-powered food recognition. Simply snap a photo of your meal and Watch My Calories instantly identifies each food item, estimates portions, and calculates calories and macronutrients.
+>
+> KEY FEATURES
+>
+> - AI Food Analysis — Snap a photo of your meal. Watch My Calories uses Google Gemini AI to identify foods and estimate calories, protein, carbs, and fat.
+> - Smart Meal Tracking — Entries are automatically categorized as Breakfast, Lunch, Dinner, or Snack based on the time of day.
+> - Daily Dashboard — See your calorie intake at a glance with a visual progress card showing how close you are to your daily goal.
+> - HealthKit Integration — Reads your active energy burned from Apple Health to dynamically adjust your effective calorie target.
+> - Personalized Goals — Set your profile (height, weight, age, activity level) and the app calculates a recommended daily calorie target using the Mifflin-St Jeor formula.
+> - Meal History — Browse all past entries organized by date and meal type. View, edit, or delete individual items or entire meal groups.
+> - Manual Entry — Prefer to log food yourself? Add entries manually with full control over name, calories, and macros.
+> - Privacy First — All your food and health data stays on your device. No accounts, no sign-ups. Food photos are sent to Google Gemini solely for analysis and are not stored. The app is supported by ads served via Google AdMob.
+>
+> Watch My Calories is designed for anyone who wants a simple, private, and intelligent way to stay on top of their nutrition.
 
 ### Promotional Text
 
-*(Optional — can be updated without a new version. Consider refreshing to highlight the smoother ad experience.)*
+> Stop guessing and start tracking! Snap a photo of your meal for instant AI calorie estimates. Private, fast, and synced with your fitness goals.
+
+*(Promotional text can be updated without a new app version.)*
 
 ### Keywords
 
-No changes needed.
+```
+calorie,tracker,food,AI,nutrition,macro,health,diet,meal,camera,fitness,weight,protein,carbs
+```
+
+*(100 characters max, comma-separated, no spaces after commas.)*
 
 ### Support URL
 
 > https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470
 
-*(Unchanged)*
+### Marketing URL
+
+> *(Optional — leave blank or provide a landing page URL.)*
 
 ---
 
-## 3. Screenshots
+## 3. Screenshots & App Previews
 
 The v1.2.0 screenshot folder is at `AppStore/V1.2.0/Screenshots/`.
 
-**Screenshots to capture:**
+### Format & Limits
 
-New screenshots are needed if any of the following UI changes are visible:
-- AI consent sheet (redesigned)
-- Dashboard or other screens now showing banner/native ads
-- Settings screen (now shows App Attestation status)
+- **Formats**: `.jpeg`, `.jpg`, `.png`
+- **Quantity**: 1–10 screenshots per localized listing
+- **App previews** (optional): Up to 3 per localization, 15–30 seconds, `.mov`/`.mp4`/`.m4v`, max 500 MB. Dimensions must match the corresponding screenshot size for that device.
 
-Use the same **1242 x 2688** (iPhone 6.5" portrait) format as v1.0.0. Refer to [V1.0.0 Set-Up.md](../V1.0.0/Set-Up.md) Section 3 for size requirements and tips.
+### Required Screenshot Sizes
 
-| Suggested Screenshots | Notes |
-|-----------------------|-------|
+You only need to provide screenshots for the **largest device size** per device family. App Store Connect automatically scales them down for smaller sizes.
+
+#### iPhone (required — provide one of these)
+
+| Display | Devices | Portrait (px) | Landscape (px) |
+|---------|---------|---------------|-----------------|
+| **6.9"** | iPhone 16 Pro Max | 1320 × 2868 | 2868 × 1320 |
+| **6.5"** | iPhone XS Max, 11 Pro Max | 1242 × 2688 | 2688 × 1242 |
+
+> Either 6.9" or 6.5" is required. Apple auto-scales for 6.7", 6.1", 5.8", 5.5", and smaller.
+
+#### iPhone (optional — only if you want device-specific screenshots)
+
+| Display | Devices | Portrait (px) | Landscape (px) |
+|---------|---------|---------------|-----------------|
+| **6.7"** | iPhone 16 Plus, 15 Pro Max, 15 Plus, 14 Pro Max | 1290 × 2796 | 2796 × 1290 |
+| **6.1"** | iPhone XR, 11 | 828 × 1792 | 1792 × 828 |
+| **5.8"** | iPhone X, XS, 11 Pro | 1125 × 2436 | 2436 × 1125 |
+| **5.5"** | iPhone 8 Plus, 7 Plus, 6s Plus | 1242 × 2208 | 2208 × 1242 |
+| **4.7"** | iPhone 8, 7, 6s, SE (3rd/2nd gen) | 750 × 1334 | 1334 × 750 |
+| **4"** | iPhone SE (1st gen), 5s | 640 × 1136 | 1136 × 640 |
+
+### Suggested Screenshots
+
+| Screenshot | Notes |
+|------------|-------|
+| Onboarding | Welcome, privacy, and goal screens |
 | Dashboard with ad | Shows the banner ad placement |
-| AI consent sheet | New consent flow |
-| Settings with attestation status | New UI element |
-| Reuse from v1.0.0 | Onboarding, Camera, Analysis, History screens if unchanged |
+| Camera scan | Camera view |
+| AI analysis results | Post-capture analysis |
+| Meal history | Past entries by date |
+| Settings | Profile data, calorie goal, Device Attestation status |
 
-- [ ] **Take new screenshots** and add them to the `AppStore/V1.2.0/Screenshots/` folder.
+**Tips:**
+- Light mode screenshots are generally preferred as lead images for the App Store listing.
+- Dark mode variants can be included for optional use or marketing materials.
+- You can add text overlays and frames using tools like [Shotbot](https://shotbot.io) or [Screenshots Pro](https://screenshots.pro).
+
+- [ ] **Take screenshots** and add them to the `AppStore/V1.2.0/Screenshots/` folder.
+
+*Reference: [Apple Screenshot Specifications](https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/)*
 
 ---
 
 ## 4. Privacy Details (App Privacy "Nutrition Labels")
 
-No changes needed — the v1.0.0 setup already declared all AdMob-related data types (Device ID, Advertising Data, Diagnostics). See [V1.0.0 Set-Up.md](../V1.0.0/Set-Up.md) Section 4.
+App Store Connect requires you to disclose all data your app collects. Fill in as follows:
+
+### Data Types Collected
+
+#### 1. Photos or Videos
+
+| Field | Value |
+|-------|-------|
+| **Data Type** | Photos |
+| **Collection** | Yes |
+| **Usage Purpose** | App Functionality |
+| **Linked to User's Identity** | No |
+| **Used for Tracking** | No |
+
+*Note: Food photos are sent to Google Gemini AI for analysis. Only the first photo per meal is stored locally on-device. Photos are not stored on the server.*
+
+#### 2. Device ID (collected by Google AdMob SDK)
+
+| Field | Value |
+|-------|-------|
+| **Data Type** | Identifiers — Device ID |
+| **Collection** | Yes |
+| **Usage Purpose** | Third-Party Advertising |
+| **Linked to User's Identity** | No |
+| **Used for Tracking** | No |
+
+*Note: Google AdMob may collect device identifiers for ad serving and measurement. This data is handled by Google's SDK and is not accessed by the app itself.*
+
+#### 3. Advertising Data (collected by Google AdMob SDK)
+
+| Field | Value |
+|-------|-------|
+| **Data Type** | Usage Data — Advertising Data |
+| **Collection** | Yes |
+| **Usage Purpose** | Third-Party Advertising |
+| **Linked to User's Identity** | No |
+| **Used for Tracking** | No |
+
+*Note: Ad interaction data (impressions, taps) collected by the AdMob SDK for ad performance measurement.*
+
+#### 4. Diagnostics (collected by Google AdMob SDK)
+
+| Field | Value |
+|-------|-------|
+| **Data Type** | Diagnostics — Performance Data |
+| **Collection** | Yes |
+| **Usage Purpose** | Third-Party Advertising |
+| **Linked to User's Identity** | No |
+| **Used for Tracking** | No |
+
+*Note: The AdMob SDK may collect performance and crash diagnostics related to ad rendering.*
+
+### Data NOT Collected
+
+Confirm that the following are **not collected**:
+
+- Health & Fitness (Active Energy Burned) — *read from HealthKit, used on-device only*
+- Body (Height, Weight) — *user-entered, stored on-device only*
+- Contact Info (name, email, phone)
+- Location
+- Contacts
+- User Content (other than photos)
+- Identifiers (user ID) — *Device ID is collected by AdMob; see above*
+- Browsing History
+- Search History
+- Purchases
+- Financial Info
+- Sensitive Info
 
 ### Privacy Policy URL
 
 > https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb
-
-*(Unchanged. The Gist has already been updated with the corrected privacy policy.)*
 
 ---
 
@@ -114,7 +247,12 @@ Paste this into the **Notes for Review** field:
 
 ### Review Contact Information
 
-*(Same as v1.0.0 — see [V1.0.0 Set-Up.md](../V1.0.0/Set-Up.md) Section 5.)*
+| Field | Value |
+|-------|-------|
+| **First Name** | *(your first name)* |
+| **Last Name** | *(your last name)* |
+| **Email** | pning80.git@gmail.com |
+| **Phone** | *(your phone number)* |
 
 ### Sign-In Required
 
@@ -124,7 +262,17 @@ Paste this into the **Notes for Review** field:
 
 ## 6. Export Compliance
 
-No changes — `ITSAppUsesNonExemptEncryption = NO` is already set in the Xcode project.
+When prompted about export compliance:
+
+| Question | Answer |
+|----------|--------|
+| Does your app use encryption? | **Yes** |
+| Does your app qualify for any exemptions? | **Yes** |
+| Exemption type | The app only uses HTTPS (TLS/SSL) for network communication — it does not contain custom encryption. Select: **"Uses encryption exempt from EAR"** and check **"The app only uses standard encryption protocols (HTTPS, TLS)"** |
+
+No CCATS or ERN number is needed. Apple's standard HTTPS exemption applies.
+
+`ITSAppUsesNonExemptEncryption = NO` is already set in the Xcode project.
 
 ---
 
@@ -132,33 +280,44 @@ No changes — `ITSAppUsesNonExemptEncryption = NO` is already set in the Xcode 
 
 1. Verify version and build number in Xcode:
    - **Marketing Version**: `1.2.0`
-   - **Build Number**: Increment if a previous build was already uploaded (currently `2` in the project)
+   - **Build Number**: Increment if a previous build was already uploaded
 2. In Xcode: **Product → Archive**
 3. In the Organizer window: select the archive → **Distribute App → App Store Connect**
 4. Follow the wizard (automatic signing recommended)
-5. Wait for the build to finish processing in App Store Connect (~10–30 minutes)
+5. Wait for the build to finish processing in App Store Connect (~10-30 minutes)
 6. Select the build in your App Store Connect version page
 
 ---
 
 ## 8. Pricing & Availability
 
-No changes — remains Free, all territories.
+| Field | Value |
+|-------|-------|
+| **Price** | Free |
+| **Availability** | All territories |
+| **Pre-Order** | No |
 
 ---
 
 ## 9. Submission Checklist
 
+Complete these items before clicking **Submit for Review**:
+
 ### Must Do (Blockers)
 
-- [x] **Update Privacy Policy Gist** — Push the fixes from `AppStore/PrivacyPolicy.md` to the live Gist before submission.
-- [ ] **Update Content Rights** — Change to **Yes** (third-party ad content via AdMob). See Section 1.
-- [ ] **Verify Age Rating** — Confirm still 4+ after Content Rights change. See Section 1.
-- [ ] **New Screenshots** — Capture updated screenshots showing ads and new UI. See Section 3.
-- [ ] **Upload Build** — Archive and upload v1.2.0 via Xcode. See Section 7.
+- [x] **Privacy Policy URL** — https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb
+- [x] **Support URL** — https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470
+- [x] **App Icon** — 1024x1024 icon is in the Xcode asset catalog (`AppIcon.png` also copied to `AppStore/`).
+- [x] **Export Compliance** — `ITSAppUsesNonExemptEncryption = NO` added to Xcode project build settings.
+- [x] **NSHealthUpdateUsageDescription** — Required by App Store validation even though the app only reads HealthKit. Added with message: "This app does not write data to Apple Health."
+- [ ] **Update Content Rights** — Set to **Yes** (third-party ad content via AdMob). See Section 1.
+- [ ] **Verify Age Rating** — Confirm 4+ after Content Rights change. See Section 1.
+- [ ] **Fill in Privacy Details** — Complete the App Privacy section. See Section 4.
+- [ ] **Screenshots** — Capture screenshots and upload. See Section 3.
+- [ ] **Upload Build** — Archive and upload via Xcode. See Section 7.
 - [ ] **Select Build** — Choose the uploaded build in App Store Connect.
-- [ ] **Update What's New** — Paste the v1.2.0 release notes. See Section 2.
-- [ ] **Update App Review Notes** — Paste the updated reviewer notes (mentions ads, UMP consent, App Attest). See Section 5.
+- [ ] **App Review Notes** — Paste the reviewer notes. See Section 5.
+- [ ] **Review Contact Info** — Add your name, email, and phone for App Review. See Section 5.
 
 ### Recommended
 
@@ -166,17 +325,26 @@ No changes — remains Free, all territories.
 - [ ] **Test the consent flow** — Verify the UMP consent sheet appears on first launch and that ads load correctly afterward.
 - [ ] **Test offline behavior** — Verify the app shows an appropriate error when food analysis is attempted without internet.
 - [ ] **Test ad placements** — Confirm banner and native ads render correctly and do not obscure app content.
-- [ ] **Proofread What's New** — Check for typos in release notes.
+- [ ] **Test the "no HealthKit" path** — Deny HealthKit permission and verify the app still works without crashing.
+- [ ] **Proofread description and keywords** — Check for typos and ensure keywords are relevant.
 
 ---
 
-## Changes Summary (v1.0.0 → v1.2.0)
+## Quick Reference — App Store Connect Fields Map
 
-| What Changed | Action in App Store Connect |
-|--------------|----------------------------|
-| AdMob ads added (banner + native) | Update Content Rights to **Yes**; update App Review Notes |
-| ATT framework removed | No App Store Connect change (ATT was never declared) |
-| UMP consent sheet added | Mention in App Review Notes |
-| App Attest backend security | Mention in App Review Notes |
-| Camera and onboarding UI fixes | New screenshots recommended |
-| Privacy policy corrected | Update the live Gist |
+| App Store Connect Section | Where to Find Content |
+|--------------------------|----------------------|
+| App Information → Name, Subtitle, Categories | Section 1 |
+| App Information → Content Rights | Section 1 |
+| App Information → Age Rating | Section 1 |
+| Version → Description | Section 2 |
+| Version → Promotional Text | Section 2 |
+| Version → Keywords | Section 2 |
+| Version → Support URL | Section 2 |
+| Version → Screenshots | Section 3 |
+| App Privacy | Section 4 |
+| App Review → Notes | Section 5 |
+| App Review → Sign-In Required | Section 5 |
+| App Review → Contact Info | Section 5 |
+| Export Compliance | Section 6 |
+| Pricing & Availability | Section 8 |
