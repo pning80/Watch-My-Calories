@@ -89,12 +89,9 @@ if ! gcloud secrets versions access latest --secret="$HMAC_SECRET_NAME" --projec
     | gcloud secrets versions add "$HMAC_SECRET_NAME" --data-file=- --project $PROJECT_ID
 fi
 
+SERVICE_ACCOUNT="watchmycalories-backend@${PROJECT_ID}.iam.gserviceaccount.com"
+
 # Grant the Cloud Run service account access to Secret Manager
-SERVICE_ACCOUNT=$(gcloud run services describe $SERVICE_NAME --region $REGION --project $PROJECT_ID --format="value(spec.template.spec.serviceAccountName)" 2>/dev/null || echo "")
-if [ -z "$SERVICE_ACCOUNT" ]; then
-  PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
-  SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
-fi
 echo "Granting Secret Manager access to $SERVICE_ACCOUNT..."
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:${SERVICE_ACCOUNT}" \
@@ -126,6 +123,7 @@ gcloud run deploy $SERVICE_NAME \
   --region $REGION \
   --project $PROJECT_ID \
   --allow-unauthenticated \
+  --service-account="$SERVICE_ACCOUNT" \
   --set-env-vars="$ENV_VARS" \
   --set-secrets="$SECRETS"
 
