@@ -1,6 +1,6 @@
 {
     "name": "watchmycalories-backend",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Backend relay for Gemini API",
     "main": "dist/server.js",
     "scripts": {
