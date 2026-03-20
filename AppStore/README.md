@@ -14,6 +14,10 @@ AppStore/
 │   ├── Set-Up.md        # App Store Connect update guide
 │   ├── AppIcon.png      # App icon (1024×1024)
 │   └── Screenshots/     # App Store screenshots
+├── V1.2.1/              # Version 1.2.1
+│   ├── Set-Up.md        # App Store Connect update guide
+│   ├── AppIcon.png      # App icon (1024×1024)
+│   └── Screenshots/     # App Store screenshots
 ├── README.md            # This file
 ├── PrivacyPolicy.md     # Privacy policy (shared)
 ├── Support.md           # Support page content (shared)
