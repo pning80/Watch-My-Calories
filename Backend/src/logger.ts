@@ -43,6 +43,8 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
             url: req.originalUrl,
             statusCode: res.statusCode,
             responseTime: Math.round(durationMs),
+            clientPlatform: req.headers['x-app-platform'],
+            clientVersion: req.headers['x-app-version'],
         });
     });
 

@@ -95,6 +95,8 @@ final class GeminiService: EstimationService {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("ios", forHTTPHeaderField: "X-App-Platform")
+        request.addValue(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown", forHTTPHeaderField: "X-App-Version")
 
         // Use legacy key as fallback when App Attest is unavailable (simulator, pre-A12 devices)
         if !attestManager.isSupported {
