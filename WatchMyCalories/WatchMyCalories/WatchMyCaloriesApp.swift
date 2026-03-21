@@ -69,7 +69,7 @@ struct WatchMyCaloriesApp: App {
                 }
                 .environmentObject(AppEnvironment.shared)
                 .modelContainer(container)
-                .task {
+                .task(id: store.hasCompletedOnboarding) {
                     guard !Self.isUITesting else { return }
                     guard store.hasCompletedOnboarding else { return }
                     await AdManager.shared.enableAds()
