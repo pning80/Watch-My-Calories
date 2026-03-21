@@ -36,7 +36,12 @@ struct OnboardingView: View {
             }
 
             Button("Skip") {
-                store.completeOnboarding()
+                Task {
+                    if !AdManager.isUITestingMode {
+                        await AdManager.shared.enableAds()
+                    }
+                    store.completeOnboarding()
+                }
             }
             .font(.subheadline.weight(.medium))
             .foregroundStyle(Color.cwPrimary)
