@@ -7,9 +7,10 @@ struct CameraView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
 
-    var onImagesCaptured: ([UIImage]) -> Void
+    var onImagesCaptured: ([UIImage], MealType) -> Void
 
     @State private var photoToReview: UIImage?
+    @State private var selectedMealType: MealType = MealType.from(date: Date())
     @State private var cameraAuthStatus: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
 
     private var isCameraDenied: Bool {
@@ -40,11 +41,15 @@ struct CameraView: View {
                 VStack {
                     Spacer()
 
+                    MealTypePicker(selection: $selectedMealType)
+                        .padding(.bottom, 16)
+
                     HStack(spacing: 40) {
                         // Retake
                         Button(action: {
                             withAnimation {
                                 photoToReview = nil
+                                selectedMealType = MealType.from(date: Date())
                                 model.reset()
                             }
                         }) {
@@ -60,7 +65,7 @@ struct CameraView: View {
 
                         // Use Photo
                         Button(action: {
-                            onImagesCaptured(model.capturedImages)
+                            onImagesCaptured(model.capturedImages, selectedMealType)
                         }) {
                             Label("Use", systemImage: "checkmark")
                                 .font(.body)
@@ -219,6 +224,30 @@ struct CameraPreview: UIViewRepresentable {
                 default: 90
                 }
                 connection.videoRotationAngle = angle
+            }
+        }
+    }
+}
+
+struct MealTypePicker: View {
+    @Binding var selection: MealType
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(MealType.allCases, id: \.self) { type in
+                Button {
+                    selection = type
+                } label: {
+                    Text(type.rawValue)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule().fill(selection == type ? Color.cwAccent : Color.white.opacity(0.25))
+                        )
+                }
             }
         }
     }
