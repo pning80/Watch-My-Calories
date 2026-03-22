@@ -8,6 +8,7 @@ struct EstimationReviewView: View {
 
     let images: [Data]
     let captureDate: Date
+    let mealType: MealType
     var onDone: () -> Void = {}
 
     @ObservedObject private var store = SettingsStore.shared
@@ -338,7 +339,8 @@ struct EstimationReviewView: View {
                 carbs: item.carbs,
                 fat: item.fat,
                 imageID: savedImageID,
-                mealName: result.mealName
+                mealName: result.mealName,
+                mealType: mealType
             )
             modelContext.insert(entry)
         }

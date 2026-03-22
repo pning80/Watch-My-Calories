@@ -109,24 +109,27 @@ struct CameraRootView: View {
     @State private var capturedImages: [UIImage] = []
     @State private var reviewData: [Data]?
     @State private var capturedDate: Date? = nil
+    @State private var selectedMealType: MealType? = nil
 
     var body: some View {
         NavigationStack {
             ZStack {
                 if photoLibraryRequested {
-                    PhotoLibraryReviewView(onImagesCaptured: { images in
+                    PhotoLibraryReviewView(onImagesCaptured: { images, mealType in
                         self.capturedImages = images
                         self.reviewData = images.compactMap { $0.downscaled(maxDimension: 2048).jpegData(compressionQuality: 0.8) }
                         self.capturedDate = Date()
+                        self.selectedMealType = mealType
                     }, onCancel: {
                         photoLibraryRequested = false
                         selectedTab = .dashboard
                     })
                 } else {
-                    CameraView(model: cameraManager) { images in
+                    CameraView(model: cameraManager) { images, mealType in
                         self.capturedImages = images
                         self.reviewData = images.compactMap { $0.downscaled(maxDimension: 2048).jpegData(compressionQuality: 0.8) }
                         self.capturedDate = Date()
+                        self.selectedMealType = mealType
                     }
                 }
             }
@@ -136,15 +139,16 @@ struct CameraRootView: View {
                     reviewData = nil
                     capturedImages.removeAll()
                     capturedDate = nil
+                    selectedMealType = nil
                     photoLibraryRequested = false
                     cameraManager.reset()
                 } }
             )) {
-                if let data = reviewData, let date = capturedDate {
-                    EstimationReviewView(images: data, captureDate: date, onDone: {
+                if let data = reviewData, let date = capturedDate, let mealType = selectedMealType {
+                    EstimationReviewView(images: data, captureDate: date, mealType: mealType, onDone: {
                         photoLibraryRequested = false
                         selectedTab = .dashboard
-                        scrollToMeal = MealType.from(date: date)
+                        scrollToMeal = mealType
                     })
                 }
             }

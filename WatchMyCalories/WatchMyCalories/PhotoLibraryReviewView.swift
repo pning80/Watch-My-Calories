@@ -1,12 +1,14 @@
 import SwiftUI
 import PhotosUI
+import ImageIO
 
 struct PhotoLibraryReviewView: View {
-    var onImagesCaptured: ([UIImage]) -> Void
+    var onImagesCaptured: ([UIImage], MealType) -> Void
     var onCancel: () -> Void
 
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
+    @State private var selectedMealType: MealType = MealType.from(date: Date())
     @State private var showPicker = true
 
     var body: some View {
@@ -25,6 +27,9 @@ struct PhotoLibraryReviewView: View {
 
                 VStack {
                     Spacer()
+
+                    MealTypePicker(selection: $selectedMealType)
+                        .padding(.bottom, 16)
 
                     HStack(spacing: 40) {
                         Button(action: {
@@ -45,7 +50,7 @@ struct PhotoLibraryReviewView: View {
                         .accessibilityIdentifier(AccessibilityID.PhotoLibrary.chooseAgainButton)
 
                         Button(action: {
-                            onImagesCaptured([image])
+                            onImagesCaptured([image], selectedMealType)
                         }) {
                             Label("Use", systemImage: "checkmark")
                                 .font(.body)
@@ -69,6 +74,8 @@ struct PhotoLibraryReviewView: View {
                 DispatchQueue.main.async {
                     if case .success(let data) = result, let data, let uiImage = UIImage(data: data) {
                         selectedImage = uiImage
+                        let photoDate = extractCreationDate(from: data) ?? Date()
+                        selectedMealType = MealType.from(date: photoDate)
                     } else {
                         selectedItem = nil
                         showPicker = true
@@ -81,5 +88,16 @@ struct PhotoLibraryReviewView: View {
                 onCancel()
             }
         }
+    }
+
+    private func extractCreationDate(from data: Data) -> Date? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
+              let exif = props[kCGImagePropertyExifDictionary as String] as? [String: Any],
+              let dateStr = exif[kCGImagePropertyExifDateTimeOriginal as String] as? String
+        else { return nil }
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyy:MM:dd HH:mm:ss"
+        return fmt.date(from: dateStr)
     }
 }
