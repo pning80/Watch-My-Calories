@@ -31,10 +31,31 @@ export function registerRoutes(app: Express, { geminiLimiter, captureRawBody, ve
         const end = timer('gemini_relay_duration_ms');
 
         try {
+            // Inject thinking and media resolution config before forwarding to Gemini
+            const thinkingLevel = process.env.GEMINI_THINKING_LEVEL || 'medium';
+            const mediaResolution = process.env.GEMINI_MEDIA_RESOLUTION || 'media_resolution_high';
+
+            const modifiedBody = {
+                ...req.body,
+                generationConfig: {
+                    ...(req.body.generationConfig || {}),
+                    thinkingConfig: { thinkingLevel },
+                },
+                contents: (req.body.contents || []).map((content: any) => ({
+                    ...content,
+                    parts: (content.parts || []).map((part: any) => {
+                        if (part.inline_data || part.inlineData) {
+                            return { ...part, mediaResolution: { level: mediaResolution } };
+                        }
+                        return part;
+                    }),
+                })),
+            };
+
             const response = await fetch(targetURL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(req.body),
+                body: JSON.stringify(modifiedBody),
             });
 
             const data = await response.json();

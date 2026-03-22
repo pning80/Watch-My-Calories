@@ -99,7 +99,7 @@ describe('Gemini proxy endpoint', () => {
             );
         });
 
-        it('sends request body as JSON', async () => {
+        it('sends request body as JSON with injected thinking and media config', async () => {
             const mockFetch = mock.method(globalThis, 'fetch', async () => ({
                 ok: true,
                 status: 200,
@@ -112,7 +112,34 @@ describe('Gemini proxy endpoint', () => {
             const opts = mockFetch.mock.calls[0].arguments[1];
             assert.equal(opts.method, 'POST');
             assert.equal(opts.headers['Content-Type'], 'application/json');
-            assert.deepEqual(JSON.parse(opts.body), body);
+
+            const sent = JSON.parse(opts.body);
+            // Original contents preserved (text parts unchanged, no mediaResolution on text)
+            assert.equal(sent.contents[0].parts[0].text, 'describe this food');
+            // thinkingConfig injected
+            assert.ok(sent.generationConfig?.thinkingConfig?.thinkingLevel, 'thinkingLevel should be set');
+        });
+
+        it('injects mediaResolution on inline_data parts', async () => {
+            const mockFetch = mock.method(globalThis, 'fetch', async () => ({
+                ok: true,
+                status: 200,
+                json: async () => ({ candidates: [] }),
+            }));
+
+            const body = { contents: [{ parts: [
+                { text: 'analyze' },
+                { inline_data: { mime_type: 'image/jpeg', data: 'abc123' } },
+            ] }] };
+            await authedPost().send(body);
+
+            const sent = JSON.parse(mockFetch.mock.calls[0].arguments[1].body);
+            // Text part should NOT have mediaResolution
+            assert.equal(sent.contents[0].parts[0].mediaResolution, undefined);
+            // Image part should have mediaResolution
+            assert.ok(sent.contents[0].parts[1].mediaResolution?.level, 'mediaResolution should be set on image part');
+            // Original inline_data preserved
+            assert.equal(sent.contents[0].parts[1].inline_data.data, 'abc123');
         });
 
         it('uses GEMINI_MODEL_NAME regardless of path param', async () => {
