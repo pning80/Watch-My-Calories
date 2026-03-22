@@ -14,14 +14,23 @@ AppStore/
 │   ├── Set-Up.md        # App Store Connect update guide
 │   ├── AppIcon.png      # App icon (1024×1024)
 │   └── Screenshots/     # App Store screenshots
-├── V1.2.1/              # Version 1.2.1
+├── V1.2.1/              # Version 1.2.1 (2026-03-19)
 │   ├── Set-Up.md        # App Store Connect update guide
 │   ├── AppIcon.png      # App icon (1024×1024)
 │   └── Screenshots/     # App Store screenshots
+├── V1.3.0/              # Version 1.3.0 (2026-03-22)
+│   ├── Set-Up.md        # App Store Connect update guide
+│   ├── AppIcon.png      # App icon (1024×1024)
+│   └── Screenshots/     # App Store screenshots
+├── FoodPhotos/          # Food photos used in simulator and demos
+│   ├── 1.Latte.JPG
+│   ├── 2.KatsuCurry.jpeg
+│   ├── 3.SeaFood.jpg
+│   ├── 4.Salmon.jpg
+│   └── 5.Lobster.jpg
 ├── README.md            # This file
 ├── PrivacyPolicy.md     # Privacy policy (shared)
-├── Support.md           # Support page content (shared)
-└── FoodPhoto.HEIC       # Demo food photo (shared)
+└── Support.md           # Support page content (shared)
 ```
 
 Each version folder contains its own Set-Up.md, screenshots, and any version-specific assets. Shared files remain at the AppStore root.

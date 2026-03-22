@@ -1,6 +1,6 @@
 # Watch My Calories — Support
 
-**Last Updated: March 15, 2026**
+**Last Updated: March 22, 2026**
 
 ## Contact
 
@@ -24,6 +24,7 @@ We aim to respond within 7 days.
 
 ### Camera permission denied
 - Go to **Settings > Watch My Calories > Camera** on your device and enable camera access.
+- Alternatively, you can analyze food from an existing photo by tapping **+** on the Dashboard and choosing **Choose from Photo Library**.
 
 ### HealthKit data not showing
 - Go to **Settings > Health > Data Access & Devices > Watch My Calories** and ensure Active Energy is enabled.
@@ -43,6 +44,7 @@ We aim to respond within 7 days.
 
 ### Logging food manually
 - Tap the **+** button on the Dashboard to add a food entry without using the camera.
+- You can also choose **Choose from Photo Library** to analyze an existing photo for calories.
 
 ### Deleting your data
 - Delete individual food entries or entire meal groups from within the app.
