@@ -125,6 +125,7 @@ struct CameraView: View {
         .onDisappear { model.stop() }
         .onChange(of: model.capturedImages.count) {
             if let image = model.capturedImages.first {
+                selectedMealType = MealType.from(date: Date())
                 withAnimation { photoToReview = image }
             } else {
                 withAnimation { photoToReview = nil }
