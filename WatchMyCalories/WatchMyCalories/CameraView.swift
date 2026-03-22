@@ -184,14 +184,11 @@ struct CameraView: View {
 // UIKit wrapper for AVCaptureVideoPreviewLayer
 struct CameraPreview: UIViewRepresentable {
     let session: AVCaptureSession
-    
+
     func makeUIView(context: Context) -> VideoPreviewView {
         let view = VideoPreviewView()
         view.videoPreviewLayer.session = session
         view.videoPreviewLayer.videoGravity = .resizeAspectFill
-        if let connection = view.videoPreviewLayer.connection {
-            connection.videoRotationAngle = 90 // portrait
-        }
         return view
     }
 
@@ -199,24 +196,30 @@ struct CameraPreview: UIViewRepresentable {
         if uiView.videoPreviewLayer.session != session {
             uiView.videoPreviewLayer.session = session
         }
-        // Keep preview locked to portrait regardless of device orientation
-        if let connection = uiView.videoPreviewLayer.connection {
-            connection.videoRotationAngle = 90
-        }
     }
-    
+
     class VideoPreviewView: UIView {
         override class var layerClass: AnyClass {
             AVCaptureVideoPreviewLayer.self
         }
-        
+
         var videoPreviewLayer: AVCaptureVideoPreviewLayer {
             return layer as! AVCaptureVideoPreviewLayer
         }
-        
+
         override func layoutSubviews() {
             super.layoutSubviews()
             videoPreviewLayer.frame = bounds
+            if let connection = videoPreviewLayer.connection {
+                let angle: CGFloat = switch UIDevice.current.orientation {
+                case .portrait: 90
+                case .landscapeLeft: 0
+                case .landscapeRight: 180
+                case .portraitUpsideDown: 270
+                default: 90
+                }
+                connection.videoRotationAngle = angle
+            }
         }
     }
 }

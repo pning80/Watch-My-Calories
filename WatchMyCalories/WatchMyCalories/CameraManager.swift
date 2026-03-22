@@ -203,8 +203,15 @@ class CameraManager: NSObject, ObservableObject {
     nonisolated private func performCapture() {
         let settings = AVCapturePhotoSettings()
         if let connection = self.output.connection(with: .video), connection.isActive {
-            // Lock capture orientation to portrait so photos are always upright
-            connection.videoRotationAngle = 90
+            // Set capture rotation based on current device orientation so photos are upright
+            let angle: CGFloat = switch UIDevice.current.orientation {
+            case .portrait: 90
+            case .landscapeLeft: 0
+            case .landscapeRight: 180
+            case .portraitUpsideDown: 270
+            default: 90
+            }
+            connection.videoRotationAngle = angle
             self.output.capturePhoto(with: settings, delegate: self)
         }
     }
