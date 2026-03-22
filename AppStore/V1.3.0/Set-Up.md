@@ -297,7 +297,7 @@ No CCATS or ERN number is needed. Apple's standard HTTPS exemption applies.
 
 1. Verify version and build number in Xcode:
    - **Marketing Version**: `1.3.0`
-   - **Build Number**: `4`
+   - **Build Number**: `6`
 2. In Xcode: **Product → Archive**
 3. In the Organizer window: select the archive → **Distribute App → App Store Connect**
 4. Follow the wizard (automatic signing recommended)
@@ -329,7 +329,7 @@ Since this is an update, most settings (like Privacy, Categories, and Age Rating
 - [ ] **Marketing URL** — Set this to `https://pning80.github.io` so AdMob can find `app-ads.txt`.
 - [ ] **Support URL** — Keep as `https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470`.
 - [ ] **Upload Build** — Archive and upload V1.3.0 via Xcode. See Section 7.
-- [ ] **Select Build** — Choose the uploaded 1.3.0 (build 4) build in App Store Connect.
+- [ ] **Select Build** — Choose the uploaded 1.3.0 (build 6) build in App Store Connect.
 - [ ] **App Review Notes** — Updated to include photo library flow. See Section 5.
 - [ ] **Screenshots** — UI changed (new photo library option, camera denied view). See Section 3.
 
