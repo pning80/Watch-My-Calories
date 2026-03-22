@@ -10,7 +10,6 @@ struct ImageStorage {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
 
-    @discardableResult
     func save(_ data: Data, id: UUID) -> Bool {
         let url = documentsDirectory.appendingPathComponent("\(id).jpg")
         do {

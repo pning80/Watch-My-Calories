@@ -5,14 +5,26 @@ import UIKit
 struct CameraView: View {
     @ObservedObject var model: CameraManager
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
 
     var onImagesCaptured: ([UIImage]) -> Void
 
     @State private var photoToReview: UIImage?
+    @State private var cameraAuthStatus: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
+
+    private var isCameraDenied: Bool {
+        #if targetEnvironment(simulator)
+        return false
+        #else
+        return cameraAuthStatus == .denied || cameraAuthStatus == .restricted
+        #endif
+    }
 
     var body: some View {
         ZStack {
-            if let image = photoToReview {
+            if isCameraDenied {
+                cameraDeniedView
+            } else if let image = photoToReview {
                 // Photo review
                 Color.black.ignoresSafeArea()
 
@@ -50,7 +62,7 @@ struct CameraView: View {
                         Button(action: {
                             onImagesCaptured(model.capturedImages)
                         }) {
-                            Label("Use Photo", systemImage: "checkmark")
+                            Label("Use", systemImage: "checkmark")
                                 .font(.body)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(.white)
@@ -97,6 +109,8 @@ struct CameraView: View {
                                 .frame(width: 68, height: 68)
                         }
                     }
+                    .disabled(model.isCapturing)
+                    .opacity(model.isCapturing ? 0.5 : 1.0)
                     .accessibilityIdentifier(AccessibilityID.Camera.captureButton)
                     .padding(.bottom, 40)
                 }
@@ -111,11 +125,58 @@ struct CameraView: View {
                 withAnimation { photoToReview = nil }
             }
         }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                cameraAuthStatus = AVCaptureDevice.authorizationStatus(for: .video)
+            }
+        }
         .alert(isPresented: Binding<Bool>(
-            get: { model.alert != nil },
+            get: {
+                guard let alert = model.alert else { return false }
+                if case .unauthorized = alert { return false }
+                return true
+            },
             set: { _ in model.alert = nil }
         )) {
             Alert(title: Text("Camera Error"), message: Text(model.alert?.localizedDescription ?? "Unknown error"), dismissButton: .default(Text("OK")))
+        }
+    }
+
+    private var cameraDeniedView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            Image(systemName: "camera.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(Color.cwPrimary.opacity(0.6))
+
+            Text("Camera Access Required")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundStyle(Color.cwTextPrimary)
+
+            Text("To scan your meals, please allow camera access in Settings.")
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Color.gray)
+                .padding(.horizontal, 40)
+
+            Button {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
+                Label("Open Settings", systemImage: "gear")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.cwPrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+            .padding(.horizontal, 40)
+
+            Spacer()
         }
     }
 }
@@ -128,13 +189,19 @@ struct CameraPreview: UIViewRepresentable {
         let view = VideoPreviewView()
         view.videoPreviewLayer.session = session
         view.videoPreviewLayer.videoGravity = .resizeAspectFill
+        if let connection = view.videoPreviewLayer.connection {
+            connection.videoRotationAngle = 90 // portrait
+        }
         return view
     }
-    
+
     func updateUIView(_ uiView: VideoPreviewView, context: Context) {
-        // Ensure layer is connected if session changes (rare)
         if uiView.videoPreviewLayer.session != session {
             uiView.videoPreviewLayer.session = session
+        }
+        // Keep preview locked to portrait regardless of device orientation
+        if let connection = uiView.videoPreviewLayer.connection {
+            connection.videoRotationAngle = 90
         }
     }
     

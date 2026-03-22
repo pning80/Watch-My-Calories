@@ -53,8 +53,10 @@ final class OnboardingTests: XCTestCase {
         // Keyboard should be visible
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3))
 
-        // Scroll to dismiss the keyboard (.scrollDismissesKeyboard(.immediately))
-        app.swipeDown()
+        // Tap the keyboard toolbar "Done" button to dismiss
+        let doneButton = app.toolbars.buttons["Done"]
+        XCTAssertTrue(doneButton.waitForExistence(timeout: 3))
+        doneButton.tap()
 
         // Keyboard should be dismissed
         XCTAssertFalse(app.keyboards.firstMatch.waitForExistence(timeout: 2))

@@ -63,6 +63,7 @@ enum GeminiError: Error, LocalizedError {
     case invalidResponse
     case apiError(String)
     case networkError(Error)
+    case rateLimited(retryAfter: Int?)
 
     var errorDescription: String? {
         switch self {
@@ -70,6 +71,11 @@ enum GeminiError: Error, LocalizedError {
         case .invalidResponse: return "Failed to parse response from Gemini."
         case .apiError(let msg): return "API Error: \(msg)"
         case .networkError(let error): return "Network error: \(error.localizedDescription)"
+        case .rateLimited(let retryAfter):
+            if let seconds = retryAfter {
+                return "Too many requests. Please try again in \(seconds) seconds."
+            }
+            return "Too many requests. Please wait a moment and try again."
         }
     }
 }
@@ -170,7 +176,18 @@ final class GeminiService: EstimationService {
                 }
             }
 
-            let (responseData, response) = try await URLSession.shared.data(for: request)
+            let responseData: Data
+            let response: URLResponse
+            do {
+                (responseData, response) = try await URLSession.shared.data(for: request)
+            } catch {
+                // Retry transient network errors (timeout, connection lost, etc.)
+                if attempt < maxAttempts {
+                    try await Task.sleep(for: .seconds(1 << (attempt - 1)))
+                    continue
+                }
+                throw GeminiError.networkError(error)
+            }
 
             guard let httpResp = response as? HTTPURLResponse else {
                 throw GeminiError.networkError(URLError(.badServerResponse))
@@ -183,9 +200,21 @@ final class GeminiService: EstimationService {
                 continue
             }
 
+            // Retry on 5xx server errors with exponential backoff
+            if httpResp.statusCode >= 500 && attempt < maxAttempts {
+                try await Task.sleep(for: .seconds(1 << (attempt - 1)))
+                continue
+            }
+
             data = responseData
             httpResponse = httpResp
             break
+        }
+
+        // Handle rate limiting
+        if httpResponse.statusCode == 429 {
+            let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After").flatMap { Int($0) }
+            throw GeminiError.rateLimited(retryAfter: retryAfter)
         }
 
         guard httpResponse.statusCode == 200 else {

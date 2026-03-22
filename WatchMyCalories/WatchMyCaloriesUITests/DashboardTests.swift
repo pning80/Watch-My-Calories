@@ -79,10 +79,12 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         // Wait for data to load
         XCTAssertTrue(app.staticTexts["Breakfast"].waitForExistence(timeout: 5))
 
-        // Remaining = 2200 - 750 = 1450 (burned=0 in test mode)
+        // Remaining = effectiveTarget - consumed
+        // effectiveTarget = 2200 (seed target) + 456 (simulator burned calories) = 2656
+        // remaining = 2656 - 750 = 1906
         let remainingElement = app.staticTexts["dashboard_remainingValue"]
         XCTAssertTrue(remainingElement.waitForExistence(timeout: 3))
-        XCTAssertTrue(remainingElement.label.contains("1450"), "Remaining should be 1450")
+        XCTAssertTrue(remainingElement.label.contains("1906"), "Remaining should be 1906 (2200 + 456 burned - 750 consumed)")
     }
 
     // MARK: - Empty State Link

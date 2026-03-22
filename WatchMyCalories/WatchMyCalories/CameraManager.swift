@@ -16,6 +16,12 @@ class CameraManager: NSObject, ObservableObject {
     
     @Published var alert: CameraError?
     @Published var capturedImages: [UIImage] = []
+    @Published var isCapturing: Bool = false
+
+    #if targetEnvironment(simulator)
+    private static let simulatorPhotos = ["FoodPhoto1", "FoodPhoto2", "FoodPhoto3", "FoodPhoto4", "FoodPhoto5"]
+    private static var simulatorPhotoIndex = 0
+    #endif
     
     // Global serial queue for camera operations
     nonisolated static let sessionQueue = DispatchQueue(label: "camera.session.queue")
@@ -102,11 +108,14 @@ class CameraManager: NSObject, ObservableObject {
     }
     
     func takePhoto() {
+        guard !isCapturing else { return }
+        isCapturing = true
+
         #if targetEnvironment(simulator)
         simulatePhotoCapture()
         return
         #endif
-        
+
         CameraManager.sessionQueue.async { [weak self] in
             guard let self = self else { return }
             self.performCapture()
@@ -115,6 +124,7 @@ class CameraManager: NSObject, ObservableObject {
     
     func reset() {
         capturedImages.removeAll()
+        isCapturing = false
     }
     
     // MARK: - Private Non-Isolated Helpers
@@ -193,15 +203,23 @@ class CameraManager: NSObject, ObservableObject {
     nonisolated private func performCapture() {
         let settings = AVCapturePhotoSettings()
         if let connection = self.output.connection(with: .video), connection.isActive {
+            // Lock capture orientation to portrait so photos are always upright
+            connection.videoRotationAngle = 90
             self.output.capturePhoto(with: settings, delegate: self)
         }
     }
     
+    #if targetEnvironment(simulator)
     private func simulatePhotoCapture() {
-        if let image = UIImage(named: "FoodPhoto") {
+        let photos = CameraManager.simulatorPhotos
+        let index = CameraManager.simulatorPhotoIndex % photos.count
+        CameraManager.simulatorPhotoIndex += 1
+        if let image = UIImage(named: photos[index]) {
             self.capturedImages.append(image)
         }
+        self.isCapturing = false
     }
+    #endif
 
     // MARK: - Error Handling
     
@@ -226,14 +244,20 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
     nonisolated func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error = error {
             Task { @MainActor in
+                self.isCapturing = false
                 self.alert = .runtimeError(error.localizedDescription)
             }
             return
         }
-        
+
         if let data = photo.fileDataRepresentation(), let image = UIImage(data: data) {
             Task { @MainActor in
                 self.capturedImages.append(image)
+                self.isCapturing = false
+            }
+        } else {
+            Task { @MainActor in
+                self.isCapturing = false
             }
         }
     }

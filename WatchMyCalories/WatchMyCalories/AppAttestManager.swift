@@ -1,6 +1,7 @@
 import Foundation
 import DeviceCheck
 import CryptoKit
+import os
 
 /// Manages Apple App Attest key generation, attestation, and per-request assertions.
 ///
@@ -11,6 +12,7 @@ import CryptoKit
 final class AppAttestManager {
 
     static let shared = AppAttestManager()
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "WatchMyCalories", category: "AppAttest")
 
     /// Whether App Attest is available on this device.
     var isSupported: Bool {
@@ -219,7 +221,10 @@ final class AppAttestManager {
     }
 
     private func saveKeychainString(_ value: String, account: String) {
-        guard let data = value.data(using: .utf8) else { return }
+        guard let data = value.data(using: .utf8) else {
+            Self.logger.error("Keychain save failed: could not encode value for account '\(account)'")
+            return
+        }
         deleteKeychainItem(account: account)
 
         let query: [String: Any] = [
@@ -229,7 +234,10 @@ final class AppAttestManager {
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
-        SecItemAdd(query as CFDictionary, nil)
+        let status = SecItemAdd(query as CFDictionary, nil)
+        if status != errSecSuccess {
+            Self.logger.error("Keychain SecItemAdd failed for account '\(account)': OSStatus \(status)")
+        }
     }
 
     private func loadKeychainString(account: String) -> String? {
@@ -253,7 +261,10 @@ final class AppAttestManager {
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: account
         ]
-        SecItemDelete(query as CFDictionary)
+        let status = SecItemDelete(query as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            Self.logger.error("Keychain SecItemDelete failed for account '\(account)': OSStatus \(status)")
+        }
     }
 }
 

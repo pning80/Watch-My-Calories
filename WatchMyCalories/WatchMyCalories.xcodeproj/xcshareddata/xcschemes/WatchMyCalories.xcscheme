@@ -29,7 +29,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "244FB6C856FCFE9F34527D32"
+               BlueprintIdentifier = "0E44E5C35CE9B21DAFFA184E"
                BuildableName = "WatchMyCaloriesTests.xctest"
                BlueprintName = "WatchMyCaloriesTests"
                ReferencedContainer = "container:WatchMyCalories.xcodeproj">
@@ -69,10 +69,10 @@
       <Testables>
          <TestableReference
             skipped = "NO"
-            parallelizable = "YES">
+            parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "244FB6C856FCFE9F34527D32"
+               BlueprintIdentifier = "0E44E5C35CE9B21DAFFA184E"
                BuildableName = "WatchMyCaloriesTests.xctest"
                BlueprintName = "WatchMyCaloriesTests"
                ReferencedContainer = "container:WatchMyCalories.xcodeproj">

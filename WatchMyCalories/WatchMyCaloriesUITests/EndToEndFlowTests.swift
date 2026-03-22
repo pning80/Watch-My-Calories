@@ -243,17 +243,19 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         app.buttons["settings_saveButton"].tap()
         XCTAssertTrue(app.buttons["dashboard_addButton"].waitForExistence(timeout: 3))
 
-        // Remaining should be 2000 (no entries, goal = consumed since default target = 2000)
+        // Remaining = effectiveTarget - consumed
+        // effectiveTarget = 2000 (set goal) + 456 (simulator burned) = 2456
+        // remaining = 2456 - 0 = 2456
         let remaining = app.staticTexts["dashboard_remainingValue"]
         XCTAssertTrue(remaining.waitForExistence(timeout: 3))
-        XCTAssertTrue(remaining.label.contains("2000"), "Remaining should be 2000 with no entries")
+        XCTAssertTrue(remaining.label.contains("2456"), "Remaining should be 2456 with no entries (2000 + 456 burned)")
 
         // Add a 500 calorie entry
         addManualEntry(name: "Burger", calories: "500", quantity: "1 burger", mealType: "Lunch")
 
-        // Remaining should now be 1500 (2000 - 500)
+        // Remaining should now be 1956 (2456 - 500)
         let remainingAfter = app.staticTexts["dashboard_remainingValue"]
         XCTAssertTrue(remainingAfter.waitForExistence(timeout: 3))
-        XCTAssertTrue(remainingAfter.label.contains("1500"), "Remaining should be 1500")
+        XCTAssertTrue(remainingAfter.label.contains("1956"), "Remaining should be 1956 (2456 - 500)")
     }
 }
