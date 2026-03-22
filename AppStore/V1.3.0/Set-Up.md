@@ -53,6 +53,7 @@ Answer **None** / **No** to all questions:
 > Analyze food from your photo library! Tap the "+" button on your Dashboard and choose "Choose from Photo Library" to estimate calories from existing photos.
 >
 > Also in this update:
+> - Meal type selector — choose Breakfast, Lunch, Dinner, or Snack before scanning. Photo library picks auto-detect the meal type from the photo's timestamp.
 > - Fixed camera preview rotation when using the app in landscape
 > - Better error messages when the service is busy
 > - Automatic retry on network issues
