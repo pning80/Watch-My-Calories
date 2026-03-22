@@ -70,6 +70,10 @@ enum AccessibilityID {
         static let aiConsentToggle = "onboarding_aiConsentToggle"
     }
 
+    enum MealTypePicker {
+        static let picker = "mealTypePicker"
+    }
+
     enum Ads {
         static let banner = "ads_banner"
         static let native = "ads_native"

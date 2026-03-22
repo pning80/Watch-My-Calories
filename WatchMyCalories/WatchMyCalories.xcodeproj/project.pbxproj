@@ -32,7 +32,9 @@
 		5A086A146AC3F8A768E60F6F /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = ABFFE771EBA4CA2B338FA383 /* GoogleMobileAds */; };
 		691DB64E436497386EE9D83C /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = F42220BFA4D7CE22EE8B55F5 /* Components.swift */; };
 		6C4148799AD45D044C126E00 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 514BD0CF4AD427F061F123F4 /* SettingsView.swift */; };
+		70343E338125790DCF753E09 /* EstimationReviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020D2E10526F3D83255546AC /* EstimationReviewTests.swift */; };
 		705A76C1259B7219CC6540BC /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB8E4D49B0C1BE6632C72FEB /* SettingsStoreTests.swift */; };
+		726ABFE4C89E25DFF063DB62 /* CameraCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20EA32B744EFA2073418E3E6 /* CameraCaptureTests.swift */; };
 		76EFFDE4B6011056C2E03C3B /* UserProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFDEDFA93ABCA53E9E806E7 /* UserProfileTests.swift */; };
 		779F15702D9F14F1BD519766 /* Prompt.md in Resources */ = {isa = PBXBuildFile; fileRef = DFA288BAC6BB6FE06EA27BEF /* Prompt.md */; };
 		7FE87593F8A7A72732A75107 /* DataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 369CDA3EF5CEF31AB53CD2D7 /* DataModels.swift */; };
@@ -83,10 +85,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		020D2E10526F3D83255546AC /* EstimationReviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstimationReviewTests.swift; sourceTree = "<group>"; };
 		07709D1A389FF826BE86478D /* HistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryTests.swift; sourceTree = "<group>"; };
 		084E91EBD7DC4B38C41CBA6A /* ManualEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualEntryTests.swift; sourceTree = "<group>"; };
 		0EB7749679EE565E30EFBBC7 /* WatchMyCaloriesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMyCaloriesApp.swift; sourceTree = "<group>"; };
 		1F54FB0C36AAEF2B30ACE55A /* OnboardingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTests.swift; sourceTree = "<group>"; };
+		20EA32B744EFA2073418E3E6 /* CameraCaptureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCaptureTests.swift; sourceTree = "<group>"; };
 		289D70AF343F07ECF3E9E085 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		2E59FB3E2F6B262D50CB4300 /* AppAttestManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAttestManager.swift; sourceTree = "<group>"; };
 		3029DABB2C822A0EB88922A2 /* UnitConversionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitConversionTests.swift; sourceTree = "<group>"; };
@@ -172,8 +176,10 @@
 		24A9D93EC20D29603712B900 /* WatchMyCaloriesUITests */ = {
 			isa = PBXGroup;
 			children = (
+				20EA32B744EFA2073418E3E6 /* CameraCaptureTests.swift */,
 				BB9910637B27BFED22380BD6 /* DashboardTests.swift */,
 				DF4B286866735900F27F8A3F /* EndToEndFlowTests.swift */,
+				020D2E10526F3D83255546AC /* EstimationReviewTests.swift */,
 				07709D1A389FF826BE86478D /* HistoryTests.swift */,
 				084E91EBD7DC4B38C41CBA6A /* ManualEntryTests.swift */,
 				1F54FB0C36AAEF2B30ACE55A /* OnboardingTests.swift */,
@@ -404,8 +410,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				726ABFE4C89E25DFF063DB62 /* CameraCaptureTests.swift in Sources */,
 				E345150A4ACEB8B3BD433A43 /* DashboardTests.swift in Sources */,
 				AABB8393DA80025C3F104481 /* EndToEndFlowTests.swift in Sources */,
+				70343E338125790DCF753E09 /* EstimationReviewTests.swift in Sources */,
 				058F3C540D3F47EAC0E72737 /* HistoryTests.swift in Sources */,
 				916C198D4023DECAA2D5D14B /* ManualEntryTests.swift in Sources */,
 				1F095FDC1661581BF3E502A6 /* OnboardingTests.swift in Sources */,
@@ -582,7 +590,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = G63KVDL36L;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -690,7 +698,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = G63KVDL36L;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
