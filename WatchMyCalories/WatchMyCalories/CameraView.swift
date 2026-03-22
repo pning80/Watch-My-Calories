@@ -250,5 +250,6 @@ struct MealTypePicker: View {
                 }
             }
         }
+        .accessibilityIdentifier(AccessibilityID.MealTypePicker.picker)
     }
 }
