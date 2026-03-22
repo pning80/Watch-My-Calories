@@ -28,6 +28,7 @@ enum AccessibilityID {
         static let saveButton = "manualEntry_saveButton"
         static let cancelButton = "manualEntry_cancelButton"
         static let scanButton = "manualEntry_scanButton"
+        static let photoLibraryButton = "manualEntry_photoLibraryButton"
     }
 
     enum Settings {
@@ -45,6 +46,11 @@ enum AccessibilityID {
         static let title = "history_title"
         static let emptyState = "history_emptyState"
         static let dayCard = "history_dayCard"
+    }
+
+    enum PhotoLibrary {
+        static let chooseAgainButton = "photoLibrary_chooseAgainButton"
+        static let usePhotoButton = "photoLibrary_usePhotoButton"
     }
 
     enum Camera {

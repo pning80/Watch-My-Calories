@@ -83,18 +83,23 @@ final class SettingsStore: ObservableObject {
     }
 
     func save() {
+        // Write both values then synchronize as a single batch
         defaults.set(appTheme.rawValue, forKey: themeKey)
         defaults.set(unitSystem.rawValue, forKey: unitSystemKey)
+        defaults.synchronize()
     }
 
     func saveAIConsent(_ status: AIConsentStatus) {
-        aiConsent = status
+        // Persist to disk before updating in-memory state
         defaults.set(status.rawValue, forKey: aiConsentKey)
+        defaults.synchronize()
+        aiConsent = status
     }
 
     func completeOnboarding() {
-        hasCompletedOnboarding = true
         defaults.set(true, forKey: onboardingKey)
+        defaults.synchronize()
+        hasCompletedOnboarding = true
     }
 }
 

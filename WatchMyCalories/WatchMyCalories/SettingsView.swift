@@ -331,16 +331,7 @@ struct SettingsView: View {
                 checkUnsaved()
                 updateAttestStatus()
             }
-            .onChange(of: heightFeet) { _, _ in checkUnsaved() }
-            .onChange(of: heightInchesPart) { _, _ in checkUnsaved() }
-            .onChange(of: weightLbs) { _, _ in checkUnsaved() }
-            .onChange(of: age) { _, _ in checkUnsaved() }
-            .onChange(of: gender) { _, _ in checkUnsaved() }
-            .onChange(of: activityLevel) { _, _ in checkUnsaved() }
-            .onChange(of: targetCalories) { _, _ in checkUnsaved() }
-            .onChange(of: heightCmUI) { _, _ in checkUnsaved() }
-            .onChange(of: weightKgUI) { _, _ in checkUnsaved() }
-            .onChange(of: store.appTheme) { _, _ in checkUnsaved() }
+            .onChange(of: settingsSnapshot) { _, _ in checkUnsaved() }
             .onChange(of: store.unitSystem) { _, _ in
                 // Cross-sync values when user toggles unit system.
                 // Derive from persisted metric profile to avoid rounding drift.
@@ -384,6 +375,15 @@ struct SettingsView: View {
             }
         }
         .preferredColorScheme(store.appTheme.colorScheme)
+    }
+
+    private var settingsSnapshot: SettingsSnapshot {
+        SettingsSnapshot(
+            heightFeet: heightFeet, heightInchesPart: heightInchesPart,
+            weightLbs: weightLbs, age: age, heightCmUI: heightCmUI, weightKgUI: weightKgUI,
+            gender: gender, activityLevel: activityLevel,
+            targetCalories: targetCalories, appTheme: store.appTheme
+        )
     }
 
     private func checkUnsaved() {
@@ -458,12 +458,27 @@ struct SettingsView: View {
 
         // 2. Prepare Profile Data
         // Convert from active unit system -> Metric (Storage)
-        let heightCm: Double
-        let weightKg: Double
+        // When in US mode, preserve original metric values if US fields weren't changed
+        // to avoid rounding drift (e.g. 173cm → 5'8" → 172.72cm)
+        var heightCm: Double
+        var weightKg: Double
         if store.unitSystem == .us {
             let totalInches = Double(heightFeet * 12 + heightInchesPart)
             heightCm = totalInches * 2.54
             weightKg = Double(weightLbs) / 2.20462
+
+            if let profile = userProfiles.first {
+                let profInches = profile.height / 2.54
+                let profFeet = Int(profInches) / 12
+                let profInchPart = Int(profInches) % 12
+                if heightFeet == profFeet && heightInchesPart == profInchPart {
+                    heightCm = profile.height
+                }
+                let profLbs = Int((profile.weight * 2.20462).rounded())
+                if weightLbs == profLbs {
+                    weightKg = profile.weight
+                }
+            }
         } else {
             heightCm = Double(heightCmUI)
             weightKg = Double(weightKgUI)
@@ -531,4 +546,12 @@ struct SettingsView: View {
 
 private enum AttestStatus {
     case verified, notVerified, notAvailable
+}
+
+private struct SettingsSnapshot: Equatable {
+    let heightFeet, heightInchesPart, weightLbs, age, heightCmUI, weightKgUI: Int
+    let gender: Gender
+    let activityLevel: ActivityLevel
+    let targetCalories: Double?
+    let appTheme: AppTheme
 }

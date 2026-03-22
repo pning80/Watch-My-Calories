@@ -25,6 +25,11 @@ struct EstimationReviewView: View {
     @State private var estimationComplete: Bool = false
     @State private var pendingResult: EstimationResult? = nil
     @State private var pendingError: String? = nil
+    @State private var estimationTask: Task<Void, Never>? = nil
+
+    private var isRateLimited: Bool {
+        pendingError?.starts(with: "Too many requests") ?? false
+    }
 
     var body: some View {
         Group {
@@ -81,16 +86,16 @@ struct EstimationReviewView: View {
                         } else if pendingError != nil {
                             // Inline error UI
                             HStack(spacing: 8) {
-                                Image(systemName: "exclamationmark.triangle.fill")
+                                Image(systemName: isRateLimited ? "clock.fill" : "exclamationmark.triangle.fill")
                                     .font(.system(size: 24))
-                                    .foregroundStyle(Color.orange)
+                                    .foregroundStyle(isRateLimited ? Color.cwPrimary : Color.orange)
 
-                                Text("Analysis Failed")
+                                Text(isRateLimited ? "Too Many Requests" : "Analysis Failed")
                                     .font(.headline)
                                     .foregroundStyle(Color.cwTextPrimary)
                             }
 
-                            Text("We couldn't analyze the image. Please try again.")
+                            Text(isRateLimited ? (pendingError ?? "") : "We couldn't analyze the image. Please try again.")
                                 .font(.subheadline)
                                 .multilineTextAlignment(.center)
                                 .foregroundStyle(Color.gray)
@@ -116,7 +121,10 @@ struct EstimationReviewView: View {
                             .foregroundStyle(Color.blue)
 
                             HStack(spacing: 16) {
-                                Button("Try Again") { Task { await estimate() } }
+                                Button("Try Again") {
+                                        estimationTask?.cancel()
+                                        estimationTask = Task { await estimate() }
+                                    }
                                     .buttonStyle(.borderedProminent)
                                     .tint(Color.cwPrimary)
                                     .accessibilityIdentifier(AccessibilityID.EstimationReview.tryAgainButton)
@@ -190,60 +198,62 @@ struct EstimationReviewView: View {
                     .padding()
                     .accessibilityIdentifier(AccessibilityID.EstimationReview.noFoodView)
                 } else {
-                    VStack(spacing: 24) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 64))
-                            .foregroundStyle(Color.cwPrimary)
-                            .transition(.scale.combined(with: .opacity))
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 64))
+                                .foregroundStyle(Color.cwPrimary)
+                                .transition(.scale.combined(with: .opacity))
 
-                        Text("Logged Successfully!")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundStyle(Color.cwTextPrimary)
+                            Text("Logged Successfully!")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Color.cwTextPrimary)
 
-                        VStack(spacing: 16) {
-                            ForEach(result.items.indices, id: \.self) { idx in
+                            VStack(spacing: 16) {
+                                ForEach(result.items.indices, id: \.self) { idx in
+                                    HStack {
+                                        Text(result.items[idx].name)
+                                            .font(.headline)
+                                            .foregroundStyle(Color.cwTextPrimary)
+                                        Spacer()
+                                        Text("\(Int(result.items[idx].calories)) kcal")
+                                            .fontWeight(.bold)
+                                            .foregroundStyle(Color.cwPrimary)
+                                    }
+                                    .padding()
+                                    .background(Color.cwSurface)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                                }
+
+                                Divider()
+
                                 HStack {
-                                    Text(result.items[idx].name)
+                                    Text("Total Added")
                                         .font(.headline)
                                         .foregroundStyle(Color.cwTextPrimary)
                                     Spacer()
-                                    Text("\(Int(result.items[idx].calories)) kcal")
+                                    Text("\(Int(result.totalCalories)) kcal")
+                                        .font(.title3)
                                         .fontWeight(.bold)
-                                        .foregroundStyle(Color.cwPrimary)
+                                        .foregroundStyle(Color.cwAccent)
                                 }
-                                .padding()
-                                .background(Color.cwSurface)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                                .padding(.top, 8)
                             }
+                            .padding(.horizontal)
 
-                            Divider()
-
-                            HStack {
-                                Text("Total Added")
-                                    .font(.headline)
-                                    .foregroundStyle(Color.cwTextPrimary)
-                                Spacer()
-                                Text("\(Int(result.totalCalories)) kcal")
-                                    .font(.title3)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(Color.cwAccent)
+                            Button("Done") {
+                                onDone()
+                                dismiss()
                             }
-                            .padding(.top, 8)
+                            .buttonStyle(.borderedProminent)
+                            .tint(Color.cwPrimary)
+                            .padding(.top)
+                            .accessibilityIdentifier(AccessibilityID.EstimationReview.doneButton)
                         }
-                        .padding(.horizontal)
-
-                        Button("Done") {
-                            onDone()
-                            dismiss()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Color.cwPrimary)
-                        .padding(.top)
-                        .accessibilityIdentifier(AccessibilityID.EstimationReview.doneButton)
+                        .padding()
                     }
-                    .padding()
                     .transition(.opacity)
                     .accessibilityIdentifier(AccessibilityID.EstimationReview.successView)
                 }
@@ -251,6 +261,10 @@ struct EstimationReviewView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
+        .onDisappear {
+            estimationTask?.cancel()
+            estimationTask = nil
+        }
         .task {
             if AdManager.shared.canRequestAds {
                 adLoader.loadAd()
@@ -258,7 +272,7 @@ struct EstimationReviewView: View {
 
             switch store.aiConsent {
             case .accepted:
-                await estimate()
+                estimationTask = Task { await estimate() }
             case .notAsked:
                 showConsentSheet = true
             case .declined:
@@ -271,7 +285,8 @@ struct EstimationReviewView: View {
                     store.saveAIConsent(.accepted)
                     showConsentSheet = false
                     isLoading = true
-                    Task { await estimate() }
+                    estimationTask?.cancel()
+                    estimationTask = Task { await estimate() }
                 },
                 onDecline: {
                     store.saveAIConsent(.declined)
@@ -289,20 +304,18 @@ struct EstimationReviewView: View {
         showDetails = false
         do {
             let estimation = try await env.estimationService.estimateCalories(images: images)
+            guard !Task.isCancelled else { return }
 
-            await MainActor.run {
-                self.pendingResult = estimation
-                if !estimation.items.isEmpty {
-                    saveToHistory(estimation)
-                    self.isSaved = true
-                }
-                self.estimationComplete = true
+            self.pendingResult = estimation
+            if !estimation.items.isEmpty {
+                saveToHistory(estimation)
+                self.isSaved = true
             }
+            self.estimationComplete = true
         } catch {
-            await MainActor.run {
-                self.pendingError = error.localizedDescription
-                self.estimationComplete = true
-            }
+            guard !Task.isCancelled else { return }
+            self.pendingError = error.localizedDescription
+            self.estimationComplete = true
         }
     }
     
@@ -310,8 +323,9 @@ struct EstimationReviewView: View {
         var savedImageID: UUID? = nil
         if let firstImageData = images.first {
             let id = UUID()
-            ImageStorage.shared.save(firstImageData, id: id)
-            savedImageID = id
+            if ImageStorage.shared.save(firstImageData, id: id) {
+                savedImageID = id
+            }
         }
 
         for item in result.items {

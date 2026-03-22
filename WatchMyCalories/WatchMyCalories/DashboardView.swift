@@ -12,6 +12,7 @@ struct DashboardView: View {
     @Binding var scrollToMeal: MealType?
     
     @State private var selectedImage: UIImage?
+    @Binding var photoLibraryRequested: Bool
     @State private var showManualEntry = false
     @State private var pendingManualEntry: FoodEntry?
     @State private var entryToEdit: FoodEntry?
@@ -19,9 +20,10 @@ struct DashboardView: View {
     @State private var groupToEdit: FoodEntryGroupEdit?
     @State private var groupToView: FoodEntryGroupEdit?
 
-    init(selectedTab: Binding<ContentView.Tab>, scrollToMeal: Binding<MealType?> = .constant(nil)) {
+    init(selectedTab: Binding<ContentView.Tab>, scrollToMeal: Binding<MealType?> = .constant(nil), photoLibraryRequested: Binding<Bool> = .constant(false)) {
         self._selectedTab = selectedTab
         self._scrollToMeal = scrollToMeal
+        self._photoLibraryRequested = photoLibraryRequested
     }
     
     var todayEntries: [FoodEntry] {
@@ -180,6 +182,10 @@ struct DashboardView: View {
             }, onScanFood: {
                 showManualEntry = false
                 selectedTab = .camera
+            }, onChooseFromLibrary: {
+                photoLibraryRequested = true
+                showManualEntry = false
+                selectedTab = .camera
             })
         }
         .sheet(item: $entryToEdit) { entry in
@@ -204,6 +210,7 @@ private struct ManualEntryView: View {
     @Environment(\.dismiss) private var dismiss
     var onSave: (FoodEntry) -> Void
     var onScanFood: (() -> Void)?
+    var onChooseFromLibrary: (() -> Void)?
 
     @State private var name = ""
     @State private var caloriesText = ""
@@ -265,6 +272,45 @@ private struct ManualEntryView: View {
                             }
                             .buttonStyle(.plain)
                             .accessibilityIdentifier(AccessibilityID.ManualEntry.scanButton)
+                            .padding(.horizontal)
+                        }
+
+                        if let onChooseFromLibrary {
+                            Button {
+                                onChooseFromLibrary()
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "photo.on.rectangle")
+                                        .font(.system(size: 24))
+                                        .foregroundStyle(Color.cwSecondary)
+                                        .padding(10)
+                                        .background(Circle().fill(Color.cwPrimary))
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Choose from Photo Library")
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(Color.cwTextPrimary)
+                                        Text("Estimate calories from an existing photo")
+                                            .font(.caption)
+                                            .foregroundStyle(Color.gray)
+                                    }
+
+                                    Spacer()
+
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(Color.gray)
+                                }
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .strokeBorder(Color.cwPrimary.opacity(0.3), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier(AccessibilityID.ManualEntry.photoLibraryButton)
                             .padding(.horizontal)
                         }
 
@@ -381,4 +427,5 @@ private struct NutrientField: View {
         }
     }
 }
+
 

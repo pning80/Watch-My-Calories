@@ -5,11 +5,12 @@ import SwiftUI
 struct BannerAdView: View {
     @ObservedObject private var adManager = AdManager.shared
     @State private var adHeight: CGFloat = 0
+    @State private var reloadTrigger: Bool = false
 
     var body: some View {
         Group {
             if !AdManager.isUITestingMode && adManager.canRequestAds {
-                BannerAdRepresentable(adHeight: $adHeight)
+                BannerAdRepresentable(adHeight: $adHeight, reloadTrigger: reloadTrigger)
                     .frame(maxWidth: .infinity)
                     .frame(height: adHeight)
                     .clipped()
@@ -19,6 +20,9 @@ struct BannerAdView: View {
                     .padding(.horizontal)
                     .animation(.easeInOut(duration: 0.3), value: adHeight)
                     .accessibilityIdentifier(AccessibilityID.Ads.banner)
+                    .onAppear {
+                        reloadTrigger.toggle()
+                    }
             }
         }
     }
@@ -26,6 +30,7 @@ struct BannerAdView: View {
 
 private struct BannerAdRepresentable: UIViewRepresentable {
     @Binding var adHeight: CGFloat
+    var reloadTrigger: Bool
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -33,6 +38,7 @@ private struct BannerAdRepresentable: UIViewRepresentable {
 
     func makeUIView(context: Context) -> BannerView {
         let bannerView = BannerView()
+        bannerView.backgroundColor = .clear
         bannerView.adUnitID = AdManager.bannerAdUnitID
         bannerView.delegate = context.coordinator
         bannerView.setContentHuggingPriority(.defaultLow, for: .vertical)
@@ -48,6 +54,11 @@ private struct BannerAdRepresentable: UIViewRepresentable {
 
     func updateUIView(_ uiView: BannerView, context: Context) {
         context.coordinator.parent = self
+        // Reload ad when view reappears (reloadTrigger toggles on onAppear)
+        if !context.coordinator.hasReceivedAd {
+            context.coordinator.retryCount = 0
+            context.coordinator.loadAdIfNeeded(uiView)
+        }
     }
 
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: BannerView, context: Context) -> CGSize? {
@@ -58,8 +69,8 @@ private struct BannerAdRepresentable: UIViewRepresentable {
         private let logger = Logger(subsystem: "com.pning80.WatchMyCalories", category: "BannerAd")
         var parent: BannerAdRepresentable
         weak var bannerView: BannerView?
-        private var retryCount = 0
-        private var hasReceivedAd = false
+        var retryCount = 0
+        var hasReceivedAd = false
         private static let maxRetries = 3
 
         init(parent: BannerAdRepresentable) {

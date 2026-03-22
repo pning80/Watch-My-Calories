@@ -7,34 +7,40 @@ import os
 class HealthKitManager: ObservableObject {
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "WatchMyCalories", category: "HealthKit")
     private let healthStore = HKHealthStore()
-    
+
     @Published var activeEnergyBurned: Double = 0.0
     @Published var isAuthorized: Bool = false
-    
+    private var observerQuery: HKObserverQuery?
+
     init() {
+        #if targetEnvironment(simulator)
+        activeEnergyBurned = 456.0
+        isAuthorized = true
+        #else
         // Check if HealthKit is available on this device
         guard HKHealthStore.isHealthDataAvailable() else {
             return
         }
+        #endif
     }
-    
+
     func checkAuthorizationStatus() {
         guard HKHealthStore.isHealthDataAvailable(),
               let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
 
         let status = healthStore.authorizationStatus(for: type)
-        
+
         DispatchQueue.main.async {
             self.isAuthorized = (status == .sharingAuthorized)
         }
     }
-    
+
     func requestAuthorization() {
         guard HKHealthStore.isHealthDataAvailable(),
               let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
 
         let readTypes: Set = [energyType]
-        
+
         // Request authorization to read active energy burned
         healthStore.requestAuthorization(toShare: nil, read: readTypes) { success, error in
             if let error = error {
@@ -49,33 +55,43 @@ class HealthKitManager: ObservableObject {
             }
         }
     }
-    
+
     func fetchTodayEnergyBurned() {
         guard HKHealthStore.isHealthDataAvailable(),
               let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
         let now = Date()
         let startOfDay = Calendar.current.startOfDay(for: now)
         let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: .strictStartDate)
-        
+
         let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
+            if let error = error {
+                Self.logger.error("HealthKit energy query failed: \(error.localizedDescription)")
+                return
+            }
             guard let result = result, let sum = result.sumQuantity() else {
                 return
             }
-            
+
             let burnedKcal = sum.doubleValue(for: HKUnit.kilocalorie())
-            
+
             DispatchQueue.main.async {
                 self.activeEnergyBurned = burnedKcal
             }
         }
-        
+
         healthStore.execute(query)
     }
-    
+
     func startObserving() {
         guard HKHealthStore.isHealthDataAvailable(),
               let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
-        
+
+        // Stop any existing observer to prevent duplicates
+        if let existing = observerQuery {
+            healthStore.stop(existing)
+            observerQuery = nil
+        }
+
         let query = HKObserverQuery(sampleType: type, predicate: nil) { [weak self] _, _, error in
             if let error = error {
                 Self.logger.error("HealthKit observer query error: \(error.localizedDescription)")
@@ -83,9 +99,10 @@ class HealthKitManager: ObservableObject {
             }
             self?.fetchTodayEnergyBurned()
         }
-        
+
+        observerQuery = query
         healthStore.execute(query)
-        
+
         // Enable background delivery
         healthStore.enableBackgroundDelivery(for: type, frequency: .immediate) { success, error in
             if let error = error {
