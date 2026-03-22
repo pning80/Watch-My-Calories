@@ -53,7 +53,7 @@ Answer **None** / **No** to all questions:
 > Analyze food from your photo library! Tap the "+" button on your Dashboard and choose "Choose from Photo Library" to estimate calories from existing photos.
 >
 > Also in this update:
-> - Improved camera stability with portrait orientation lock
+> - Fixed camera preview rotation when using the app in landscape
 > - Better error messages when the service is busy
 > - Automatic retry on network issues
 > - Graceful handling when camera access is denied
