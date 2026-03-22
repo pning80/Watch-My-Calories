@@ -39,6 +39,8 @@ private struct BannerAdRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> BannerView {
         let bannerView = BannerView()
         bannerView.backgroundColor = .clear
+        bannerView.clipsToBounds = true
+        bannerView.isHidden = true
         bannerView.adUnitID = AdManager.bannerAdUnitID
         bannerView.delegate = context.coordinator
         bannerView.setContentHuggingPriority(.defaultLow, for: .vertical)
@@ -54,10 +56,13 @@ private struct BannerAdRepresentable: UIViewRepresentable {
 
     func updateUIView(_ uiView: BannerView, context: Context) {
         context.coordinator.parent = self
-        // Reload ad when view reappears (reloadTrigger toggles on onAppear)
-        if !context.coordinator.hasReceivedAd {
-            context.coordinator.retryCount = 0
-            context.coordinator.loadAdIfNeeded(uiView)
+        if reloadTrigger != context.coordinator.lastReloadTrigger {
+            context.coordinator.lastReloadTrigger = reloadTrigger
+            if !context.coordinator.isAdValid {
+                uiView.isHidden = true
+                context.coordinator.retryCount = 0
+                context.coordinator.loadAdIfNeeded(uiView)
+            }
         }
     }
 
@@ -70,7 +75,9 @@ private struct BannerAdRepresentable: UIViewRepresentable {
         var parent: BannerAdRepresentable
         weak var bannerView: BannerView?
         var retryCount = 0
-        var hasReceivedAd = false
+        var hasEverReceivedAd = false
+        var isAdValid = false
+        var lastReloadTrigger: Bool = false
         private static let maxRetries = 3
 
         init(parent: BannerAdRepresentable) {
@@ -82,7 +89,6 @@ private struct BannerAdRepresentable: UIViewRepresentable {
                 .compactMap({ $0 as? UIWindowScene })
                 .first,
                 let rootVC = windowScene.windows.first?.rootViewController else {
-                // Window not ready — retry on next run-loop cycle
                 DispatchQueue.main.async { [weak self] in
                     self?.loadAdIfNeeded(bannerView)
                 }
@@ -96,14 +102,19 @@ private struct BannerAdRepresentable: UIViewRepresentable {
 
         func bannerViewDidReceiveAd(_ bannerView: BannerView) {
             retryCount = 0
-            hasReceivedAd = true
+            hasEverReceivedAd = true
+            isAdValid = true
+            bannerView.isHidden = false
             let height = min(bannerView.adSize.size.height, 90)
             parent.adHeight = height
         }
 
         func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
             logger.error("Failed to load: \(error.localizedDescription)")
-            if !hasReceivedAd {
+            isAdValid = false
+            // Only hide if no ad was ever successfully loaded — keep showing last good ad
+            if !hasEverReceivedAd {
+                bannerView.isHidden = true
                 parent.adHeight = 0
             }
 
