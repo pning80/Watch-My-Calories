@@ -1,6 +1,6 @@
 # Privacy Policy — Watch My Calories
 
-**Last Updated: March 15, 2026**
+**Last Updated: March 22, 2026**
 
 Watch My Calories ("the App") is a mobile application that helps you track your daily calorie intake using AI-powered food recognition. This Privacy Policy explains what data the App collects, how it is used, and your choices.
 
@@ -16,16 +16,18 @@ When you log meals — either manually or via camera scan — the App stores foo
 
 ### Food Photos
 
-When you use the camera scan feature, photos of your food are sent to our backend server, which forwards them to Google Gemini AI for nutritional analysis. The photos are:
+When you use the camera scan feature or choose a photo from your photo library, photos of your food are sent to our backend server, which forwards them to Google Gemini AI for nutritional analysis. The photos are:
 
 - Transmitted over HTTPS (encrypted in transit)
 - Used solely to identify foods and estimate nutritional content
 - **Not stored on our server** — they are forwarded to Google Gemini in real time and discarded
 - Subject to [Google's API Terms of Service](https://ai.google.dev/gemini-api/terms) and [Privacy Policy](https://policies.google.com/privacy)
 
+When you choose a photo from your photo library, the App uses Apple's standard photo picker. This grants access only to the specific photo you select — the App does not have persistent access to your photo library.
+
 The photo from each meal session is saved locally on your device for your reference. You can delete it at any time by deleting the food entry.
 
-Before your first food scan, the App asks for your explicit consent to send photos to the AI service. You can change this choice at any time in Settings. If you decline, the camera scan feature is unavailable, but all other app features continue to work.
+Before your first food scan, the App asks for your explicit consent to send photos to the AI service. You can change this choice at any time in Settings. If you decline, the camera scan and photo library features are unavailable, but all other app features continue to work.
 
 ### Health Data (Apple HealthKit)
 
@@ -43,7 +45,7 @@ The App does **not** collect, store, or transmit any of the following:
 
 - Names, email addresses, or contact information
 - Location data
-- Usage analytics or crash reports
+- Usage analytics or crash reports *(minimal app version info is sent with photo analysis requests for diagnostics; see "Food Photos" above)*
 - Browsing or search history
 - Financial or payment information
 
@@ -57,7 +59,7 @@ The App does not require or support user accounts, sign-ups, or login. There is 
 
 The App uses the following third-party services:
 
-- **Google Gemini AI** — Food photos are sent through our backend server to Google's Gemini API for nutritional analysis. No other data (profile, health, nutrition logs) is sent. Google's use of this data is governed by their [API Terms of Service](https://ai.google.dev/gemini-api/terms) and [Privacy Policy](https://policies.google.com/privacy).
+- **Google Gemini AI** — Food photos are sent through our backend server to Google's Gemini API for nutritional analysis. The app platform and version are also sent with each request for diagnostic purposes. No other data (profile, health, nutrition logs) is sent. Google's use of this data is governed by their [API Terms of Service](https://ai.google.dev/gemini-api/terms) and [Privacy Policy](https://policies.google.com/privacy).
 
 - **Google AdMob** — The App displays non-personalized (contextual) advertisements provided by Google AdMob. AdMob may collect limited device information (such as device model, OS version, and IP address) to serve and measure ads. The App does not request access to Apple's advertising identifier (IDFA). Ad data is handled by Google and is governed by [Google's Privacy Policy](https://policies.google.com/privacy). Where required by regional regulations (e.g., GDPR), the App uses Google's User Messaging Platform (UMP) to present a consent form.
 
