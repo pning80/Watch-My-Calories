@@ -58,7 +58,18 @@ private struct BannerAdRepresentable: UIViewRepresentable {
         context.coordinator.parent = self
         if reloadTrigger != context.coordinator.lastReloadTrigger {
             context.coordinator.lastReloadTrigger = reloadTrigger
-            if !context.coordinator.isAdValid {
+            let shouldReload: Bool
+            if !context.coordinator.hasEverReceivedAd {
+                shouldReload = true
+            } else if !context.coordinator.isAdValid {
+                shouldReload = true
+            } else if let lastTime = context.coordinator.lastAdReceivedTime,
+                      Date().timeIntervalSince(lastTime) > Coordinator.maxAdAge {
+                shouldReload = true
+            } else {
+                shouldReload = false
+            }
+            if shouldReload {
                 uiView.isHidden = true
                 context.coordinator.retryCount = 0
                 context.coordinator.loadAdIfNeeded(uiView)
@@ -77,8 +88,10 @@ private struct BannerAdRepresentable: UIViewRepresentable {
         var retryCount = 0
         var hasEverReceivedAd = false
         var isAdValid = false
+        var lastAdReceivedTime: Date?
         var lastReloadTrigger: Bool = false
         private static let maxRetries = 3
+        static let maxAdAge: TimeInterval = 150
 
         init(parent: BannerAdRepresentable) {
             self.parent = parent
@@ -104,6 +117,7 @@ private struct BannerAdRepresentable: UIViewRepresentable {
             retryCount = 0
             hasEverReceivedAd = true
             isAdValid = true
+            lastAdReceivedTime = Date()
             bannerView.isHidden = false
             let height = min(bannerView.adSize.size.height, 90)
             parent.adHeight = height
