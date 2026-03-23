@@ -275,7 +275,7 @@ describe('App Attest assertion verification', () => {
 
     // --- RP ID hash check when APPLE_TEAM_ID is not set ---
 
-    it('skips RP ID hash check when APPLE_TEAM_ID is not set', async () => {
+    it('rejects assertion when APPLE_TEAM_ID is not set', async () => {
         const savedTeamId = process.env.APPLE_TEAM_ID;
         delete process.env.APPLE_TEAM_ID;
 
@@ -283,14 +283,13 @@ describe('App Attest assertion verification', () => {
         const { publicKey, privateKey } = generateP256KeyPair();
         registerKey(keyID, publicKey, 0);
 
-        // Build assertion with wrong RP ID hash but sign correctly
+        // Build assertion with correct signature but missing APPLE_TEAM_ID config
         const body = { contents: [] as unknown[] };
         const bodyStr = JSON.stringify(body);
         const bodyBuf = Buffer.from(bodyStr);
         const clientDataHash = crypto.createHash('sha256').update(bodyBuf).digest();
 
-        const wrongRpIdHash = crypto.randomBytes(32);
-        const authData = buildAssertionAuthData(wrongRpIdHash, 1);
+        const authData = buildAssertionAuthData(rpIdHash, 1);
         const signature = signAssertion(privateKey, authData, clientDataHash);
         const assertionBase64 = buildAssertionObject(authData, signature);
 
@@ -301,8 +300,8 @@ describe('App Attest assertion verification', () => {
             .set('Content-Type', 'application/json')
             .send(bodyStr);
 
-        // Should NOT be 401 because RP ID check is skipped when APPLE_TEAM_ID is absent
-        assert.notEqual(res.status, 401);
+        // Must reject — APPLE_TEAM_ID is required for RP ID hash verification
+        assert.equal(res.status, 401);
 
         process.env.APPLE_TEAM_ID = savedTeamId;
     });

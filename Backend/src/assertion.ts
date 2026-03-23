@@ -74,15 +74,16 @@ export async function verifyAppAttestAssertion(req: Request, assertionBase64: st
     const authDataBuf = Buffer.from(authenticatorData);
 
     // Verify RP ID hash
-    if (process.env.APPLE_TEAM_ID) {
-        const rpIdHash = authDataBuf.subarray(0, 32);
-        const expectedRpIdHash = crypto.createHash('sha256')
-            .update(`${process.env.APPLE_TEAM_ID}.${BUNDLE_ID}`)
-            .digest();
-        if (!crypto.timingSafeEqual(rpIdHash, expectedRpIdHash)) {
-            counters.increment('assertion_total', { result: 'invalid' });
-            throw new Error('RP ID hash mismatch.');
-        }
+    if (!process.env.APPLE_TEAM_ID) {
+        throw new Error('APPLE_TEAM_ID not configured — cannot verify RP ID hash.');
+    }
+    const rpIdHash = authDataBuf.subarray(0, 32);
+    const expectedRpIdHash = crypto.createHash('sha256')
+        .update(`${process.env.APPLE_TEAM_ID}.${BUNDLE_ID}`)
+        .digest();
+    if (!crypto.timingSafeEqual(rpIdHash, expectedRpIdHash)) {
+        counters.increment('assertion_total', { result: 'invalid' });
+        throw new Error('RP ID hash mismatch.');
     }
 
     // Verify counter is incrementing (replay protection)
