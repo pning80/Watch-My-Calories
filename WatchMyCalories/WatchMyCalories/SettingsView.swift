@@ -9,8 +9,10 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var env: AppEnvironment
 
-    @Binding var selectedTab: ContentView.Tab
     @Binding var hasUnsavedChanges: Bool
+    var onDismiss: () -> Void = {}
+
+    @State private var showUnsavedAlert = false
 
     // Use ObservedObject for singletons to avoid lifecycle conflicts
     @ObservedObject private var store = SettingsStore.shared
@@ -43,9 +45,9 @@ struct SettingsView: View {
         case calories
     }
 
-    init(selectedTab: Binding<ContentView.Tab> = .constant(.settings), hasUnsavedChanges: Binding<Bool> = .constant(false)) {
-        self._selectedTab = selectedTab
+    init(hasUnsavedChanges: Binding<Bool> = .constant(false), onDismiss: @escaping () -> Void = {}) {
         self._hasUnsavedChanges = hasUnsavedChanges
+        self.onDismiss = onDismiss
     }
 
     var body: some View {
@@ -63,10 +65,6 @@ struct SettingsView: View {
                             Text("Watch My Calories")
                                 .font(.headline)
                                 .foregroundStyle(Color.cwPrimary)
-
-                            Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
                         }
                         Spacer()
                     }
@@ -285,13 +283,6 @@ struct SettingsView: View {
                         }
                     }
 
-                    Link(destination: URL(string: "https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb")!) {
-                        Label("Privacy Policy", systemImage: "hand.raised")
-                    }
-
-                    Link(destination: URL(string: "https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470")!) {
-                        Label("Support", systemImage: "lifepreserver")
-                    }
                 }
 
                 Section(header: Text("Device Attestation")) {
@@ -311,10 +302,13 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        saveSettings()
+                    Button("Done") {
                         focusedField = nil
-                        selectedTab = .dashboard
+                        if hasUnsavedChanges {
+                            showUnsavedAlert = true
+                        } else {
+                            onDismiss()
+                        }
                     }
                     .accessibilityIdentifier(AccessibilityID.Settings.saveButton)
                 }
@@ -324,6 +318,19 @@ struct SettingsView: View {
                         focusedField = nil
                     }
                 }
+            }
+            .alert("Unsaved Changes", isPresented: $showUnsavedAlert) {
+                Button("Save", role: .cancel) {
+                    saveSettings()
+                    onDismiss()
+                }
+                Button("Discard", role: .destructive) {
+                    loadSettings()
+                    onDismiss()
+                }
+                Button("Cancel", role: .none) {}
+            } message: {
+                Text("Do you want to save or discard your changes?")
             }
             .onAppear {
                 loadSettings()
@@ -363,14 +370,6 @@ struct SettingsView: View {
                 isEditingHeight = false
                 isEditingWeight = false
                 isEditingAge = false
-                checkUnsaved()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .saveSettings)) { _ in
-                saveSettings()
-                checkUnsaved()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .discardSettings)) { _ in
-                loadSettings()
                 checkUnsaved()
             }
         }

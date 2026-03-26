@@ -1,137 +1,144 @@
 import SwiftUI
 import SwiftData
 
-extension Notification.Name {
-    static let saveSettings = Notification.Name("SaveSettings")
-    static let discardSettings = Notification.Name("DiscardSettings")
-}
-
 struct ContentView: View {
     @State private var selectedTab: Tab = .dashboard
+    @State private var previousTab: Tab = .dashboard
 
-    // State to trigger scrolling
+    // Log Food sheet + flow state
+    @State private var showLogFoodSheet = false
+    @State private var showScanFoodFlow = false
+    @State private var showPhotoLibraryFlow = false
+    @State private var showManualEntryFlow = false
+
+    // State to trigger scrolling after food is logged
     @State private var scrollToMeal: MealType?
 
-    // Photo library flow: route through camera tab
-    @State private var photoLibraryRequested: Bool = false
-    
     @ObservedObject private var store = SettingsStore.shared
-    
-    // State for Settings unsaved changes alerts
-    @State private var settingsHasUnsavedChanges: Bool = false
-    @State private var showUnsavedWarning: Bool = false
-    @State private var pendingTab: Tab? = nil
-    
+
+    enum Tab: Hashable {
+        case dashboard, logFood, scanMenu, history
+    }
+
     var tabBinding: Binding<Tab> {
         Binding(
             get: { selectedTab },
             set: { newTab in
-                if selectedTab == .settings && newTab != .settings && settingsHasUnsavedChanges {
-                    pendingTab = newTab
-                    showUnsavedWarning = true
+                if newTab == .logFood {
+                    showLogFoodSheet = true
+                    // Don't change selectedTab — stay on current tab
                 } else {
+                    previousTab = selectedTab
                     selectedTab = newTab
                 }
             }
         )
     }
-    
-    enum Tab: Hashable {
-        case dashboard, camera, history, settings
-    }
-    
+
     var body: some View {
         TabView(selection: tabBinding) {
-            DashboardView(selectedTab: $selectedTab, scrollToMeal: $scrollToMeal, photoLibraryRequested: $photoLibraryRequested)
+            DashboardView(selectedTab: $selectedTab, scrollToMeal: $scrollToMeal)
                 .tabItem {
                     Label("Today", systemImage: "flame.fill")
                 }
                 .tag(Tab.dashboard)
-            
-            CameraRootView(selectedTab: $selectedTab, scrollToMeal: $scrollToMeal, photoLibraryRequested: $photoLibraryRequested)
+
+            // Placeholder view for the action tab — never actually shown
+            Color.clear
                 .tabItem {
-                    Label("Scan", systemImage: "camera.fill")
+                    Label("Log Food", systemImage: "plus.circle.fill")
                 }
-                .tag(Tab.camera)
-            
+                .tag(Tab.logFood)
+
+            MenuCameraRootView(selectedTab: $selectedTab)
+                .tabItem {
+                    Label("Scan Menu", systemImage: "doc.viewfinder")
+                }
+                .tag(Tab.scanMenu)
+
             HistoryView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("History", systemImage: "calendar")
                 }
                 .tag(Tab.history)
-            
-            SettingsView(selectedTab: $selectedTab, hasUnsavedChanges: $settingsHasUnsavedChanges)
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape.fill")
-                }
-                .tag(Tab.settings)
-        }
-        .alert("Unsaved Changes", isPresented: $showUnsavedWarning) {
-            Button("Save", role: .cancel) {
-                if let t = pendingTab {
-                    selectedTab = t
-                    pendingTab = nil
-                    NotificationCenter.default.post(name: .saveSettings, object: nil)
-                }
-            }
-            Button("Discard", role: .destructive) {
-                if let t = pendingTab {
-                    selectedTab = t
-                    pendingTab = nil
-                    NotificationCenter.default.post(name: .discardSettings, object: nil)
-                }
-            }
-        } message: {
-            Text("Do you want to save or discard your changes?")
         }
         .tint(Color.cwPrimary)
         .preferredColorScheme(store.appTheme.colorScheme)
         .onAppear {
-            // Configure Tab Bar appearance safely once the view is loaded
             let appearance = UITabBarAppearance()
             appearance.configureWithOpaqueBackground()
             appearance.backgroundColor = UIColor { tc in
                 tc.userInterfaceStyle == .dark ? .secondarySystemBackground : .white
             }
-            
+
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
+        .sheet(isPresented: $showLogFoodSheet) {
+            LogFoodSheet(
+                onScanFood: {
+                    showLogFoodSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showScanFoodFlow = true
+                    }
+                },
+                onChooseFromLibrary: {
+                    showLogFoodSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showPhotoLibraryFlow = true
+                    }
+                },
+                onLogManually: {
+                    showLogFoodSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showManualEntryFlow = true
+                    }
+                }
+            )
+        }
+        .fullScreenCover(isPresented: $showScanFoodFlow) {
+            CameraRootView(onDone: { mealType in
+                showScanFoodFlow = false
+                selectedTab = .dashboard
+                scrollToMeal = mealType
+            })
+        }
+        .fullScreenCover(isPresented: $showPhotoLibraryFlow) {
+            PhotoLibraryRootView(onDone: { mealType in
+                showPhotoLibraryFlow = false
+                selectedTab = .dashboard
+                scrollToMeal = mealType
+            }, onCancel: {
+                showPhotoLibraryFlow = false
+            })
+        }
+        .sheet(isPresented: $showManualEntryFlow) {
+            ManualEntryRootView(onDone: {
+                showManualEntryFlow = false
+                selectedTab = .dashboard
+            })
         }
     }
 }
 
-// Wrapper for Camera to handle navigation to review
+// MARK: - Camera Root (presented modally now, not as a tab)
+
 struct CameraRootView: View {
-    @Binding var selectedTab: ContentView.Tab
-    @Binding var scrollToMeal: MealType?
-    @Binding var photoLibraryRequested: Bool
+    var onDone: (MealType) -> Void
     @StateObject private var cameraManager = CameraManager()
     @State private var capturedImages: [UIImage] = []
     @State private var reviewData: [Data]?
     @State private var capturedDate: Date? = nil
     @State private var selectedMealType: MealType? = nil
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                if photoLibraryRequested {
-                    PhotoLibraryReviewView(onImagesCaptured: { images, mealType in
-                        self.capturedImages = images
-                        self.reviewData = images.compactMap { $0.downscaled(maxDimension: 2048).jpegData(compressionQuality: 0.8) }
-                        self.capturedDate = Date()
-                        self.selectedMealType = mealType
-                    }, onCancel: {
-                        photoLibraryRequested = false
-                        selectedTab = .dashboard
-                    })
-                } else {
-                    CameraView(model: cameraManager) { images, mealType in
-                        self.capturedImages = images
-                        self.reviewData = images.compactMap { $0.downscaled(maxDimension: 2048).jpegData(compressionQuality: 0.8) }
-                        self.capturedDate = Date()
-                        self.selectedMealType = mealType
-                    }
-                }
+            CameraView(model: cameraManager) { images, mealType in
+                self.capturedImages = images
+                self.reviewData = images.compactMap { $0.downscaled(maxDimension: 2048).jpegData(compressionQuality: 0.8) }
+                self.capturedDate = Date()
+                self.selectedMealType = mealType
             }
             .navigationDestination(isPresented: Binding(
                 get: { reviewData != nil },
@@ -140,25 +147,85 @@ struct CameraRootView: View {
                     capturedImages.removeAll()
                     capturedDate = nil
                     selectedMealType = nil
-                    photoLibraryRequested = false
                     cameraManager.reset()
                 } }
             )) {
                 if let data = reviewData, let date = capturedDate, let mealType = selectedMealType {
                     EstimationReviewView(images: data, captureDate: date, mealType: mealType, onDone: {
-                        photoLibraryRequested = false
-                        selectedTab = .dashboard
-                        scrollToMeal = mealType
+                        onDone(mealType)
                     })
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
                 }
             }
         }
         .onAppear {
-            if !photoLibraryRequested {
-                capturedImages.removeAll()
-                reviewData = nil
-                cameraManager.reset()
+            capturedImages.removeAll()
+            reviewData = nil
+            cameraManager.reset()
+        }
+    }
+}
+
+// MARK: - Photo Library Root (presented modally)
+
+struct PhotoLibraryRootView: View {
+    var onDone: (MealType) -> Void
+    var onCancel: () -> Void
+    @State private var capturedImages: [UIImage] = []
+    @State private var reviewData: [Data]?
+    @State private var capturedDate: Date? = nil
+    @State private var selectedMealType: MealType? = nil
+
+    var body: some View {
+        NavigationStack {
+            PhotoLibraryReviewView(onImagesCaptured: { images, mealType in
+                self.capturedImages = images
+                self.reviewData = images.compactMap { $0.downscaled(maxDimension: 2048).jpegData(compressionQuality: 0.8) }
+                self.capturedDate = Date()
+                self.selectedMealType = mealType
+            }, onCancel: {
+                onCancel()
+            })
+            .navigationDestination(isPresented: Binding(
+                get: { reviewData != nil },
+                set: { if !$0 {
+                    reviewData = nil
+                    capturedImages.removeAll()
+                    capturedDate = nil
+                    selectedMealType = nil
+                } }
+            )) {
+                if let data = reviewData, let date = capturedDate, let mealType = selectedMealType {
+                    EstimationReviewView(images: data, captureDate: date, mealType: mealType, onDone: {
+                        onDone(mealType)
+                    })
+                }
             }
+        }
+    }
+}
+
+// MARK: - Manual Entry Root (presented as sheet)
+
+struct ManualEntryRootView: View {
+    @Environment(\.modelContext) private var modelContext
+    var onDone: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ManualEntryView(onSave: { entry in
+                modelContext.insert(entry)
+                onDone()
+            }, onScanFood: {
+                // Already in a sheet — just dismiss, user can tap Log Food tab again
+                onDone()
+            }, onChooseFromLibrary: {
+                onDone()
+            })
         }
     }
 }

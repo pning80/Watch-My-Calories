@@ -36,9 +36,13 @@ struct WatchMyCaloriesApp: App {
             SettingsStore.shared.hasCompletedOnboarding = false
         }
 
-        let schema = Schema([UserProfile.self, FoodEntry.self])
+        let schema = Schema([UserProfile.self, FoodEntry.self, MenuScan.self])
 
         if Self.isUITesting {
+            // Reset transient flags so tests get a consistent initial state
+            UserDefaults.standard.removeObject(forKey: "hasSeenEstimateDisclaimer")
+            SettingsStore.shared.hasSeenEstimateDisclaimer = false
+
             // Always use in-memory store for UI tests
             container = try? ModelContainer(for: schema, configurations: [
                 ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)

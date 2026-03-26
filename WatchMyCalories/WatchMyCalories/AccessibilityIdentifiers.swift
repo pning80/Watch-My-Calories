@@ -74,6 +74,26 @@ enum AccessibilityID {
         static let picker = "mealTypePicker"
     }
 
+    enum AppMenu {
+        static let menuButton = "appMenu_button"
+    }
+
+    enum About {
+        static let versionLabel = "about_versionLabel"
+        static let helpAndSupport = "about_helpAndSupport"
+        static let privacyPolicy = "about_privacyPolicy"
+        static let rateOnAppStore = "about_rateOnAppStore"
+    }
+
+    enum Disclaimer {
+        static let dontShowToggle = "disclaimer_dontShowToggle"
+        static let continueButton = "disclaimer_continueButton"
+    }
+
+    enum ScannedMenus {
+        static let emptyState = "scannedMenus_emptyState"
+    }
+
     enum Ads {
         static let banner = "ads_banner"
         static let native = "ads_native"

@@ -11,11 +11,13 @@ final class SettingsStoreTests: XCTestCase {
     private let unitSystemKey = "unitSystem"
     private let aiConsentKey = "aiConsentStatus"
     private let onboardingKey = "hasCompletedOnboarding"
+    private let estimateDisclaimerKey = "hasSeenEstimateDisclaimer"
 
     private var originalTheme: String?
     private var originalUnit: String?
     private var originalConsent: String?
     private var originalOnboarding: Bool = false
+    private var originalDisclaimer: Bool = false
 
     override func setUpWithError() throws {
         // Snapshot original values to restore after test
@@ -23,6 +25,7 @@ final class SettingsStoreTests: XCTestCase {
         originalUnit = defaults.string(forKey: unitSystemKey)
         originalConsent = defaults.string(forKey: aiConsentKey)
         originalOnboarding = defaults.bool(forKey: onboardingKey)
+        originalDisclaimer = defaults.bool(forKey: estimateDisclaimerKey)
     }
 
     override func tearDownWithError() throws {
@@ -31,6 +34,7 @@ final class SettingsStoreTests: XCTestCase {
         if let u = originalUnit { defaults.set(u, forKey: unitSystemKey) } else { defaults.removeObject(forKey: unitSystemKey) }
         if let c = originalConsent { defaults.set(c, forKey: aiConsentKey) } else { defaults.removeObject(forKey: aiConsentKey) }
         defaults.set(originalOnboarding, forKey: onboardingKey)
+        defaults.set(originalDisclaimer, forKey: estimateDisclaimerKey)
         defaults.synchronize()
         store.load()
     }
@@ -66,6 +70,27 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(store.hasCompletedOnboarding)
     }
 
+    // MARK: - dismissEstimateDisclaimer()
+
+    func testDismissEstimateDisclaimerPersists() {
+        defaults.set(false, forKey: estimateDisclaimerKey)
+        defaults.synchronize()
+        store.load()
+
+        store.dismissEstimateDisclaimer()
+
+        XCTAssertTrue(defaults.bool(forKey: estimateDisclaimerKey))
+        XCTAssertTrue(store.hasSeenEstimateDisclaimer)
+    }
+
+    func testEstimateDisclaimerDefaultsToFalse() {
+        defaults.removeObject(forKey: estimateDisclaimerKey)
+        defaults.synchronize()
+        store.load()
+
+        XCTAssertFalse(store.hasSeenEstimateDisclaimer)
+    }
+
     // MARK: - load()
 
     func testLoadRestoresPersistedValues() {
@@ -73,6 +98,7 @@ final class SettingsStoreTests: XCTestCase {
         defaults.set("US Customary", forKey: unitSystemKey)
         defaults.set("declined", forKey: aiConsentKey)
         defaults.set(true, forKey: onboardingKey)
+        defaults.set(true, forKey: estimateDisclaimerKey)
         defaults.synchronize()
 
         store.load()
@@ -81,5 +107,6 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.unitSystem, .us)
         XCTAssertEqual(store.aiConsent, .declined)
         XCTAssertTrue(store.hasCompletedOnboarding)
+        XCTAssertTrue(store.hasSeenEstimateDisclaimer)
     }
 }

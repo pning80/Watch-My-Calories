@@ -1,6 +1,29 @@
 import Foundation
 import SwiftData
 
+// MARK: - Menu Scan
+
+@Model
+final class MenuScan {
+    var id: UUID
+    var restaurantName: String?
+    var imageID: UUID?
+    var timestamp: Date
+    var itemsData: Data
+
+    var items: [MenuItemResult] {
+        (try? JSONDecoder().decode([MenuItemResult].self, from: itemsData)) ?? []
+    }
+
+    init(restaurantName: String?, imageID: UUID?, timestamp: Date, items: [MenuItemResult]) {
+        self.id = UUID()
+        self.restaurantName = restaurantName
+        self.imageID = imageID
+        self.timestamp = timestamp
+        self.itemsData = (try? JSONEncoder().encode(items)) ?? Data()
+    }
+}
+
 @Model
 final class UserProfile {
     var height: Double // cm (Reverted to Metric storage)

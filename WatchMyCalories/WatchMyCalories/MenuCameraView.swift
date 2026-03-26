@@ -1,16 +1,13 @@
 import SwiftUI
 import AVFoundation
-import UIKit
 
-struct CameraView: View {
+struct MenuCameraView: View {
     @ObservedObject var model: CameraManager
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
 
-    var onImagesCaptured: ([UIImage], MealType) -> Void
+    var onImageCaptured: (Data) -> Void
 
     @State private var photoToReview: UIImage?
-    @State private var selectedMealType: MealType = MealType.from(date: Date())
     @State private var cameraAuthStatus: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
     @State private var showEstimateDisclaimer = false
     @ObservedObject private var store = SettingsStore.shared
@@ -43,15 +40,11 @@ struct CameraView: View {
                 VStack {
                     Spacer()
 
-                    MealTypePicker(selection: $selectedMealType)
-                        .padding(.bottom, 16)
-
                     HStack(spacing: 40) {
                         // Retake
                         Button(action: {
                             withAnimation {
                                 photoToReview = nil
-                                selectedMealType = MealType.from(date: Date())
                                 model.reset()
                             }
                         }) {
@@ -63,13 +56,14 @@ struct CameraView: View {
                                 .padding(.vertical, 14)
                                 .background(Capsule().fill(Color.white.opacity(0.25)))
                         }
-                        .accessibilityIdentifier(AccessibilityID.Camera.retakeButton)
 
-                        // Use Photo
+                        // Analyze Menu
                         Button(action: {
-                            onImagesCaptured(model.capturedImages, selectedMealType)
+                            if let data = image.downscaledForMenu(maxDimension: 2048).jpegData(compressionQuality: 0.8) {
+                                onImageCaptured(data)
+                            }
                         }) {
-                            Label("Use", systemImage: "checkmark")
+                            Label("Analyze Menu", systemImage: "checkmark")
                                 .font(.body)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(.white)
@@ -78,7 +72,6 @@ struct CameraView: View {
                                 .background(Capsule().fill(Color.cwAccent))
                                 .shadow(radius: 4)
                         }
-                        .accessibilityIdentifier(AccessibilityID.Camera.usePhotoButton)
                     }
                     .padding(.bottom, 50)
                 }
@@ -118,16 +111,17 @@ struct CameraView: View {
                     }
                     .disabled(model.isCapturing)
                     .opacity(model.isCapturing ? 0.5 : 1.0)
-                    .accessibilityIdentifier(AccessibilityID.Camera.captureButton)
                     .padding(.bottom, 40)
                 }
             }
         }
-        .onAppear { model.start() }
+        .onAppear {
+            model.start()
+            LocationManager.shared.requestPermission()
+        }
         .onDisappear { model.stop() }
         .onChange(of: model.capturedImages.count) {
             if let image = model.capturedImages.first {
-                selectedMealType = MealType.from(date: Date())
                 withAnimation { photoToReview = image }
                 if !store.hasSeenEstimateDisclaimer {
                     showEstimateDisclaimer = true
@@ -174,7 +168,7 @@ struct CameraView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(Color.cwTextPrimary)
 
-            Text("To scan your meals, please allow camera access in Settings.")
+            Text("To scan restaurant menus, please allow camera access in Settings.")
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Color.gray)
@@ -200,70 +194,53 @@ struct CameraView: View {
     }
 }
 
-// UIKit wrapper for AVCaptureVideoPreviewLayer
-struct CameraPreview: UIViewRepresentable {
-    let session: AVCaptureSession
-
-    func makeUIView(context: Context) -> VideoPreviewView {
-        let view = VideoPreviewView()
-        view.videoPreviewLayer.session = session
-        view.videoPreviewLayer.videoGravity = .resizeAspectFill
-        return view
-    }
-
-    func updateUIView(_ uiView: VideoPreviewView, context: Context) {
-        if uiView.videoPreviewLayer.session != session {
-            uiView.videoPreviewLayer.session = session
-        }
-    }
-
-    class VideoPreviewView: UIView {
-        override class var layerClass: AnyClass {
-            AVCaptureVideoPreviewLayer.self
-        }
-
-        var videoPreviewLayer: AVCaptureVideoPreviewLayer {
-            return layer as! AVCaptureVideoPreviewLayer
-        }
-
-        override func layoutSubviews() {
-            super.layoutSubviews()
-            videoPreviewLayer.frame = bounds
-            if let connection = videoPreviewLayer.connection {
-                let angle: CGFloat = switch UIDevice.current.orientation {
-                case .portrait: 90
-                case .landscapeLeft: 0
-                case .landscapeRight: 180
-                case .portraitUpsideDown: 270
-                default: 90
-                }
-                connection.videoRotationAngle = angle
-            }
-        }
+private extension UIImage {
+    func downscaledForMenu(maxDimension: CGFloat) -> UIImage {
+        let maxSide = max(size.width, size.height)
+        guard maxSide > maxDimension else { return self }
+        let scale = maxDimension / maxSide
+        let newSize = CGSize(width: size.width * scale, height: size.height * scale)
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in draw(in: CGRect(origin: .zero, size: newSize)) }
     }
 }
 
-struct MealTypePicker: View {
-    @Binding var selection: MealType
+// MARK: - Root View for Scan Menu Tab
+
+struct MenuCameraRootView: View {
+    @Binding var selectedTab: ContentView.Tab
+    @StateObject private var cameraManager = CameraManager()
+    @State private var menuReviewData: Data?
 
     var body: some View {
-        HStack(spacing: 8) {
-            ForEach(MealType.allCases, id: \.self) { type in
-                Button {
-                    selection = type
-                } label: {
-                    Text(type.rawValue)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule().fill(selection == type ? Color.cwAccent : Color.white.opacity(0.25))
-                        )
+        #if targetEnvironment(simulator)
+        let _ = cameraManager.simulatorPhotos = ["MenuPhoto1"]
+        #endif
+        NavigationStack {
+            MenuCameraView(model: cameraManager) { imageData in
+                menuReviewData = imageData
+            }
+            .navigationDestination(isPresented: Binding(
+                get: { menuReviewData != nil },
+                set: { if !$0 {
+                    menuReviewData = nil
+                    cameraManager.reset()
+                } }
+            )) {
+                if let data = menuReviewData {
+                    MenuAnalysisView(imageData: data, onDone: {
+                        menuReviewData = nil
+                        cameraManager.reset()
+                        selectedTab = .dashboard
+                    }, onScanAgain: {
+                        menuReviewData = nil
+                        cameraManager.reset()
+                    })
                 }
             }
         }
-        .accessibilityIdentifier(AccessibilityID.MealTypePicker.picker)
+        .onAppear {
+            cameraManager.reset()
+        }
     }
 }
