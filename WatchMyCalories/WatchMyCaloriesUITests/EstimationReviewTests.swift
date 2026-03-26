@@ -5,11 +5,17 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
     /// Navigate to camera, capture, and tap Use to start estimation.
     private func startEstimation() {
         launchEmpty()
-        app.tabBars.buttons["Scan"].tap()
+        app.tabBars.buttons["Scan Food"].tap()
 
         let captureButton = app.buttons["camera_captureButton"]
         XCTAssertTrue(captureButton.waitForExistence(timeout: 5))
         captureButton.tap()
+
+        // Dismiss disclaimer if shown
+        let disclaimerContinue = app.buttons["disclaimer_continueButton"]
+        if disclaimerContinue.waitForExistence(timeout: 3) {
+            disclaimerContinue.tap()
+        }
 
         let useButton = app.buttons["camera_usePhotoButton"]
         XCTAssertTrue(useButton.waitForExistence(timeout: 5))

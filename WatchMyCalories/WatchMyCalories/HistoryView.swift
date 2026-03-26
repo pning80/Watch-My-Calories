@@ -37,6 +37,7 @@ struct HistoryView: View {
                                 .cwTitle()
                                 .accessibilityIdentifier(AccessibilityID.History.title)
                             Spacer()
+                            AppMenuButton()
                         }
                         .padding(.horizontal)
                         .padding(.top)
@@ -45,7 +46,7 @@ struct HistoryView: View {
 
                         if sortedDates.isEmpty {
                             Button {
-                                selectedTab = .camera
+                                selectedTab = .logFood
                             } label: {
                                 EmptyStateCard()
                             }
@@ -71,6 +72,7 @@ struct HistoryView: View {
                     .padding(.bottom, 100)
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)
         }
         .fullScreenCover(item: Binding<ImageWrapper?>(
             get: { selectedImage.map { ImageWrapper(image: $0) } },

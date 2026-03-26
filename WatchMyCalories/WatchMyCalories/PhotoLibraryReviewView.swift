@@ -10,6 +10,8 @@ struct PhotoLibraryReviewView: View {
     @State private var selectedImage: UIImage?
     @State private var selectedMealType: MealType = MealType.from(date: Date())
     @State private var showPicker = true
+    @State private var showEstimateDisclaimer = false
+    @ObservedObject private var store = SettingsStore.shared
 
     var body: some View {
         ZStack {
@@ -76,6 +78,9 @@ struct PhotoLibraryReviewView: View {
                         selectedImage = uiImage
                         let photoDate = extractCreationDate(from: data) ?? Date()
                         selectedMealType = MealType.from(date: photoDate)
+                        if !store.hasSeenEstimateDisclaimer {
+                            showEstimateDisclaimer = true
+                        }
                     } else {
                         selectedItem = nil
                         showPicker = true
@@ -86,6 +91,14 @@ struct PhotoLibraryReviewView: View {
         .onChange(of: showPicker) { _, isShowing in
             if !isShowing && selectedItem == nil {
                 onCancel()
+            }
+        }
+        .sheet(isPresented: $showEstimateDisclaimer) {
+            CalorieDisclaimerSheet { dontShowAgain in
+                if dontShowAgain {
+                    store.dismissEstimateDisclaimer()
+                }
+                showEstimateDisclaimer = false
             }
         }
     }

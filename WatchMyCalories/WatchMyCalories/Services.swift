@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import UIKit
+import CoreLocation
 
 // MARK: - Models
 
@@ -50,6 +51,49 @@ struct EstimationResult: Codable {
     }
 }
 
+// MARK: - Menu Analysis Models
+
+struct MenuItemResult: Identifiable, Codable {
+    var id = UUID()
+    let name: String
+    let description: String?
+    let calories: Double
+    let protein: Double?
+    let carbs: Double?
+    let fat: Double?
+
+    init(name: String, description: String?, calories: Double, protein: Double?, carbs: Double?, fat: Double?) {
+        self.id = UUID()
+        self.name = name
+        self.description = description
+        self.calories = calories
+        self.protein = protein
+        self.carbs = carbs
+        self.fat = fat
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = UUID()
+        self.name = try container.decode(String.self, forKey: .name)
+        self.description = try container.decodeIfPresent(String.self, forKey: .description)
+        self.calories = try container.decode(Double.self, forKey: .calories)
+        self.protein = try container.decodeIfPresent(Double.self, forKey: .protein)
+        self.carbs = try container.decodeIfPresent(Double.self, forKey: .carbs)
+        self.fat = try container.decodeIfPresent(Double.self, forKey: .fat)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name, description, calories, protein, carbs, fat
+    }
+}
+
+struct MenuAnalysisResult: Codable {
+    let restaurantName: String?
+    let items: [MenuItemResult]?
+    let error: String?
+}
+
 // MARK: - Protocols
 
 protocol EstimationService {
@@ -82,7 +126,10 @@ enum GeminiError: Error, LocalizedError {
 
 final class GeminiService: EstimationService {
 
-    func estimateCalories(images: [Data]) async throws -> EstimationResult {
+    // MARK: - Shared HTTP/Retry Infrastructure
+
+    /// Sends a prompt + images to the Gemini backend and returns the cleaned JSON text from the response.
+    private func sendGeminiRequest(prompt: String, images: [Data]) async throws -> String {
         let backendURL = BackendConfig.baseURL
         let backendKey = BackendConfig.apiKey
 
@@ -90,11 +137,9 @@ final class GeminiService: EstimationService {
             throw GeminiError.missingBackendConfig
         }
 
-        // Ensure App Attest key is generated and attested (no-op on simulator)
         let attestManager = AppAttestManager.shared
         try await attestManager.ensureAttested()
 
-        // Model name in the path is ignored by the backend — it always uses its configured model
         let urlString = "\(backendURL)/v1beta/models/default:generateContent"
         guard let url = URL(string: urlString) else { throw GeminiError.networkError(URLError(.badURL)) }
 
@@ -104,12 +149,129 @@ final class GeminiService: EstimationService {
         request.addValue("ios", forHTTPHeaderField: "X-App-Platform")
         request.addValue(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown", forHTTPHeaderField: "X-App-Version")
 
-        // Use legacy key as fallback when App Attest is unavailable (simulator, pre-A12 devices)
         if !attestManager.isSupported {
             request.addValue(backendKey, forHTTPHeaderField: "x-backend-key")
         }
 
-        // Construct Request Body
+        let parts: [[String: Any]] = [
+            ["text": prompt]
+        ] + images.map { data in
+            [
+                "inline_data": [
+                    "mime_type": "image/jpeg",
+                    "data": data.base64EncodedString()
+                ]
+            ]
+        }
+
+        let body: [String: Any] = [
+            "contents": [
+                ["parts": parts]
+            ]
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.timeoutInterval = 30
+
+        let maxAttempts = 3
+        var data: Data!
+        var httpResponse: HTTPURLResponse!
+
+        for attempt in 1...maxAttempts {
+            if attestManager.isSupported, let httpBody = request.httpBody {
+                request.setValue(nil, forHTTPHeaderField: "X-App-Attest-Assertion")
+                request.setValue(nil, forHTTPHeaderField: "X-App-Attest-KeyID")
+                let headers = try await attestManager.assertionHeaders(for: httpBody)
+                for (key, value) in headers {
+                    request.setValue(value, forHTTPHeaderField: key)
+                }
+            }
+
+            let responseData: Data
+            let response: URLResponse
+            do {
+                (responseData, response) = try await URLSession.shared.data(for: request)
+            } catch {
+                if attempt < maxAttempts {
+                    try await Task.sleep(for: .seconds(1 << (attempt - 1)))
+                    continue
+                }
+                throw GeminiError.networkError(error)
+            }
+
+            guard let httpResp = response as? HTTPURLResponse else {
+                throw GeminiError.networkError(URLError(.badServerResponse))
+            }
+
+            if httpResp.statusCode == 401 && attestManager.isSupported && attempt < maxAttempts {
+                attestManager.handleAttestationRejected()
+                try await attestManager.ensureAttested()
+                continue
+            }
+
+            if httpResp.statusCode >= 500 && attempt < maxAttempts {
+                try await Task.sleep(for: .seconds(1 << (attempt - 1)))
+                continue
+            }
+
+            data = responseData
+            httpResponse = httpResp
+            break
+        }
+
+        if httpResponse.statusCode == 429 {
+            let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After").flatMap { Int($0) }
+            throw GeminiError.rateLimited(retryAfter: retryAfter)
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            if httpResponse.statusCode == 401 && attestManager.isSupported {
+                attestManager.handleAttestationRejected()
+            }
+            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let errorObj = errorJson["error"] as? [String: Any],
+               let message = errorObj["message"] as? String {
+                throw GeminiError.apiError(message)
+            }
+            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let message = errorJson["error"] as? String {
+                throw GeminiError.apiError(message)
+            }
+            throw GeminiError.apiError("Server returned \(httpResponse.statusCode)")
+        }
+
+        // Parse Gemini response structure
+        // Note: text is optional because thinking models (e.g. gemini-3-flash)
+        // may include thought-only parts without a text field.
+        struct GeminiResponse: Decodable {
+            struct Candidate: Decodable {
+                struct Content: Decodable {
+                    struct Part: Decodable {
+                        let text: String?
+                    }
+                    let parts: [Part]
+                }
+                let content: Content
+            }
+            let candidates: [Candidate]?
+        }
+
+        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
+        guard let text = geminiResponse.candidates?.first?.content.parts.compactMap(\.text).first else {
+            throw GeminiError.invalidResponse
+        }
+
+        let cleanText = text
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return cleanText
+    }
+
+    // MARK: - Food Estimation
+
+    func estimateCalories(images: [Data]) async throws -> EstimationResult {
         let unitInstruction: String
         let quantityExample: String
         if SettingsStore.shared.unitSystem == .metric {
@@ -139,134 +301,11 @@ final class GeminiService: EstimationService {
         }
         """
 
-        let parts: [[String: Any]] = [
-            ["text": prompt]
-        ] + images.map { data in
-            [
-                "inline_data": [
-                    "mime_type": "image/jpeg",
-                    "data": data.base64EncodedString()
-                ]
-            ]
-        }
-
-        let body: [String: Any] = [
-            "contents": [
-                ["parts": parts]
-            ]
-        ]
-
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        request.timeoutInterval = 30
-
-        // Retry loop: automatically re-attest and retry on 401 attestation rejection
-        let maxAttempts = 3
-        var data: Data!
-        var httpResponse: HTTPURLResponse!
-
-        for attempt in 1...maxAttempts {
-            // Attach App Attest assertion headers (signs the request body)
-            if attestManager.isSupported, let httpBody = request.httpBody {
-                // Strip old assertion headers before regenerating
-                request.setValue(nil, forHTTPHeaderField: "X-App-Attest-Assertion")
-                request.setValue(nil, forHTTPHeaderField: "X-App-Attest-KeyID")
-                let headers = try await attestManager.assertionHeaders(for: httpBody)
-                for (key, value) in headers {
-                    request.setValue(value, forHTTPHeaderField: key)
-                }
-            }
-
-            let responseData: Data
-            let response: URLResponse
-            do {
-                (responseData, response) = try await URLSession.shared.data(for: request)
-            } catch {
-                // Retry transient network errors (timeout, connection lost, etc.)
-                if attempt < maxAttempts {
-                    try await Task.sleep(for: .seconds(1 << (attempt - 1)))
-                    continue
-                }
-                throw GeminiError.networkError(error)
-            }
-
-            guard let httpResp = response as? HTTPURLResponse else {
-                throw GeminiError.networkError(URLError(.badServerResponse))
-            }
-
-            // On 401 with App Attest, re-attest and retry transparently
-            if httpResp.statusCode == 401 && attestManager.isSupported && attempt < maxAttempts {
-                attestManager.handleAttestationRejected()
-                try await attestManager.ensureAttested()
-                continue
-            }
-
-            // Retry on 5xx server errors with exponential backoff
-            if httpResp.statusCode >= 500 && attempt < maxAttempts {
-                try await Task.sleep(for: .seconds(1 << (attempt - 1)))
-                continue
-            }
-
-            data = responseData
-            httpResponse = httpResp
-            break
-        }
-
-        // Handle rate limiting
-        if httpResponse.statusCode == 429 {
-            let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After").flatMap { Int($0) }
-            throw GeminiError.rateLimited(retryAfter: retryAfter)
-        }
-
-        guard httpResponse.statusCode == 200 else {
-            // Clear attestation state on final 401 so next user-initiated retry starts fresh
-            if httpResponse.statusCode == 401 && attestManager.isSupported {
-                attestManager.handleAttestationRejected()
-            }
-            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let errorObj = errorJson["error"] as? [String: Any],
-               let message = errorObj["message"] as? String {
-                throw GeminiError.apiError(message)
-            }
-            // Check for plain-text error from backend
-            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let message = errorJson["error"] as? String {
-                throw GeminiError.apiError(message)
-            }
-            throw GeminiError.apiError("Server returned \(httpResponse.statusCode)")
-        }
-
-        // Parse Gemini Response Structure
-        // Note: text is optional because thinking models (e.g. gemini-3-flash)
-        // may include thought-only parts without a text field.
-        struct GeminiResponse: Decodable {
-            struct Candidate: Decodable {
-                struct Content: Decodable {
-                    struct Part: Decodable {
-                        let text: String?
-                    }
-                    let parts: [Part]
-                }
-                let content: Content
-            }
-            let candidates: [Candidate]?
-        }
-
-        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
-        guard let text = geminiResponse.candidates?.first?.content.parts.compactMap(\.text).first else {
-            throw GeminiError.invalidResponse
-        }
-
-        // Clean up text (remove markdown if present)
-        let cleanText = text
-            .replacingOccurrences(of: "```json", with: "")
-            .replacingOccurrences(of: "```", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-
+        let cleanText = try await sendGeminiRequest(prompt: prompt, images: images)
         guard let jsonData = cleanText.data(using: .utf8) else { throw GeminiError.invalidResponse }
 
         let result = try JSONDecoder().decode(EstimationResult.self, from: jsonData)
 
-        // Clamp negative calorie/macro values to zero
         let validatedItems = result.items.map { item in
             EstimationItem(
                 id: item.id,
@@ -281,6 +320,72 @@ final class GeminiService: EstimationService {
         }
 
         return EstimationResult(mealName: result.mealName, items: validatedItems)
+    }
+
+    // MARK: - Menu Analysis
+
+    func analyzeMenu(image: Data, location: CLLocation?, locality: String?) async throws -> MenuAnalysisResult {
+        var locationContext = ""
+        if let location, let locality {
+            locationContext = "\nThe user is located near \(locality) (approximately \(location.coordinate.latitude), \(location.coordinate.longitude)). Use this to help identify the restaurant and cuisine style for more accurate estimates.\n"
+        } else if let location {
+            locationContext = "\nThe user is located at approximately \(location.coordinate.latitude), \(location.coordinate.longitude). Use this to help identify the restaurant and cuisine style for more accurate estimates.\n"
+        }
+
+        let unitInstruction: String
+        if SettingsStore.shared.unitSystem == .metric {
+            unitInstruction = "Prefer metric units for quantities (g, kg, ml, L, pieces, slices) when possible."
+        } else {
+            unitInstruction = "Prefer US customary units for quantities. Use oz for weight, fl oz for liquid volume, and cups/tbsp/tsp for other volumes."
+        }
+
+        let prompt = """
+        Analyze this photo of a restaurant menu. Identify the dishes listed and estimate the calorie content for each based on typical serving sizes.
+        \(locationContext)
+        \(unitInstruction)
+
+        A restaurant menu includes printed menus, chalkboard specials, digital menu displays, drink lists, and similar documents listing food or drink items offered by a food service establishment. Receipts, grocery lists, nutrition labels, and non-food documents are NOT menus.
+
+        If the image does NOT appear to be a restaurant menu, respond with ONLY:
+        {"error": "not_a_menu"}
+
+        Otherwise, return ONLY a raw JSON object (no markdown, no code blocks):
+        {
+          "restaurantName": "Name if visible or identifiable, otherwise null",
+          "items": [
+            {
+              "name": "Dish Name",
+              "description": "Brief description if visible on menu",
+              "calories": 500,
+              "protein": 30,
+              "carbs": 50,
+              "fat": 15
+            }
+          ]
+        }
+        """
+
+        let cleanText = try await sendGeminiRequest(prompt: prompt, images: [image])
+        guard let jsonData = cleanText.data(using: .utf8) else { throw GeminiError.invalidResponse }
+
+        let result = try JSONDecoder().decode(MenuAnalysisResult.self, from: jsonData)
+
+        // Clamp negative values in menu items
+        if let items = result.items {
+            let validatedItems = items.map { item in
+                MenuItemResult(
+                    name: item.name,
+                    description: item.description,
+                    calories: max(0, item.calories),
+                    protein: item.protein.map { max(0, $0) },
+                    carbs: item.carbs.map { max(0, $0) },
+                    fat: item.fat.map { max(0, $0) }
+                )
+            }
+            return MenuAnalysisResult(restaurantName: result.restaurantName, items: validatedItems, error: nil)
+        }
+
+        return result
     }
 }
 

@@ -12,18 +12,14 @@ struct DashboardView: View {
     @Binding var scrollToMeal: MealType?
     
     @State private var selectedImage: UIImage?
-    @Binding var photoLibraryRequested: Bool
-    @State private var showManualEntry = false
-    @State private var pendingManualEntry: FoodEntry?
     @State private var entryToEdit: FoodEntry?
     @State private var entryToView: FoodEntry?
     @State private var groupToEdit: FoodEntryGroupEdit?
     @State private var groupToView: FoodEntryGroupEdit?
 
-    init(selectedTab: Binding<ContentView.Tab>, scrollToMeal: Binding<MealType?> = .constant(nil), photoLibraryRequested: Binding<Bool> = .constant(false)) {
+    init(selectedTab: Binding<ContentView.Tab>, scrollToMeal: Binding<MealType?> = .constant(nil)) {
         self._selectedTab = selectedTab
         self._scrollToMeal = scrollToMeal
-        self._photoLibraryRequested = photoLibraryRequested
     }
     
     var todayEntries: [FoodEntry] {
@@ -78,17 +74,7 @@ struct DashboardView: View {
                                 }
                                 Spacer()
 
-                                Button {
-                                    showManualEntry = true
-                                } label: {
-                                    Image(systemName: "plus")
-                                        .font(.system(size: 15, weight: .bold))
-                                        .foregroundStyle(Color.white)
-                                        .padding(10)
-                                        .background(Circle().fill(Color.cwPrimary))
-                                        .shadow(color: Color.cwPrimary.opacity(0.3), radius: 4, x: 0, y: 2)
-                                }
-                                .accessibilityIdentifier(AccessibilityID.Dashboard.addButton)
+                                AppMenuButton()
                             }
                             .padding(.horizontal)
                             .padding(.top)
@@ -105,7 +91,7 @@ struct DashboardView: View {
                             if todayEntries.isEmpty {
                                 VStack(spacing: 12) {
                                     Button {
-                                        selectedTab = .camera
+                                        selectedTab = .logFood
                                     } label: {
                                         EmptyStateCard()
                                     }
@@ -113,7 +99,7 @@ struct DashboardView: View {
                                     .accessibilityIdentifier(AccessibilityID.Dashboard.emptyStateCard)
 
                                     Button {
-                                        showManualEntry = true
+                                        selectedTab = .logFood
                                     } label: {
                                         Label("or log manually", systemImage: "square.and.pencil")
                                             .font(.subheadline)
@@ -158,6 +144,7 @@ struct DashboardView: View {
                     }
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)
         }
         .fullScreenCover(item: Binding<ImageWrapper?>(
             get: { selectedImage.map { ImageWrapper(image: $0) } },
@@ -169,24 +156,6 @@ struct DashboardView: View {
             if !WatchMyCaloriesApp.isUITesting {
                 healthKitManager.requestAuthorization()
             }
-        }
-        .sheet(isPresented: $showManualEntry, onDismiss: {
-            if let entry = pendingManualEntry {
-                modelContext.insert(entry)
-                pendingManualEntry = nil
-            }
-        }) {
-            ManualEntryView(onSave: { entry in
-                pendingManualEntry = entry
-                showManualEntry = false
-            }, onScanFood: {
-                showManualEntry = false
-                selectedTab = .camera
-            }, onChooseFromLibrary: {
-                photoLibraryRequested = true
-                showManualEntry = false
-                selectedTab = .camera
-            })
         }
         .sheet(item: $entryToEdit) { entry in
             EditFoodEntryView(entry: entry)
@@ -206,7 +175,7 @@ struct DashboardView: View {
 
 // MARK: - Manual Entry
 
-private struct ManualEntryView: View {
+struct ManualEntryView: View {
     @Environment(\.dismiss) private var dismiss
     var onSave: (FoodEntry) -> Void
     var onScanFood: (() -> Void)?

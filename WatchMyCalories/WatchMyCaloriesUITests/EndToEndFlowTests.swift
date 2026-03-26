@@ -66,8 +66,11 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(goalElement.waitForExistence(timeout: 5))
         XCTAssertTrue(goalElement.label.contains("2200"))
 
-        // Go to Settings
-        app.tabBars.buttons["Settings"].tap()
+        // Go to Settings via app menu
+        let menuButton = app.buttons["appMenu_button"]
+        XCTAssertTrue(menuButton.waitForExistence(timeout: 3))
+        menuButton.tap()
+        app.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
 
         // Daily Goals section is below the fold — scroll to reveal
@@ -78,9 +81,13 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(calculateButton.waitForExistence(timeout: 3))
         calculateButton.tap()
 
-        // Save
-        let saveButton = app.buttons["settings_saveButton"]
-        saveButton.tap()
+        // Done (saves + dismisses since changes were made)
+        app.buttons["settings_saveButton"].tap()
+        // Handle unsaved changes alert
+        let alert = app.alerts["Unsaved Changes"]
+        if alert.waitForExistence(timeout: 2) {
+            alert.buttons["Save"].tap()
+        }
 
         // Should be back on dashboard with updated target
         let addButton = app.buttons["dashboard_addButton"]
@@ -157,8 +164,11 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
     func testSettingsGoalPersistsOnReturn() {
         launchEmpty()
 
-        // Go to Settings and set a target
-        app.tabBars.buttons["Settings"].tap()
+        // Go to Settings via app menu and set a target
+        let menuButton = app.buttons["appMenu_button"]
+        XCTAssertTrue(menuButton.waitForExistence(timeout: 3))
+        menuButton.tap()
+        app.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
 
         // Daily Goals section is below the fold — scroll to reveal
@@ -169,8 +179,12 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         targetField.tap()
         targetField.typeText("1800")
 
-        // Save
+        // Done — triggers unsaved changes alert
         app.buttons["settings_saveButton"].tap()
+        let alert = app.alerts["Unsaved Changes"]
+        if alert.waitForExistence(timeout: 2) {
+            alert.buttons["Save"].tap()
+        }
 
         // Should be on dashboard — verify target is 1800
         let addButton = app.buttons["dashboard_addButton"]
@@ -228,8 +242,11 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
     func testRemainingCaloriesUpdateAfterEntry() {
         launchEmpty()
 
-        // Go to Settings, set goal to 2000, save
-        app.tabBars.buttons["Settings"].tap()
+        // Go to Settings via app menu, set goal to 2000, save
+        let menuButton = app.buttons["appMenu_button"]
+        XCTAssertTrue(menuButton.waitForExistence(timeout: 3))
+        menuButton.tap()
+        app.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
 
         // Daily Goals section is below the fold — scroll to reveal
@@ -240,7 +257,12 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         targetField.tap()
         targetField.typeText("2000")
 
+        // Done — triggers unsaved changes alert
         app.buttons["settings_saveButton"].tap()
+        let settingsAlert = app.alerts["Unsaved Changes"]
+        if settingsAlert.waitForExistence(timeout: 2) {
+            settingsAlert.buttons["Save"].tap()
+        }
         XCTAssertTrue(app.buttons["dashboard_addButton"].waitForExistence(timeout: 3))
 
         // Remaining = effectiveTarget - consumed

@@ -19,8 +19,9 @@ class CameraManager: NSObject, ObservableObject {
     @Published var isCapturing: Bool = false
 
     #if targetEnvironment(simulator)
-    private static let simulatorPhotos = ["FoodPhoto1", "FoodPhoto2", "FoodPhoto3", "FoodPhoto4", "FoodPhoto5"]
+    private static let defaultSimulatorPhotos = ["FoodPhoto1", "FoodPhoto2", "FoodPhoto3", "FoodPhoto4", "FoodPhoto5"]
     private static var simulatorPhotoIndex = 0
+    var simulatorPhotos: [String] = defaultSimulatorPhotos
     #endif
     
     // Global serial queue for camera operations
@@ -218,7 +219,7 @@ class CameraManager: NSObject, ObservableObject {
     
     #if targetEnvironment(simulator)
     private func simulatePhotoCapture() {
-        let photos = CameraManager.simulatorPhotos
+        let photos = simulatorPhotos
         let index = CameraManager.simulatorPhotoIndex % photos.count
         CameraManager.simulatorPhotoIndex += 1
         if let image = UIImage(named: photos[index]) {

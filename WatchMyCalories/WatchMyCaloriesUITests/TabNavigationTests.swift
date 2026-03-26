@@ -6,9 +6,15 @@ final class TabNavigationTests: WatchMyCaloriesUITestBase {
         launchEmpty()
 
         XCTAssertTrue(app.tabBars.buttons["Today"].exists)
-        XCTAssertTrue(app.tabBars.buttons["Scan"].exists)
+        XCTAssertTrue(app.tabBars.buttons["Scan Food"].exists)
+        XCTAssertTrue(app.tabBars.buttons["Scan Menu"].exists)
         XCTAssertTrue(app.tabBars.buttons["History"].exists)
-        XCTAssertTrue(app.tabBars.buttons["Settings"].exists)
+    }
+
+    func testSettingsTabDoesNotExist() {
+        launchEmpty()
+
+        XCTAssertFalse(app.tabBars.buttons["Settings"].exists)
     }
 
     func testTappingHistoryTabShowsHistory() {
@@ -20,28 +26,30 @@ final class TabNavigationTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(historyTitle.waitForExistence(timeout: 3))
     }
 
-    func testTappingSettingsTabShowsSettings() {
-        launchEmpty()
-
-        app.tabBars.buttons["Settings"].tap()
-
-        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
-    }
-
     func testTappingTodayTabReturnsToDashboard() {
         launchEmpty()
 
-        app.tabBars.buttons["Settings"].tap()
+        app.tabBars.buttons["History"].tap()
         app.tabBars.buttons["Today"].tap()
 
         let addButton = app.buttons["dashboard_addButton"]
         XCTAssertTrue(addButton.waitForExistence(timeout: 3))
     }
 
-    func testTappingScanTabSwitchesTab() {
+    func testTappingScanFoodTabSwitchesTab() {
         launchEmpty()
 
-        app.tabBars.buttons["Scan"].tap()
+        app.tabBars.buttons["Scan Food"].tap()
+
+        // Should no longer show the dashboard add button
+        let addButton = app.buttons["dashboard_addButton"]
+        XCTAssertFalse(addButton.waitForExistence(timeout: 2))
+    }
+
+    func testTappingScanMenuTabSwitchesTab() {
+        launchEmpty()
+
+        app.tabBars.buttons["Scan Menu"].tap()
 
         // Should no longer show the dashboard add button
         let addButton = app.buttons["dashboard_addButton"]
@@ -55,10 +63,9 @@ final class TabNavigationTests: WatchMyCaloriesUITestBase {
         app.tabBars.buttons["History"].tap()
         XCTAssertTrue(app.staticTexts["history_title"].waitForExistence(timeout: 3))
 
-        app.tabBars.buttons["Settings"].tap()
-        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
+        app.tabBars.buttons["Scan Food"].tap()
 
-        app.tabBars.buttons["Scan"].tap()
+        app.tabBars.buttons["Scan Menu"].tap()
 
         app.tabBars.buttons["Today"].tap()
         let addButton = app.buttons["dashboard_addButton"]

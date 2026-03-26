@@ -45,11 +45,13 @@ final class SettingsStore: ObservableObject {
     private let defaults = UserDefaults.standard
 
     @Published var hasCompletedOnboarding: Bool = false
+    @Published var hasSeenEstimateDisclaimer: Bool = false
 
     private let themeKey = "appTheme"
     private let unitSystemKey = "unitSystem"
     private let aiConsentKey = "aiConsentStatus"
     private let onboardingKey = "hasCompletedOnboarding"
+    private let estimateDisclaimerKey = "hasSeenEstimateDisclaimer"
 
     var savedAppTheme: AppTheme {
         if let themeRaw = defaults.string(forKey: themeKey), let theme = AppTheme(rawValue: themeRaw) {
@@ -80,6 +82,7 @@ final class SettingsStore: ObservableObject {
             aiConsent = consent
         }
         hasCompletedOnboarding = defaults.bool(forKey: onboardingKey)
+        hasSeenEstimateDisclaimer = defaults.bool(forKey: estimateDisclaimerKey)
     }
 
     func save() {
@@ -100,6 +103,12 @@ final class SettingsStore: ObservableObject {
         defaults.set(true, forKey: onboardingKey)
         defaults.synchronize()
         hasCompletedOnboarding = true
+    }
+
+    func dismissEstimateDisclaimer() {
+        defaults.set(true, forKey: estimateDisclaimerKey)
+        defaults.synchronize()
+        hasSeenEstimateDisclaimer = true
     }
 }
 
