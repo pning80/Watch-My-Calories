@@ -3,6 +3,7 @@ import StoreKit
 
 struct AboutView: View {
     @State private var showCopiedToast = false
+    @State private var attestStatus: AttestStatus = .notAvailable
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
@@ -54,20 +55,11 @@ struct AboutView: View {
                 .listRowBackground(Color.clear)
             }
 
-            // Support
-            Section(header: Text("Support")) {
-                Link(destination: URL(string: "https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470")!) {
-                    Label("Help & Support", systemImage: "questionmark.circle")
-                }
-                .accessibilityIdentifier(AccessibilityID.About.helpAndSupport)
-            }
-
-            // Legal
-            Section(header: Text("Legal")) {
-                Link(destination: URL(string: "https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb")!) {
-                    Label("Privacy Policy", systemImage: "hand.raised")
-                }
-                .accessibilityIdentifier(AccessibilityID.About.privacyPolicy)
+            // Ad
+            Section {
+                BannerAdView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
             }
 
             // Rate
@@ -82,6 +74,34 @@ struct AboutView: View {
                     Label("Rate on App Store", systemImage: "star")
                 }
                 .accessibilityIdentifier(AccessibilityID.About.rateOnAppStore)
+            }
+
+            // Support & Legal
+            Section(header: Text("Support & Legal")) {
+                Link(destination: URL(string: "https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470")!) {
+                    Label("Help & Support", systemImage: "questionmark.circle")
+                }
+                .accessibilityIdentifier(AccessibilityID.About.helpAndSupport)
+
+                Link(destination: URL(string: "https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb")!) {
+                    Label("Privacy Policy", systemImage: "hand.raised")
+                }
+                .accessibilityIdentifier(AccessibilityID.About.privacyPolicy)
+            }
+
+            // Device Attestation
+            Section(header: Text("Device Attestation")) {
+                switch attestStatus {
+                case .verified:
+                    Label("Verified", systemImage: "checkmark.shield.fill")
+                        .foregroundStyle(.green)
+                case .notVerified:
+                    Label("Not Verified", systemImage: "shield.slash")
+                        .foregroundStyle(.secondary)
+                case .notAvailable:
+                    Label("Not Available", systemImage: "shield.slash")
+                        .foregroundStyle(.secondary)
+                }
             }
 
             // Footer
@@ -106,5 +126,17 @@ struct AboutView: View {
         }
         .navigationTitle("About")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            let manager = AppAttestManager.shared
+            if manager.isSupported {
+                attestStatus = manager.isAttested() ? .verified : .notVerified
+            } else {
+                attestStatus = .notAvailable
+            }
+        }
     }
+}
+
+private enum AttestStatus {
+    case verified, notVerified, notAvailable
 }

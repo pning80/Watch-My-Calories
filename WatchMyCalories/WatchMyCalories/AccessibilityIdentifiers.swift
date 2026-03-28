@@ -27,8 +27,6 @@ enum AccessibilityID {
         static let mealPicker = "manualEntry_mealPicker"
         static let saveButton = "manualEntry_saveButton"
         static let cancelButton = "manualEntry_cancelButton"
-        static let scanButton = "manualEntry_scanButton"
-        static let photoLibraryButton = "manualEntry_photoLibraryButton"
     }
 
     enum Settings {
@@ -88,6 +86,12 @@ enum AccessibilityID {
     enum Disclaimer {
         static let dontShowToggle = "disclaimer_dontShowToggle"
         static let continueButton = "disclaimer_continueButton"
+    }
+
+    enum ScanMenuSheet {
+        static let scanButton = "scanMenuSheet_scan"
+        static let chooseFromLibraryButton = "scanMenuSheet_chooseFromLibrary"
+        static let storedMenusButton = "scanMenuSheet_storedMenus"
     }
 
     enum ScannedMenus {

@@ -10,16 +10,66 @@ struct ImageWrapper: Identifiable {
 struct FullScreenImageView: View {
     let image: UIImage
     @Environment(\.dismiss) private var dismiss
-    
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            
+
             Image(uiImage: image)
                 .resizable()
                 .scaledToFit()
+                .scaleEffect(scale)
+                .offset(offset)
+                .gesture(
+                    MagnifyGesture()
+                        .onChanged { value in
+                            scale = lastScale * value.magnification
+                        }
+                        .onEnded { _ in
+                            lastScale = scale
+                            if scale < 1.0 {
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    scale = 1.0
+                                    lastScale = 1.0
+                                    offset = .zero
+                                    lastOffset = .zero
+                                }
+                            }
+                        }
+                        .simultaneously(with:
+                            DragGesture()
+                                .onChanged { value in
+                                    if scale > 1.0 {
+                                        offset = CGSize(
+                                            width: lastOffset.width + value.translation.width,
+                                            height: lastOffset.height + value.translation.height
+                                        )
+                                    }
+                                }
+                                .onEnded { _ in
+                                    lastOffset = offset
+                                }
+                        )
+                )
+                .onTapGesture(count: 2) {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        if scale > 1.0 {
+                            scale = 1.0
+                            lastScale = 1.0
+                            offset = .zero
+                            lastOffset = .zero
+                        } else {
+                            scale = 3.0
+                            lastScale = 3.0
+                        }
+                    }
+                }
                 .ignoresSafeArea()
-            
+
             VStack {
                 HStack {
                     Spacer()
@@ -90,7 +140,20 @@ struct HeroSummaryCard: View {
         return min(burnedCalories / effectiveTarget, 1.0)
     }
 
+    // Macro totals
+    var totalProtein: Double { entries.compactMap(\.protein).reduce(0, +) }
+    var totalCarbs: Double { entries.compactMap(\.carbs).reduce(0, +) }
+    var totalFat: Double { entries.compactMap(\.fat).reduce(0, +) }
+    var hasMacroData: Bool { totalProtein > 0 || totalCarbs > 0 || totalFat > 0 }
+
+    // Calorie contribution per macro (protein/carbs = 4 cal/g, fat = 9 cal/g)
+    var proteinCals: Double { totalProtein * 4 }
+    var carbsCals: Double { totalCarbs * 4 }
+    var fatCals: Double { totalFat * 9 }
+    var totalMacroCals: Double { proteinCals + carbsCals + fatCals }
+
     var body: some View {
+        VStack(spacing: 0) {
         HStack(spacing: 20) {
             ZStack {
                 // Background Ring (Total Budget / Remaining if seen as inverse)
@@ -145,10 +208,73 @@ struct HeroSummaryCard: View {
                 StatRow(label: "Remaining", value: "\(Int(remaining))", icon: "chart.bar.fill", color: .cwSecondary, accessibilityID: AccessibilityID.Dashboard.remainingValue)
             }
         }
+
+        // Macro breakdown
+        if hasMacroData {
+            Divider()
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+
+            // Labels + values
+            HStack(spacing: 0) {
+                macroLabel("Protein", grams: totalProtein, cals: proteinCals, color: .cwPrimary)
+                Spacer()
+                macroLabel("Carbs", grams: totalCarbs, cals: carbsCals, color: .cwAccent)
+                Spacer()
+                macroLabel("Fat", grams: totalFat, cals: fatCals, color: .secondary)
+            }
+
+            // Stacked proportional bar
+            GeometryReader { geo in
+                let w = geo.size.width
+                let total = max(totalMacroCals, 1)
+                let pWidth = w * (proteinCals / total)
+                let cWidth = w * (carbsCals / total)
+                let fWidth = w * (fatCals / total)
+
+                HStack(spacing: 1.5) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color.cwPrimary)
+                        .frame(width: max(pWidth, proteinCals > 0 ? 4 : 0))
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color.cwAccent)
+                        .frame(width: max(cWidth, carbsCals > 0 ? 4 : 0))
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color.secondary)
+                        .frame(width: max(fWidth, fatCals > 0 ? 4 : 0))
+                }
+                .animation(.easeInOut(duration: 0.5), value: totalMacroCals)
+            }
+            .frame(height: 8)
+            .padding(.top, 6)
+        }
+        } // VStack
+        .frame(maxWidth: .infinity)
         .cwCard()
         .padding(.horizontal)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(AccessibilityID.Dashboard.heroCard)
+    }
+
+    private func macroLabel(_ label: String, grams: Double, cals: Double, color: Color) -> some View {
+        let pct = totalMacroCals > 0 ? Int((cals / totalMacroCals * 100).rounded()) : 0
+        return VStack(spacing: 2) {
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(color)
+                    .frame(width: 8, height: 8)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            Text("\(Int(grams))g")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundStyle(Color.cwTextPrimary)
+            Text("\(pct)%")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
     }
 }
 

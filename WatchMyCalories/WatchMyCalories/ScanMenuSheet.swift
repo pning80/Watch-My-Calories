@@ -1,18 +1,11 @@
 import SwiftUI
 
-struct SheetHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
-
-struct LogFoodSheet: View {
-    var onScanFood: () -> Void
+struct ScanMenuSheet: View {
+    var onScanMenu: () -> Void
     var onChooseFromLibrary: () -> Void
-    var onLogManually: () -> Void
+    var onStoredMenus: () -> Void
 
-    @State private var sheetHeight: CGFloat = 300
+    @State private var sheetHeight: CGFloat = 250
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,31 +16,31 @@ struct LogFoodSheet: View {
                 .padding(.top, 8)
                 .padding(.bottom, 20)
 
-            Text("Log Food")
+            Text("Scan Menu")
                 .font(.system(.title3, design: .serif, weight: .bold))
                 .foregroundStyle(Color.cwPrimary)
                 .padding(.bottom, 20)
 
             VStack(spacing: 12) {
-                logOptionButton(
-                    title: "Scan Food",
-                    subtitle: "Take a photo of your meal",
-                    icon: "camera.fill",
-                    action: onScanFood
+                optionButton(
+                    title: "Scan Menu",
+                    subtitle: "Photograph a restaurant menu",
+                    icon: "doc.viewfinder",
+                    action: onScanMenu
                 )
 
-                logOptionButton(
+                optionButton(
                     title: "Choose from Library",
                     subtitle: "Select a photo from your library",
                     icon: "photo.on.rectangle",
                     action: onChooseFromLibrary
                 )
 
-                logOptionButton(
-                    title: "Log Manually",
-                    subtitle: "Enter food details by hand",
-                    icon: "square.and.pencil",
-                    action: onLogManually
+                optionButton(
+                    title: "Stored Menus",
+                    subtitle: "View previously scanned menus",
+                    icon: "menucard",
+                    action: onStoredMenus
                 )
             }
             .padding(.horizontal)
@@ -62,7 +55,7 @@ struct LogFoodSheet: View {
         .presentationDetents([.height(sheetHeight)])
     }
 
-    private func logOptionButton(title: String, subtitle: String, icon: String, action: @escaping () -> Void) -> some View {
+    private func optionButton(title: String, subtitle: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 16) {
                 Image(systemName: icon)

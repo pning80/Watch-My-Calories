@@ -4,7 +4,11 @@ final class CameraCaptureTests: WatchMyCaloriesUITestBase {
 
     private func navigateToCamera() {
         launchEmpty()
-        app.tabBars.buttons["Scan Food"].tap()
+        // Open Log Food sheet, then tap Scan Food
+        app.tabBars.buttons["Log Food"].tap()
+        let scanFood = app.staticTexts["Scan Food"]
+        XCTAssertTrue(scanFood.waitForExistence(timeout: 3))
+        scanFood.tap()
     }
 
     private func capturePhoto() {

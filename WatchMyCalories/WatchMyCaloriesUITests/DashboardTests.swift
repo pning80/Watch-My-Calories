@@ -45,18 +45,18 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.staticTexts["Lunch"].exists)
     }
 
-    // MARK: - Add Button
+    // MARK: - Log Food Tab
 
-    func testAddButtonOpensManualEntry() {
+    func testLogFoodTabOpensSheet() {
         launchEmpty()
 
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
-        addButton.tap()
+        app.tabBars.buttons["Log Food"].tap()
 
-        // Manual entry sheet should appear
-        let foodNameField = app.textFields["manualEntry_foodName"]
-        XCTAssertTrue(foodNameField.waitForExistence(timeout: 3))
+        // Log Food sheet should appear with options
+        XCTAssertTrue(app.staticTexts["Log Food"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Scan Food"].exists)
+        XCTAssertTrue(app.staticTexts["Choose from Library"].exists)
+        XCTAssertTrue(app.staticTexts["Log Manually"].exists)
     }
 
     // MARK: - Hero Card Details
@@ -96,9 +96,8 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(link.waitForExistence(timeout: 3))
         link.tap()
 
-        // Manual entry sheet should open
-        let foodNameField = app.textFields["manualEntry_foodName"]
-        XCTAssertTrue(foodNameField.waitForExistence(timeout: 3))
+        // Log Food sheet should open
+        XCTAssertTrue(app.staticTexts["Log Food"].waitForExistence(timeout: 3))
     }
 
     // MARK: - Hero Card Accessibility Elements

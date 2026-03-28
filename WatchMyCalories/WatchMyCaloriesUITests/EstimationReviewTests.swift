@@ -5,7 +5,11 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
     /// Navigate to camera, capture, and tap Use to start estimation.
     private func startEstimation() {
         launchEmpty()
-        app.tabBars.buttons["Scan Food"].tap()
+        // Open Log Food sheet, then tap Scan Food
+        app.tabBars.buttons["Log Food"].tap()
+        let scanFood = app.staticTexts["Scan Food"]
+        XCTAssertTrue(scanFood.waitForExistence(timeout: 3))
+        scanFood.tap()
 
         let captureButton = app.buttons["camera_captureButton"]
         XCTAssertTrue(captureButton.waitForExistence(timeout: 5))
@@ -107,7 +111,7 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
         doneButton.tap()
 
         // Should be back on Dashboard
-        let addButton = app.buttons["dashboard_addButton"]
+        let addButton = app.otherElements["dashboard_heroCard"]
         XCTAssertTrue(addButton.waitForExistence(timeout: 5))
     }
 

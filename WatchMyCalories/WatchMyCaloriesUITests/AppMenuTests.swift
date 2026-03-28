@@ -20,22 +20,13 @@ final class AppMenuTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(menuButton.waitForExistence(timeout: 3))
     }
 
-    func testAppMenuNotVisibleOnScanFoodTab() {
+    func testLogFoodTabShowsSheetNotTab() {
         launchEmpty()
 
-        app.tabBars.buttons["Scan Food"].tap()
+        app.tabBars.buttons["Log Food"].tap()
 
-        let menuButton = app.buttons["appMenu_button"]
-        XCTAssertFalse(menuButton.waitForExistence(timeout: 2))
-    }
-
-    func testAppMenuNotVisibleOnScanMenuTab() {
-        launchEmpty()
-
-        app.tabBars.buttons["Scan Menu"].tap()
-
-        let menuButton = app.buttons["appMenu_button"]
-        XCTAssertFalse(menuButton.waitForExistence(timeout: 2))
+        // Log Food shows a sheet, not a tab
+        XCTAssertTrue(app.staticTexts["Log Food"].waitForExistence(timeout: 3))
     }
 
     // MARK: - Menu Items
@@ -47,28 +38,8 @@ final class AppMenuTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(menuButton.waitForExistence(timeout: 3))
         menuButton.tap()
 
-        XCTAssertTrue(app.buttons["Scanned Menus"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.buttons["About"].exists)
+        XCTAssertTrue(app.buttons["About"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.buttons["Settings"].exists)
-    }
-
-    // MARK: - Open Scanned Menus
-
-    func testOpenScannedMenusFromMenu() {
-        launchEmpty()
-
-        app.buttons["appMenu_button"].tap()
-        app.buttons["Scanned Menus"].tap()
-
-        // Should show ScannedMenusView as a sheet
-        XCTAssertTrue(app.navigationBars["Scanned Menus"].waitForExistence(timeout: 3))
-
-        // Should show empty state
-        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "No scanned menus")).firstMatch.waitForExistence(timeout: 3))
-
-        // Dismiss
-        app.buttons["Done"].tap()
-        XCTAssertTrue(app.buttons["dashboard_addButton"].waitForExistence(timeout: 3))
     }
 
     // MARK: - Open About
@@ -86,7 +57,7 @@ final class AppMenuTests: WatchMyCaloriesUITestBase {
 
         // Dismiss
         app.buttons["Done"].tap()
-        XCTAssertTrue(app.buttons["dashboard_addButton"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["dashboard_emptyStateCard"].waitForExistence(timeout: 3))
     }
 
     func testAboutScreenShowsAIDisclaimer() {
@@ -125,6 +96,33 @@ final class AppMenuTests: WatchMyCaloriesUITestBase {
 
         let privacyLink = app.buttons["about_privacyPolicy"]
         XCTAssertTrue(privacyLink.waitForExistence(timeout: 3))
+    }
+
+    func testAboutScreenShowsRateOnAppStore() {
+        launchEmpty()
+
+        app.buttons["appMenu_button"].tap()
+        app.buttons["About"].tap()
+
+        XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 3))
+
+        let rateButton = app.buttons["about_rateOnAppStore"]
+        XCTAssertTrue(rateButton.waitForExistence(timeout: 3))
+    }
+
+    func testAboutScreenShowsDeviceAttestation() {
+        launchEmpty()
+
+        app.buttons["appMenu_button"].tap()
+        app.buttons["About"].tap()
+
+        XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 3))
+
+        app.swipeUp()
+
+        // Attestation shows as Verified, Not Verified, or Not Available
+        let attestLabel = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@ OR label CONTAINS %@ OR label CONTAINS %@", "Verified", "Not Verified", "Not Available"))
+        XCTAssertTrue(attestLabel.firstMatch.waitForExistence(timeout: 3))
     }
 
     // MARK: - Open Settings

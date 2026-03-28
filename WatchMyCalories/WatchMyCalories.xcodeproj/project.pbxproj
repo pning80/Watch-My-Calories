@@ -49,6 +49,7 @@
 		9599F79541F273330E60B7BA /* Ideation.md in Resources */ = {isa = PBXBuildFile; fileRef = 6686EB8F1CC8A770139ACDD9 /* Ideation.md */; };
 		999940D742B3C592CBF81BD5 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB769435ED541B180F2C9564 /* AboutView.swift */; };
 		9E2AFDB5B31BFD55B83AD0A1 /* SettingsEnumTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3A9C569505064D6B75393E /* SettingsEnumTests.swift */; };
+		9E911FAF5266721368F4D77A /* ScanMenuSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ECC89AF9EE304310A348F43 /* ScanMenuSheet.swift */; };
 		A0CDAF3EB62A888ADE48E289 /* SettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5945C40A62C1547DE7787237 /* SettingsTests.swift */; };
 		A5715C25BE8E3AAE821C875D /* EstimationModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF3ED9DADCEC9EA7B83D625A /* EstimationModelTests.swift */; };
 		A7A00D6C94119D6C45D4C40A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43E36EE49FCC374E73606CE6 /* ContentView.swift */; };
@@ -111,6 +112,7 @@
 		450ECAAF3A341F54606FFC9A /* HealthKit_Integration_Prompt.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = HealthKit_Integration_Prompt.md; sourceTree = "<group>"; };
 		48A49C397A1E694DBE38C172 /* FoodEntryEdgeCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodEntryEdgeCaseTests.swift; sourceTree = "<group>"; };
 		4E3A9C569505064D6B75393E /* SettingsEnumTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsEnumTests.swift; sourceTree = "<group>"; };
+		4ECC89AF9EE304310A348F43 /* ScanMenuSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanMenuSheet.swift; sourceTree = "<group>"; };
 		50A183F7D8BD4CC28FF50CBB /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		514BD0CF4AD427F061F123F4 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		56055085D12E0B8C12CC561C /* AdManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdManager.swift; sourceTree = "<group>"; };
@@ -294,6 +296,7 @@
 				5650DFF0917A6E049BBDE501 /* PrivacyInfo.xcprivacy */,
 				DFA288BAC6BB6FE06EA27BEF /* Prompt.md */,
 				BF20722D7FEDCB10C37EE13E /* README.md */,
+				4ECC89AF9EE304310A348F43 /* ScanMenuSheet.swift */,
 				1F4FB98C53977532637B71A3 /* ScannedMenusView.swift */,
 				E72403405DC03A97854DBFE7 /* Services.swift */,
 				7DB8F0B6279CE4A06E2288DC /* SettingsStore.swift */,
@@ -503,6 +506,7 @@
 				4F538006A10C9D081B43F790 /* NativeAdView.swift in Sources */,
 				2B5603DF9151284FA96ABB62 /* OnboardingView.swift in Sources */,
 				8869EBD8C5C2D430796E1C80 /* PhotoLibraryReviewView.swift in Sources */,
+				9E911FAF5266721368F4D77A /* ScanMenuSheet.swift in Sources */,
 				5A94C968DC18CC069B4AB708 /* ScannedMenusView.swift in Sources */,
 				8E9FCDA969CAD5F02FE91FBF /* Services.swift in Sources */,
 				3A93ADBE797050EC8FFB7B0C /* SettingsStore.swift in Sources */,

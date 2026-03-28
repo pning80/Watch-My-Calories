@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct HistoryView: View {
-    @Binding var selectedTab: ContentView.Tab
+    var onLogFood: () -> Void
 
     // Changed order to .forward so items inside the day card are chronological
     @Query(sort: \FoodEntry.timestamp, order: .forward) private var foodEntries: [FoodEntry]
@@ -46,7 +46,7 @@ struct HistoryView: View {
 
                         if sortedDates.isEmpty {
                             Button {
-                                selectedTab = .logFood
+                                onLogFood()
                             } label: {
                                 EmptyStateCard()
                             }

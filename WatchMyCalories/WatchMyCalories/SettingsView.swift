@@ -9,10 +9,8 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var env: AppEnvironment
 
-    @Binding var hasUnsavedChanges: Bool
-    var onDismiss: () -> Void = {}
-
-    @State private var showUnsavedAlert = false
+    @State private var hasUnsavedChanges = false
+    @State private var showDiscardAlert = false
 
     // Use ObservedObject for singletons to avoid lifecycle conflicts
     @ObservedObject private var store = SettingsStore.shared
@@ -37,7 +35,6 @@ struct SettingsView: View {
     @State private var isEditingHeight = false
     @State private var isEditingWeight = false
     @State private var isEditingAge = false
-    @State private var attestStatus: AttestStatus = .notAvailable
 
     @FocusState private var focusedField: Field?
 
@@ -45,32 +42,11 @@ struct SettingsView: View {
         case calories
     }
 
-    init(hasUnsavedChanges: Binding<Bool> = .constant(false), onDismiss: @escaping () -> Void = {}) {
-        self._hasUnsavedChanges = hasUnsavedChanges
-        self.onDismiss = onDismiss
-    }
+    init() {}
 
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    HStack {
-                        Spacer()
-                        VStack(spacing: 12) {
-                            AppIconView()
-                                .frame(width: 100, height: 100)
-                                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                                .shadow(radius: 5)
-
-                            Text("Watch My Calories")
-                                .font(.headline)
-                                .foregroundStyle(Color.cwPrimary)
-                        }
-                        Spacer()
-                    }
-                    .listRowBackground(Color.clear)
-                }
-
                 Section {
                     BannerAdView()
                         .listRowInsets(EdgeInsets())
@@ -285,30 +261,25 @@ struct SettingsView: View {
 
                 }
 
-                Section(header: Text("Device Attestation")) {
-                    switch attestStatus {
-                    case .verified:
-                        Label("Verified", systemImage: "checkmark.shield.fill")
-                            .foregroundStyle(.green)
-                    case .notVerified:
-                        Label("Not Verified", systemImage: "shield.slash")
-                            .foregroundStyle(.secondary)
-                    case .notAvailable:
-                        Label("Not Available", systemImage: "shield.slash")
-                            .foregroundStyle(.secondary)
-                    }
-                }
             }
             .navigationTitle("Settings")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
                         focusedField = nil
                         if hasUnsavedChanges {
-                            showUnsavedAlert = true
+                            showDiscardAlert = true
                         } else {
-                            onDismiss()
+                            dismiss()
                         }
+                    }
+                }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        focusedField = nil
+                        saveSettings()
+                        dismiss()
                     }
                     .accessibilityIdentifier(AccessibilityID.Settings.saveButton)
                 }
@@ -319,24 +290,18 @@ struct SettingsView: View {
                     }
                 }
             }
-            .alert("Unsaved Changes", isPresented: $showUnsavedAlert) {
-                Button("Save", role: .cancel) {
-                    saveSettings()
-                    onDismiss()
-                }
-                Button("Discard", role: .destructive) {
+            .interactiveDismissDisabled(hasUnsavedChanges)
+            .confirmationDialog("You have unsaved changes.", isPresented: $showDiscardAlert, titleVisibility: .visible) {
+                Button("Discard Changes", role: .destructive) {
                     loadSettings()
-                    onDismiss()
+                    dismiss()
                 }
-                Button("Cancel", role: .none) {}
-            } message: {
-                Text("Do you want to save or discard your changes?")
+                Button("Keep Editing", role: .cancel) {}
             }
             .onAppear {
                 loadSettings()
                 focusedField = nil
                 checkUnsaved()
-                updateAttestStatus()
             }
             .onChange(of: settingsSnapshot) { _, _ in checkUnsaved() }
             .onChange(of: store.unitSystem) { _, _ in
@@ -515,15 +480,6 @@ struct SettingsView: View {
         }
     }
 
-    private func updateAttestStatus() {
-        let manager = AppAttestManager.shared
-        if manager.isSupported {
-            attestStatus = manager.isAttested() ? .verified : .notVerified
-        } else {
-            attestStatus = .notAvailable
-        }
-    }
-
     private func calculateCalories() {
         let heightCm: Double
         let weightKg: Double
@@ -541,10 +497,6 @@ struct SettingsView: View {
             gender: gender, activityLevel: activityLevel
         )
     }
-}
-
-private enum AttestStatus {
-    case verified, notVerified, notAvailable
 }
 
 private struct SettingsSnapshot: Equatable {
