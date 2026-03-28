@@ -3,13 +3,18 @@ import SwiftData
 
 struct ContentView: View {
     @State private var selectedTab: Tab = .dashboard
-    @State private var previousTab: Tab = .dashboard
 
     // Log Food sheet + flow state
     @State private var showLogFoodSheet = false
     @State private var showScanFoodFlow = false
     @State private var showPhotoLibraryFlow = false
     @State private var showManualEntryFlow = false
+
+    // Scan Menu sheet + flow state
+    @State private var showScanMenuSheet = false
+    @State private var showScanMenuCameraFlow = false
+    @State private var showMenuPhotoLibraryFlow = false
+    @State private var showStoredMenusFlow = false
 
     // State to trigger scrolling after food is logged
     @State private var scrollToMeal: MealType?
@@ -20,43 +25,35 @@ struct ContentView: View {
         case dashboard, logFood, scanMenu, history
     }
 
-    var tabBinding: Binding<Tab> {
-        Binding(
-            get: { selectedTab },
-            set: { newTab in
-                if newTab == .logFood {
-                    showLogFoodSheet = true
-                    // Don't change selectedTab — stay on current tab
-                } else {
-                    previousTab = selectedTab
-                    selectedTab = newTab
-                }
-            }
-        )
-    }
-
     var body: some View {
-        TabView(selection: tabBinding) {
-            DashboardView(selectedTab: $selectedTab, scrollToMeal: $scrollToMeal)
+        TabView(selection: $selectedTab) {
+            DashboardView(onLogFood: { showLogFoodSheet = true }, scrollToMeal: $scrollToMeal)
+                .background(
+                    TabBarInterceptor(
+                        onLogFood: { showLogFoodSheet = true },
+                        onScanMenu: { showScanMenuSheet = true }
+                    )
+                )
                 .tabItem {
                     Label("Today", systemImage: "flame.fill")
                 }
                 .tag(Tab.dashboard)
 
             // Placeholder view for the action tab — never actually shown
-            Color.clear
+            Color(.systemBackground)
                 .tabItem {
                     Label("Log Food", systemImage: "plus.circle.fill")
                 }
                 .tag(Tab.logFood)
 
-            MenuCameraRootView(selectedTab: $selectedTab)
+            // Placeholder view for the scan menu tab — never actually shown
+            Color(.systemBackground)
                 .tabItem {
                     Label("Scan Menu", systemImage: "doc.viewfinder")
                 }
                 .tag(Tab.scanMenu)
 
-            HistoryView(selectedTab: $selectedTab)
+            HistoryView(onLogFood: { showLogFoodSheet = true })
                 .tabItem {
                     Label("History", systemImage: "calendar")
                 }
@@ -117,6 +114,52 @@ struct ContentView: View {
                 showManualEntryFlow = false
                 selectedTab = .dashboard
             })
+        }
+        .sheet(isPresented: $showScanMenuSheet) {
+            ScanMenuSheet(
+                onScanMenu: {
+                    showScanMenuSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showScanMenuCameraFlow = true
+                    }
+                },
+                onChooseFromLibrary: {
+                    showScanMenuSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showMenuPhotoLibraryFlow = true
+                    }
+                },
+                onStoredMenus: {
+                    showScanMenuSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showStoredMenusFlow = true
+                    }
+                }
+            )
+        }
+        .fullScreenCover(isPresented: $showMenuPhotoLibraryFlow) {
+            MenuPhotoLibraryRootView(onDone: {
+                showMenuPhotoLibraryFlow = false
+                selectedTab = .dashboard
+            }, onCancel: {
+                showMenuPhotoLibraryFlow = false
+            })
+        }
+        .fullScreenCover(isPresented: $showScanMenuCameraFlow) {
+            MenuCameraRootView(onDone: {
+                showScanMenuCameraFlow = false
+                selectedTab = .dashboard
+            })
+        }
+        .sheet(isPresented: $showStoredMenusFlow) {
+            NavigationStack {
+                ScannedMenusView()
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") { showStoredMenusFlow = false }
+                        }
+                    }
+            }
         }
     }
 }
@@ -220,12 +263,49 @@ struct ManualEntryRootView: View {
             ManualEntryView(onSave: { entry in
                 modelContext.insert(entry)
                 onDone()
-            }, onScanFood: {
-                // Already in a sheet — just dismiss, user can tap Log Food tab again
-                onDone()
-            }, onChooseFromLibrary: {
-                onDone()
             })
+        }
+    }
+}
+
+// MARK: - Tab Bar Interceptor
+
+/// Prevents UIKit's TabView from switching to placeholder tabs (Log Food, Scan Menu).
+/// Instead, calls the provided closures so the sheet can appear without any tab transition flash.
+private struct TabBarInterceptor: UIViewControllerRepresentable {
+    var onLogFood: () -> Void
+    var onScanMenu: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeUIViewController(context: Context) -> UIViewController { UIViewController() }
+
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        context.coordinator.onLogFood = onLogFood
+        context.coordinator.onScanMenu = onScanMenu
+        DispatchQueue.main.async {
+            guard let tabBarController = uiViewController.tabBarController else { return }
+            tabBarController.delegate = context.coordinator
+        }
+    }
+
+    class Coordinator: NSObject, UITabBarControllerDelegate {
+        var onLogFood: (() -> Void)?
+        var onScanMenu: (() -> Void)?
+
+        func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
+            guard let vcs = tabBarController.viewControllers,
+                  let index = vcs.firstIndex(of: viewController) else { return true }
+            switch index {
+            case 1:
+                onLogFood?()
+                return false
+            case 2:
+                onScanMenu?()
+                return false
+            default:
+                return true
+            }
         }
     }
 }

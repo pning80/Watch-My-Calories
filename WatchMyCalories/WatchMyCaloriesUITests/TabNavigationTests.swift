@@ -6,7 +6,7 @@ final class TabNavigationTests: WatchMyCaloriesUITestBase {
         launchEmpty()
 
         XCTAssertTrue(app.tabBars.buttons["Today"].exists)
-        XCTAssertTrue(app.tabBars.buttons["Scan Food"].exists)
+        XCTAssertTrue(app.tabBars.buttons["Log Food"].exists)
         XCTAssertTrue(app.tabBars.buttons["Scan Menu"].exists)
         XCTAssertTrue(app.tabBars.buttons["History"].exists)
     }
@@ -32,43 +32,38 @@ final class TabNavigationTests: WatchMyCaloriesUITestBase {
         app.tabBars.buttons["History"].tap()
         app.tabBars.buttons["Today"].tap()
 
-        let addButton = app.buttons["dashboard_addButton"]
+        let addButton = app.buttons["dashboard_emptyStateCard"]
         XCTAssertTrue(addButton.waitForExistence(timeout: 3))
     }
 
-    func testTappingScanFoodTabSwitchesTab() {
+    func testTappingLogFoodTabShowsSheet() {
         launchEmpty()
 
-        app.tabBars.buttons["Scan Food"].tap()
+        app.tabBars.buttons["Log Food"].tap()
 
-        // Should no longer show the dashboard add button
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertFalse(addButton.waitForExistence(timeout: 2))
+        // Should show the log food sheet
+        XCTAssertTrue(app.staticTexts["Log Food"].waitForExistence(timeout: 3))
     }
 
-    func testTappingScanMenuTabSwitchesTab() {
+    func testTappingScanMenuTabShowsSheet() {
         launchEmpty()
 
         app.tabBars.buttons["Scan Menu"].tap()
 
-        // Should no longer show the dashboard add button
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertFalse(addButton.waitForExistence(timeout: 2))
+        // Should show the scan menu sheet, not navigate away
+        XCTAssertTrue(app.staticTexts["Scan Menu"].waitForExistence(timeout: 3))
     }
 
     func testRoundTripTabNavigation() {
         launchEmpty()
 
-        // Navigate through all tabs and return to Today
+        // Navigate to History
         app.tabBars.buttons["History"].tap()
         XCTAssertTrue(app.staticTexts["history_title"].waitForExistence(timeout: 3))
 
-        app.tabBars.buttons["Scan Food"].tap()
-
-        app.tabBars.buttons["Scan Menu"].tap()
-
+        // Return to Today
         app.tabBars.buttons["Today"].tap()
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        let emptyState = app.buttons["dashboard_emptyStateCard"]
+        XCTAssertTrue(emptyState.waitForExistence(timeout: 3))
     }
 }

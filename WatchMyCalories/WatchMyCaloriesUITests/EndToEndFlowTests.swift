@@ -5,9 +5,11 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
     // MARK: - Helpers
 
     private func addManualEntry(name: String, calories: String, quantity: String, mealType: String? = nil) {
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
-        addButton.tap()
+        // Open Log Food sheet via tab, then tap Log Manually
+        app.tabBars.buttons["Log Food"].tap()
+        let logManually = app.staticTexts["Log Manually"]
+        XCTAssertTrue(logManually.waitForExistence(timeout: 3))
+        logManually.tap()
 
         let nameField = app.textFields["manualEntry_foodName"]
         XCTAssertTrue(nameField.waitForExistence(timeout: 3))
@@ -30,8 +32,9 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(saveButton.isEnabled)
         saveButton.tap()
 
-        // Wait for sheet to dismiss
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        // Wait for return to dashboard
+        let heroCard = app.otherElements["dashboard_heroCard"]
+        XCTAssertTrue(heroCard.waitForExistence(timeout: 5))
     }
 
     // MARK: - Tests
@@ -81,17 +84,12 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(calculateButton.waitForExistence(timeout: 3))
         calculateButton.tap()
 
-        // Done (saves + dismisses since changes were made)
+        // Save dismisses directly
         app.buttons["settings_saveButton"].tap()
-        // Handle unsaved changes alert
-        let alert = app.alerts["Unsaved Changes"]
-        if alert.waitForExistence(timeout: 2) {
-            alert.buttons["Save"].tap()
-        }
 
         // Should be back on dashboard with updated target
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 5))
+        let heroCard = app.otherElements["dashboard_heroCard"]
+        XCTAssertTrue(heroCard.waitForExistence(timeout: 5))
 
         // Target should no longer be 2200
         let goalAfter = app.staticTexts["dashboard_goalValue"]
@@ -179,16 +177,12 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         targetField.tap()
         targetField.typeText("1800")
 
-        // Done — triggers unsaved changes alert
+        // Save dismisses directly
         app.buttons["settings_saveButton"].tap()
-        let alert = app.alerts["Unsaved Changes"]
-        if alert.waitForExistence(timeout: 2) {
-            alert.buttons["Save"].tap()
-        }
 
         // Should be on dashboard — verify target is 1800
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        let emptyState = app.buttons["dashboard_emptyStateCard"]
+        XCTAssertTrue(emptyState.waitForExistence(timeout: 3))
         let goalElement = app.staticTexts["dashboard_goalValue"]
         XCTAssertTrue(goalElement.waitForExistence(timeout: 3))
         XCTAssertTrue(goalElement.label.contains("1800"), "Goal should show 1800")
@@ -257,13 +251,10 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         targetField.tap()
         targetField.typeText("2000")
 
-        // Done — triggers unsaved changes alert
+        // Save dismisses directly
         app.buttons["settings_saveButton"].tap()
-        let settingsAlert = app.alerts["Unsaved Changes"]
-        if settingsAlert.waitForExistence(timeout: 2) {
-            settingsAlert.buttons["Save"].tap()
-        }
-        XCTAssertTrue(app.buttons["dashboard_addButton"].waitForExistence(timeout: 3))
+        let emptyCard = app.buttons["dashboard_emptyStateCard"]
+        XCTAssertTrue(emptyCard.waitForExistence(timeout: 3))
 
         // Remaining = effectiveTarget - consumed
         // effectiveTarget = 2000 (set goal) + 456 (simulator burned) = 2456

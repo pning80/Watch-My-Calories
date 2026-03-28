@@ -132,59 +132,65 @@ struct MenuAnalysisView: View {
     // MARK: - Success
 
     private func successView(items: [MenuItemResult]) -> some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Header
-                HStack(spacing: 8) {
-                    Image(systemName: "fork.knife")
-                        .font(.title2)
-                        .foregroundStyle(Color.cwPrimary)
-                    Text("Menu Analysis")
-                        .font(.system(.title2, design: .serif, weight: .bold))
-                        .foregroundStyle(Color.cwPrimary)
-                }
-                .padding(.top, 20)
-
-                // Restaurant name
-                if let name = result?.restaurantName {
-                    Text("Looks like \(name)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                // Items
-                LazyVStack(spacing: 12) {
-                    ForEach(items) { item in
-                        menuItemCard(item)
-                    }
-                }
-                .padding(.horizontal)
-
-                // Buttons
-                VStack(spacing: 12) {
-                    Button(action: onDone) {
-                        Text("Done")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.cwPrimary)
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    }
-
-                    Button(action: onScanAgain) {
-                        Text("Scan Again")
-                            .font(.headline)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Header
+                    HStack(spacing: 8) {
+                        Image(systemName: "fork.knife")
+                            .font(.title2)
                             .foregroundStyle(Color.cwPrimary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.cwPrimary.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        Text("Menu Analysis")
+                            .font(.system(.title2, design: .serif, weight: .bold))
+                            .foregroundStyle(Color.cwPrimary)
                     }
+                    .padding(.top, 20)
+
+                    // Restaurant name
+                    if let name = result?.restaurantName {
+                        Text("Looks like \(name)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    // Items
+                    LazyVStack(spacing: 12) {
+                        ForEach(items) { item in
+                            menuItemCard(item)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 16)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 30)
             }
+
+            // Fixed bottom buttons
+            HStack(spacing: 12) {
+                Button(action: onScanAgain) {
+                    Text("Scan Again")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.cwPrimary)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.cwPrimary.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+
+                Button(action: onDone) {
+                    Text("Done")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.cwPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 10)
+            .background(Color.cwBackground)
         }
         .background(Color.cwBackground)
     }

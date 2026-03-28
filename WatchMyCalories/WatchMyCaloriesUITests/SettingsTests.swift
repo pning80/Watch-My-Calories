@@ -56,18 +56,28 @@ final class SettingsTests: WatchMyCaloriesUITestBase {
         XCTAssertFalse(value.isEmpty, "Target calories should be populated after calculation")
     }
 
-    // MARK: - Done & Dismiss
+    // MARK: - Save & Cancel
 
-    func testDoneButtonDismissesSheet() {
+    func testSaveButtonDismissesSheet() {
         openSettings()
 
-        let doneButton = app.buttons["settings_saveButton"]
-        XCTAssertTrue(doneButton.waitForExistence(timeout: 3))
-        doneButton.tap()
+        let saveButton = app.buttons["settings_saveButton"]
+        XCTAssertTrue(saveButton.waitForExistence(timeout: 3))
+        saveButton.tap()
 
         // Sheet should dismiss — we should be back on the dashboard
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        let emptyState = app.buttons["dashboard_emptyStateCard"]
+        XCTAssertTrue(emptyState.waitForExistence(timeout: 3))
+    }
+
+    func testCancelButtonDismissesWhenNoChanges() {
+        openSettings()
+
+        app.buttons["Cancel"].tap()
+
+        // Should dismiss directly without dialog
+        let emptyState = app.buttons["dashboard_emptyStateCard"]
+        XCTAssertTrue(emptyState.waitForExistence(timeout: 3))
     }
 
     // MARK: - AI Consent
@@ -136,9 +146,9 @@ final class SettingsTests: WatchMyCaloriesUITestBase {
                        "Expected calculated goal in range 2500-2560, got \(value)")
     }
 
-    // MARK: - Unsaved Changes Alert
+    // MARK: - Cancel with Unsaved Changes
 
-    func testUnsavedChangesAlertOnDone() {
+    func testCancelShowsDiscardDialogWhenChanged() {
         openSettingsWithSeedData()
 
         app.swipeUp()
@@ -148,17 +158,14 @@ final class SettingsTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(calculateButton.waitForExistence(timeout: 3))
         calculateButton.tap()
 
-        // Tap Done — should trigger unsaved changes alert
-        app.buttons["settings_saveButton"].tap()
+        // Tap Cancel — should trigger discard confirmation dialog
+        app.buttons["Cancel"].tap()
 
-        let alert = app.alerts["Unsaved Changes"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 3))
-        XCTAssertTrue(alert.buttons["Save"].exists)
-        XCTAssertTrue(alert.buttons["Discard"].exists)
-        XCTAssertTrue(alert.buttons["Cancel"].exists)
+        let discardButton = app.buttons["Discard Changes"]
+        XCTAssertTrue(discardButton.waitForExistence(timeout: 3))
     }
 
-    func testUnsavedChangesAlertSave() {
+    func testDiscardChangesFromCancelDialog() {
         openSettingsWithSeedData()
 
         app.swipeUp()
@@ -167,18 +174,18 @@ final class SettingsTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(calculateButton.waitForExistence(timeout: 3))
         calculateButton.tap()
 
-        app.buttons["settings_saveButton"].tap()
+        app.buttons["Cancel"].tap()
 
-        let alert = app.alerts["Unsaved Changes"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 3))
-        alert.buttons["Save"].tap()
+        let discardButton = app.buttons["Discard Changes"]
+        XCTAssertTrue(discardButton.waitForExistence(timeout: 3))
+        discardButton.tap()
 
         // Sheet should dismiss — back on dashboard
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        let heroCard = app.otherElements["dashboard_heroCard"]
+        XCTAssertTrue(heroCard.waitForExistence(timeout: 3))
     }
 
-    func testUnsavedChangesAlertDiscard() {
+    func testKeepEditingFromCancelDialog() {
         openSettingsWithSeedData()
 
         app.swipeUp()
@@ -187,28 +194,35 @@ final class SettingsTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(calculateButton.waitForExistence(timeout: 3))
         calculateButton.tap()
 
-        app.buttons["settings_saveButton"].tap()
+        app.buttons["Cancel"].tap()
 
-        let alert = app.alerts["Unsaved Changes"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 3))
-        alert.buttons["Discard"].tap()
+        let keepButton = app.buttons["Keep Editing"]
+        XCTAssertTrue(keepButton.waitForExistence(timeout: 3))
+        keepButton.tap()
 
-        // Sheet should dismiss — back on dashboard
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        // Should still be on Settings
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
     }
 
-    func testNoUnsavedAlertWhenUnchanged() {
+    func testCancelNoDialogWhenUnchanged() {
         openSettingsWithSeedData()
 
-        // Tap Done without making changes — no alert, just dismiss
-        app.buttons["settings_saveButton"].tap()
+        // Tap Cancel without making changes — no dialog, just dismiss
+        app.buttons["Cancel"].tap()
 
-        // Should dismiss directly to dashboard without alert
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        // Should dismiss directly to dashboard
+        let heroCard = app.otherElements["dashboard_heroCard"]
+        XCTAssertTrue(heroCard.waitForExistence(timeout: 3))
+    }
 
-        XCTAssertFalse(app.alerts["Unsaved Changes"].exists)
+    func testDeviceAttestationNotInSettings() {
+        openSettings()
+
+        app.swipeUp()
+        app.swipeUp()
+
+        let attestation = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Device Attestation"))
+        XCTAssertFalse(attestation.firstMatch.waitForExistence(timeout: 2))
     }
 
     // MARK: - Theme & Unit Pickers

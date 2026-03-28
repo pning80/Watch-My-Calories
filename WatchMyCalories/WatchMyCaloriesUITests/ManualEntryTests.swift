@@ -4,9 +4,11 @@ final class ManualEntryTests: WatchMyCaloriesUITestBase {
 
     private func openManualEntry() {
         launchEmpty()
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
-        addButton.tap()
+        // Open via Log Food tab → Log Manually
+        app.tabBars.buttons["Log Food"].tap()
+        let logManually = app.staticTexts["Log Manually"]
+        XCTAssertTrue(logManually.waitForExistence(timeout: 3))
+        logManually.tap()
     }
 
     // MARK: - Form Fields
@@ -35,7 +37,7 @@ final class ManualEntryTests: WatchMyCaloriesUITestBase {
         cancelButton.tap()
 
         // Sheet should dismiss — add button should reappear on dashboard
-        let addButton = app.buttons["dashboard_addButton"]
+        let addButton = app.buttons["dashboard_emptyStateCard"]
         XCTAssertTrue(addButton.waitForExistence(timeout: 3))
     }
 
@@ -60,11 +62,7 @@ final class ManualEntryTests: WatchMyCaloriesUITestBase {
         saveButton.tap()
 
         // After save, we should be back on dashboard with the entry visible
-        let addButton = app.buttons["dashboard_addButton"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
-
-        // The food entry should appear on the dashboard
-        XCTAssertTrue(app.staticTexts["Apple"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Apple"].waitForExistence(timeout: 5))
     }
 
     // MARK: - Meal Type Picker
@@ -128,14 +126,6 @@ final class ManualEntryTests: WatchMyCaloriesUITestBase {
 
         let saveButton = app.buttons["manualEntry_saveButton"]
         XCTAssertFalse(saveButton.isEnabled)
-    }
-
-    // MARK: - Scan Button
-
-    func testScanButtonExistsInManualEntry() {
-        openManualEntry()
-
-        XCTAssertTrue(app.staticTexts["Scan with Camera"].waitForExistence(timeout: 3))
     }
 
     // MARK: - Save Button Enabled

@@ -5,6 +5,8 @@ struct ScannedMenusView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \MenuScan.timestamp, order: .reverse) private var scans: [MenuScan]
 
+    @State private var editMode: EditMode = .inactive
+
     var body: some View {
         Group {
             if scans.isEmpty {
@@ -15,6 +17,14 @@ struct ScannedMenusView: View {
         }
         .navigationTitle("Scanned Menus")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !scans.isEmpty {
+                ToolbarItem(placement: .topBarLeading) {
+                    EditButton()
+                }
+            }
+        }
+        .environment(\.editMode, $editMode)
     }
 
     private var emptyState: some View {
@@ -36,14 +46,22 @@ struct ScannedMenusView: View {
 
     private var scanList: some View {
         List {
-            ForEach(scans) { scan in
-                NavigationLink {
-                    MenuScanDetailView(scan: scan)
-                } label: {
-                    scanRow(scan)
-                }
+            Section {
+                BannerAdView()
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets())
             }
-            .onDelete(perform: deleteScans)
+
+            Section {
+                ForEach(scans) { scan in
+                    NavigationLink {
+                        MenuScanDetailView(scan: scan)
+                    } label: {
+                        scanRow(scan)
+                    }
+                }
+                .onDelete(perform: deleteScans)
+            }
         }
         .listStyle(.plain)
     }
@@ -98,7 +116,11 @@ struct ScannedMenusView: View {
 
 struct MenuScanDetailView: View {
     let scan: MenuScan
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @State private var expandedItems: Set<UUID> = []
+    @State private var showDeleteConfirmation = false
+    @State private var showFullScreenImage = false
 
     var body: some View {
         ScrollView {
@@ -132,6 +154,10 @@ struct MenuScanDetailView: View {
                         .frame(maxHeight: 200)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .padding(.horizontal)
+                        .onTapGesture { showFullScreenImage = true }
+                        .fullScreenCover(isPresented: $showFullScreenImage) {
+                            FullScreenImageView(image: image)
+                        }
                 }
 
                 // Items
@@ -146,6 +172,24 @@ struct MenuScanDetailView: View {
         }
         .background(Color.cwBackground)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(role: .destructive) {
+                    showDeleteConfirmation = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+            }
+        }
+        .confirmationDialog("Delete this scanned menu?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                if let imageID = scan.imageID {
+                    _ = ImageStorage.shared.delete(id: imageID)
+                }
+                modelContext.delete(scan)
+                dismiss()
+            }
+        }
     }
 
     private func itemCard(_ item: MenuItemResult) -> some View {
@@ -201,3 +245,4 @@ struct MenuScanDetailView: View {
         }
     }
 }
+

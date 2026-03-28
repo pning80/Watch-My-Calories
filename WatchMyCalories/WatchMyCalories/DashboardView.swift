@@ -8,17 +8,17 @@ struct DashboardView: View {
     
     @StateObject private var healthKitManager = HealthKitManager()
     
-    @Binding var selectedTab: ContentView.Tab
+    var onLogFood: () -> Void
     @Binding var scrollToMeal: MealType?
-    
+
     @State private var selectedImage: UIImage?
     @State private var entryToEdit: FoodEntry?
     @State private var entryToView: FoodEntry?
     @State private var groupToEdit: FoodEntryGroupEdit?
     @State private var groupToView: FoodEntryGroupEdit?
 
-    init(selectedTab: Binding<ContentView.Tab>, scrollToMeal: Binding<MealType?> = .constant(nil)) {
-        self._selectedTab = selectedTab
+    init(onLogFood: @escaping () -> Void = {}, scrollToMeal: Binding<MealType?> = .constant(nil)) {
+        self.onLogFood = onLogFood
         self._scrollToMeal = scrollToMeal
     }
     
@@ -91,7 +91,7 @@ struct DashboardView: View {
                             if todayEntries.isEmpty {
                                 VStack(spacing: 12) {
                                     Button {
-                                        selectedTab = .logFood
+                                        onLogFood()
                                     } label: {
                                         EmptyStateCard()
                                     }
@@ -99,7 +99,7 @@ struct DashboardView: View {
                                     .accessibilityIdentifier(AccessibilityID.Dashboard.emptyStateCard)
 
                                     Button {
-                                        selectedTab = .logFood
+                                        onLogFood()
                                     } label: {
                                         Label("or log manually", systemImage: "square.and.pencil")
                                             .font(.subheadline)
@@ -178,8 +178,6 @@ struct DashboardView: View {
 struct ManualEntryView: View {
     @Environment(\.dismiss) private var dismiss
     var onSave: (FoodEntry) -> Void
-    var onScanFood: (() -> Void)?
-    var onChooseFromLibrary: (() -> Void)?
 
     @State private var name = ""
     @State private var caloriesText = ""
@@ -204,85 +202,6 @@ struct ManualEntryView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Scan with camera
-                        if let onScanFood {
-                            Button {
-                                onScanFood()
-                            } label: {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "camera.viewfinder")
-                                        .font(.system(size: 24))
-                                        .foregroundStyle(Color.cwSecondary)
-                                        .padding(10)
-                                        .background(Circle().fill(Color.cwPrimary))
-
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("Scan with Camera")
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(Color.cwTextPrimary)
-                                        Text("Estimate calories from a photo, or enter manually below")
-                                            .font(.caption)
-                                            .foregroundStyle(Color.gray)
-                                    }
-
-                                    Spacer()
-
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundStyle(Color.gray)
-                                }
-                                .padding()
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .strokeBorder(Color.cwPrimary.opacity(0.3), lineWidth: 1)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityIdentifier(AccessibilityID.ManualEntry.scanButton)
-                            .padding(.horizontal)
-                        }
-
-                        if let onChooseFromLibrary {
-                            Button {
-                                onChooseFromLibrary()
-                            } label: {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "photo.on.rectangle")
-                                        .font(.system(size: 24))
-                                        .foregroundStyle(Color.cwSecondary)
-                                        .padding(10)
-                                        .background(Circle().fill(Color.cwPrimary))
-
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text("Choose from Photo Library")
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(Color.cwTextPrimary)
-                                        Text("Estimate calories from an existing photo")
-                                            .font(.caption)
-                                            .foregroundStyle(Color.gray)
-                                    }
-
-                                    Spacer()
-
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundStyle(Color.gray)
-                                }
-                                .padding()
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .strokeBorder(Color.cwPrimary.opacity(0.3), lineWidth: 1)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityIdentifier(AccessibilityID.ManualEntry.photoLibraryButton)
-                            .padding(.horizontal)
-                        }
-
                         // Food info section
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Food Details")
