@@ -61,6 +61,7 @@
 		C0613831FB33E2623C482B66 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = BF20722D7FEDCB10C37EE13E /* README.md */; };
 		C2FC63DE5817A547E4A2E30B /* MenuCameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFD51FDE157B47D9D1D49172 /* MenuCameraView.swift */; };
 		D0C1CCFF49144C36A1C1FF23 /* LogFoodSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59AF50111D93D059A82BFA6E /* LogFoodSheet.swift */; };
+		D5A13ACA6AF15CB84DC8BF9F /* DevelopmentAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1252025FD16D52276566372F /* DevelopmentAssets.xcassets */; };
 		DA29D17520CFE21FBD92AD86 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB3FC6E262A5412FD9C22B75 /* DesignSystem.swift */; };
 		DD0BA3638F2D5F70076F50FE /* MenuAnalysisModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0983642BAE5A2E429C1469A /* MenuAnalysisModelTests.swift */; };
 		E345150A4ACEB8B3BD433A43 /* DashboardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB9910637B27BFED22380BD6 /* DashboardTests.swift */; };
@@ -100,6 +101,7 @@
 		084E91EBD7DC4B38C41CBA6A /* ManualEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualEntryTests.swift; sourceTree = "<group>"; };
 		0EB7749679EE565E30EFBBC7 /* WatchMyCaloriesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMyCaloriesApp.swift; sourceTree = "<group>"; };
 		11F9D2C04A44CAB2312F02FC /* MenuAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuAnalysisView.swift; sourceTree = "<group>"; };
+		1252025FD16D52276566372F /* DevelopmentAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DevelopmentAssets.xcassets; sourceTree = "<group>"; };
 		1F4FB98C53977532637B71A3 /* ScannedMenusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannedMenusView.swift; sourceTree = "<group>"; };
 		1F54FB0C36AAEF2B30ACE55A /* OnboardingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTests.swift; sourceTree = "<group>"; };
 		20EA32B744EFA2073418E3E6 /* CameraCaptureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCaptureTests.swift; sourceTree = "<group>"; };
@@ -280,6 +282,7 @@
 				289D70AF343F07ECF3E9E085 /* DashboardView.swift */,
 				369CDA3EF5CEF31AB53CD2D7 /* DataModels.swift */,
 				FB3FC6E262A5412FD9C22B75 /* DesignSystem.swift */,
+				1252025FD16D52276566372F /* DevelopmentAssets.xcassets */,
 				DC0B3B6C9D227FE2A102F700 /* EstimationReviewView.swift */,
 				450ECAAF3A341F54606FFC9A /* HealthKit_Integration_Prompt.md */,
 				F790BA5108CE14854D3685A8 /* HealthKitManager.swift */,
@@ -422,6 +425,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FA0A220623B979E115B93697 /* Assets.xcassets in Resources */,
+				D5A13ACA6AF15CB84DC8BF9F /* DevelopmentAssets.xcassets in Resources */,
 				FA0A37DFBED1CA3A5082113A /* HealthKit_Integration_Prompt.md in Resources */,
 				9599F79541F273330E60B7BA /* Ideation.md in Resources */,
 				13E1E32BBB3287EB270D829F /* LICENSE.txt in Resources */,
@@ -547,6 +551,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need access to your active energy data to adjust your daily calorie goals.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app does not write data to Apple Health.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location helps identify the restaurant when scanning menus.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need access to your photo library to analyze food images and menu photos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -684,6 +689,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WatchMyCalories/WatchMyCalories.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				EXCLUDED_SOURCE_FILE_NAMES = DevelopmentAssets.xcassets;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
@@ -691,6 +697,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need access to your active energy data to adjust your daily calorie goals.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app does not write data to Apple Health.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Your location helps identify the restaurant when scanning menus.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need access to your photo library to analyze food images and menu photos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

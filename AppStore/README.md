@@ -22,8 +22,13 @@ AppStore/
 │   ├── Set-Up.md        # App Store Connect update guide
 │   ├── AppIcon.png      # App icon (1024×1024)
 │   └── Screenshots/     # App Store screenshots
+├── V1.4.0/              # Version 1.4.0 (2026-03-29)
+│   ├── Set-Up.md        # App Store Connect update guide
+│   ├── AppIcon.png      # App icon (1024×1024)
+│   └── Screenshots/     # App Store screenshots
 ├── FoodPhotos/          # Food photos used in simulator and demos
 │   ├── 1.Latte.JPG
+│   ├── 1.Menu.HEIC
 │   ├── 2.KatsuCurry.jpeg
 │   ├── 3.SeaFood.jpg
 │   ├── 4.Salmon.jpg
