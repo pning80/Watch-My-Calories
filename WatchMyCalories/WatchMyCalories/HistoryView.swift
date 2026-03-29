@@ -156,37 +156,43 @@ struct HistoryDayCard: View {
     var body: some View {
         VStack(spacing: 0) {
             Button(action: { withAnimation(.snappy) { isExpanded.toggle() } }) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(date, format: .dateTime.day().month(.wide))
-                            .font(.headline)
-                            .foregroundStyle(Color.cwTextPrimary)
-                        Text(date, format: .dateTime.weekday(.wide))
+                VStack(spacing: 0) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(date, format: .dateTime.day().month(.wide))
+                                .font(.headline)
+                                .foregroundStyle(Color.cwTextPrimary)
+                            Text(date, format: .dateTime.weekday(.wide))
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(Color.gray)
+                        }
+
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 0) {
+                            Text("\(Int(totalCalories))")
+                                .font(.system(.title3, design: .rounded))
+                                .fontWeight(.bold)
+                                .foregroundStyle(Color.cwPrimary)
+                            Text("kcal")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Color.gray)
+                        }
+
+                        Image(systemName: "chevron.right")
                             .font(.caption)
-                            .fontWeight(.medium)
                             .foregroundStyle(Color.gray)
+                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                            .padding(.leading, 8)
                     }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: 0) {
-                        Text("\(Int(totalCalories))")
-                            .font(.system(.title3, design: .rounded))
-                            .fontWeight(.bold)
-                            .foregroundStyle(Color.cwPrimary)
-                        Text("kcal")
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                            .foregroundStyle(Color.gray)
-                    }
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(Color.gray)
-                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                        .padding(.leading, 8)
+                    .padding()
+
+                    CompactMacroRow(entries: entries)
+                        .padding(.horizontal)
+                        .padding(.bottom, 10)
                 }
-                .padding()
                 .background(Color.cwSurface)
             }
             

@@ -225,27 +225,11 @@ struct HeroSummaryCard: View {
             }
 
             // Stacked proportional bar
-            GeometryReader { geo in
-                let w = geo.size.width
-                let total = max(totalMacroCals, 1)
-                let pWidth = w * (proteinCals / total)
-                let cWidth = w * (carbsCals / total)
-                let fWidth = w * (fatCals / total)
-
-                HStack(spacing: 1.5) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.cwPrimary)
-                        .frame(width: max(pWidth, proteinCals > 0 ? 4 : 0))
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.cwAccent)
-                        .frame(width: max(cWidth, carbsCals > 0 ? 4 : 0))
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.secondary)
-                        .frame(width: max(fWidth, fatCals > 0 ? 4 : 0))
-                }
-                .animation(.easeInOut(duration: 0.5), value: totalMacroCals)
-            }
-            .frame(height: 8)
+            MacroProportionalBar(
+                proteinCals: proteinCals,
+                carbsCals: carbsCals,
+                fatCals: fatCals
+            )
             .padding(.top, 6)
         }
         } // VStack
@@ -274,6 +258,96 @@ struct HeroSummaryCard: View {
             Text("\(pct)%")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
+        }
+    }
+}
+
+// MARK: - Macro Proportional Bar
+
+struct MacroProportionalBar: View {
+    let proteinCals: Double
+    let carbsCals: Double
+    let fatCals: Double
+    var height: CGFloat = 8
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let total = max(proteinCals + carbsCals + fatCals, 1)
+            let pWidth = w * (proteinCals / total)
+            let cWidth = w * (carbsCals / total)
+            let fWidth = w * (fatCals / total)
+
+            HStack(spacing: 1.5) {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Color.cwPrimary)
+                    .frame(width: max(pWidth, proteinCals > 0 ? 4 : 0))
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Color.cwAccent)
+                    .frame(width: max(cWidth, carbsCals > 0 ? 4 : 0))
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Color.secondary)
+                    .frame(width: max(fWidth, fatCals > 0 ? 4 : 0))
+            }
+            .animation(.easeInOut(duration: 0.5), value: total)
+        }
+        .frame(height: height)
+    }
+}
+
+// MARK: - Compact Macro Row (History)
+
+struct CompactMacroRow: View {
+    let entries: [FoodEntry]
+
+    private var totalProtein: Double { entries.compactMap(\.protein).reduce(0, +) }
+    private var totalCarbs: Double { entries.compactMap(\.carbs).reduce(0, +) }
+    private var totalFat: Double { entries.compactMap(\.fat).reduce(0, +) }
+    private var hasMacroData: Bool { totalProtein > 0 || totalCarbs > 0 || totalFat > 0 }
+    private var proteinCals: Double { totalProtein * 4 }
+    private var carbsCals: Double { totalCarbs * 4 }
+    private var fatCals: Double { totalFat * 9 }
+    private var totalMacroCals: Double { proteinCals + carbsCals + fatCals }
+
+    private func pct(_ cals: Double) -> Int {
+        totalMacroCals > 0 ? Int((cals / totalMacroCals * 100).rounded()) : 0
+    }
+
+    var body: some View {
+        if hasMacroData {
+            HStack(spacing: 12) {
+                MacroProportionalBar(
+                    proteinCals: proteinCals,
+                    carbsCals: carbsCals,
+                    fatCals: fatCals,
+                    height: 6
+                )
+
+                HStack(spacing: 8) {
+                    compactMacro("P", grams: totalProtein, pct: pct(proteinCals), color: .cwPrimary)
+                    compactMacro("C", grams: totalCarbs, pct: pct(carbsCals), color: .cwAccent)
+                    compactMacro("F", grams: totalFat, pct: pct(fatCals), color: .secondary)
+                }
+                .fixedSize()
+            }
+            .accessibilityIdentifier(AccessibilityID.History.dayCardMacros)
+        }
+    }
+
+    private func compactMacro(_ label: String, grams: Double, pct: Int, color: Color) -> some View {
+        HStack(alignment: .top, spacing: 2) {
+            Circle()
+                .fill(color)
+                .frame(width: 6, height: 6)
+                .padding(.top, 3)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("\(label): \(Int(grams))g")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text("\(pct)%")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
         }
     }
 }

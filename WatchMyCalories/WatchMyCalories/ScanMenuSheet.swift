@@ -44,7 +44,11 @@ struct ScanMenuSheet: View {
                 )
             }
             .padding(.horizontal)
-            .padding(.bottom, 24)
+            .padding(.bottom, 16)
+
+            BannerAdView()
+                .frame(minHeight: 50)
+                .padding(.bottom, 24)
         }
         .background(
             GeometryReader { geo in

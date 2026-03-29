@@ -202,6 +202,8 @@ struct ManualEntryView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
+                        BannerAdView()
+
                         // Food info section
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Food Details")

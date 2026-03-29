@@ -44,6 +44,7 @@ enum AccessibilityID {
         static let title = "history_title"
         static let emptyState = "history_emptyState"
         static let dayCard = "history_dayCard"
+        static let dayCardMacros = "history_dayCard_macros"
     }
 
     enum PhotoLibrary {
