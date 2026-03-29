@@ -26,6 +26,7 @@ struct ScanMenuSheet: View {
                     title: "Scan Menu",
                     subtitle: "Take a photo of a restaurant menu",
                     icon: "doc.viewfinder",
+                    accessibilityID: AccessibilityID.ScanMenuSheet.scanButton,
                     action: onScanMenu
                 )
 
@@ -33,6 +34,7 @@ struct ScanMenuSheet: View {
                     title: "Choose from Library",
                     subtitle: "Select a photo from your library",
                     icon: "photo.on.rectangle",
+                    accessibilityID: AccessibilityID.ScanMenuSheet.chooseFromLibraryButton,
                     action: onChooseFromLibrary
                 )
 
@@ -40,6 +42,7 @@ struct ScanMenuSheet: View {
                     title: "Stored Menus",
                     subtitle: "View previously scanned menus",
                     icon: "menucard",
+                    accessibilityID: AccessibilityID.ScanMenuSheet.storedMenusButton,
                     action: onStoredMenus
                 )
             }
@@ -59,7 +62,7 @@ struct ScanMenuSheet: View {
         .presentationDetents([.height(sheetHeight)])
     }
 
-    private func optionButton(title: String, subtitle: String, icon: String, action: @escaping () -> Void) -> some View {
+    private func optionButton(title: String, subtitle: String, icon: String, accessibilityID: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 16) {
                 Image(systemName: icon)
@@ -91,5 +94,6 @@ struct ScanMenuSheet: View {
             .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(accessibilityID)
     }
 }
