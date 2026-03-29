@@ -48,10 +48,14 @@ targets:
         INFOPLIST_KEY_NSHealthShareUsageDescription: "We need access to your active energy data to adjust your daily calorie goals."
         INFOPLIST_KEY_NSHealthUpdateUsageDescription: "This app does not write data to Apple Health."
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Your location helps identify the restaurant when scanning menus."
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "We need access to your photo library to analyze food images and menu photos."
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+      configs:
+        Release:
+          EXCLUDED_SOURCE_FILE_NAMES: DevelopmentAssets.xcassets
     entitlements:
       path: WatchMyCalories/WatchMyCalories.entitlements
       properties:
