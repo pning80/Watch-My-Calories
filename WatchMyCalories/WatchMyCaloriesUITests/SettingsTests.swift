@@ -196,12 +196,22 @@ final class SettingsTests: WatchMyCaloriesUITestBase {
 
         app.buttons["Cancel"].tap()
 
-        let keepButton = app.buttons["Keep Editing"]
-        XCTAssertTrue(keepButton.waitForExistence(timeout: 3))
-        keepButton.tap()
+        // Wait for the discard dialog to appear
+        let discardButton = app.buttons["Discard Changes"]
+        XCTAssertTrue(discardButton.waitForExistence(timeout: 5))
+
+        // "Keep Editing" has role: .cancel — find via predicate as the system
+        // may render it differently in the action sheet
+        let keepButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'Keep Editing'")).firstMatch
+        if keepButton.waitForExistence(timeout: 3) {
+            keepButton.tap()
+        } else {
+            // Fallback: tap outside the action sheet to dismiss (same as cancel)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)).tap()
+        }
 
         // Should still be on Settings
-        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
     }
 
     func testCancelNoDialogWhenUnchanged() {

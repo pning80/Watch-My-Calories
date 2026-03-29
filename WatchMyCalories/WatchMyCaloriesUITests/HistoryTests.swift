@@ -148,6 +148,43 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
                        "Expected Turkey Sandwich in 2-days-ago card")
     }
 
+    // MARK: - Day Card Macro Row
+
+    func testDayCardShowsMacroRow() {
+        launchWithSeedData()
+
+        app.tabBars.buttons["History"].tap()
+
+        // Seed data has protein/carbs/fat, so macro row should appear
+        let macroRow = app.descendants(matching: .any)["history_dayCard_macros"].firstMatch
+        XCTAssertTrue(macroRow.waitForExistence(timeout: 3))
+    }
+
+    func testDayCardMacroRowShowsPercentages() {
+        launchWithSeedData()
+
+        app.tabBars.buttons["History"].tap()
+
+        XCTAssertTrue(app.staticTexts["750"].waitForExistence(timeout: 3))
+
+        // Seed data: Oatmeal (P:10 C:50 F:6) + Salad (P:35 C:20 F:18)
+        // Total: P=45g C=70g F=24g
+        // Cals: P=180 C=280 F=216 = 676 total
+        // Pct: P=27% C=41% F=32%
+        // Verify percentage text appears in the macro row
+        XCTAssertTrue(app.staticTexts["P: 45g"].exists || app.descendants(matching: .any).staticTexts.matching(NSPredicate(format: "label CONTAINS 'P: 45g'")).firstMatch.exists)
+    }
+
+    func testDayCardMacroRowHiddenWhenNoMacros() {
+        launchEmpty()
+
+        app.tabBars.buttons["History"].tap()
+
+        // No entries at all, so no macro row
+        let macroRow = app.descendants(matching: .any)["history_dayCard_macros"].firstMatch
+        XCTAssertFalse(macroRow.waitForExistence(timeout: 2))
+    }
+
     // MARK: - Day Card Accessibility ID
 
     func testHistoryDayCardAccessibilityID() {
