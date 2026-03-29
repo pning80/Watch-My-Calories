@@ -24,7 +24,7 @@ struct ScanMenuSheet: View {
             VStack(spacing: 12) {
                 optionButton(
                     title: "Scan Menu",
-                    subtitle: "Photograph a restaurant menu",
+                    subtitle: "Take a photo of a restaurant menu",
                     icon: "doc.viewfinder",
                     action: onScanMenu
                 )

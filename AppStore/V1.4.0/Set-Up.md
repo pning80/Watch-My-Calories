@@ -68,7 +68,7 @@ Answer **None** / **No** to all questions:
 > KEY FEATURES
 >
 > - AI Food Analysis — Snap a photo of your meal or choose one from your photo library. Watch My Calories uses Google Gemini AI to identify foods and estimate calories, protein, carbs, and fat.
-> - Menu Scanning — Photograph a restaurant menu to see AI calorie estimates for every item. Your approximate location helps identify the restaurant's cuisine for more accurate results. Scanned menus are saved automatically.
+> - Menu Scanning — Take a photo of a restaurant menu to see AI calorie estimates for every item. Your approximate location helps identify the restaurant's cuisine for more accurate results. Scanned menus are saved automatically.
 > - Smart Meal Tracking — Entries are automatically categorized as Breakfast, Lunch, Dinner, or Snack based on the time of day.
 > - Daily Dashboard — See your calorie intake at a glance with a nutrition hero card showing calories consumed, remaining, and a protein/carbs/fat breakdown.
 > - HealthKit Integration — Reads your active energy burned from Apple Health to dynamically adjust your effective calorie target.
@@ -281,7 +281,7 @@ Paste this into the **Notes for Review** field:
 > 5. Return to Dashboard to see the logged entry and updated hero card with macro breakdown.
 > 6. Tap "Log Food" > "Choose from Library". Select a food photo. Tap "Use". Review results. Tap "Done".
 > 7. Tap the "Scan Menu" tab. A sheet appears with "Scan Menu", "Choose from Library", "Stored Menus".
-> 8. Tap "Scan Menu". Photograph a restaurant menu. Tap "Use". Grant location permission (optional). View calorie estimates for each menu item. Tap items to expand macro details. Tap "Done" to save.
+> 8. Tap "Scan Menu". Take a photo of a restaurant menu. Tap "Use". Grant location permission (optional). View calorie estimates for each menu item. Tap items to expand macro details. Tap "Done" to save.
 > 9. Tap "Scan Menu" tab > "Stored Menus" to view previously scanned menus.
 > 10. Tap the "History" tab. View past entries organized by date with daily nutrition summaries (macros).
 > 11. Tap the "..." (ellipsis) menu button. Tap "Settings" to see profile data, calorie goal, and privacy choices. Tap "About" to see app version, App Store rating, support links, and device attestation status.
@@ -367,7 +367,7 @@ Since this is an update, most settings (like Categories and Age Rating) carry ov
 
 - [ ] **Test on a physical device** — Verify camera, HealthKit, ad loading, consent sheet, location, and App Attest all work.
 - [ ] **Test Log Food sheet** — Tap "Log Food" tab. Verify sheet appears with Scan Food, Choose from Library, and Log Manually. Test each option.
-- [ ] **Test Scan Menu flow** — Tap "Scan Menu" tab. Tap "Scan Menu". Photograph a restaurant menu. Verify analysis shows calorie estimates per item. Tap items to expand macro details. Verify saved to Stored Menus.
+- [ ] **Test Scan Menu flow** — Tap "Scan Menu" tab. Tap "Scan Menu". Take a photo of a restaurant menu. Verify analysis shows calorie estimates per item. Tap items to expand macro details. Verify saved to Stored Menus.
 - [ ] **Test menu from photo library** — Tap "Scan Menu" > "Choose from Library". Select a menu photo. Verify analysis completes.
 - [ ] **Test Stored Menus** — Tap "Scan Menu" > "Stored Menus". Verify previously scanned menus appear. Test swipe-to-delete.
 - [ ] **Test location permission** — During menu scan, verify location prompt appears. Test granting and denying. Verify menu scan works without location.

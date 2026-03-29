@@ -20,7 +20,7 @@ Tap the **Log Food** tab to open the logging sheet with three options:
 
 ### Scanning Menus
 Tap the **Scan Menu** tab to analyze a restaurant menu:
-- **Scan Menu** — Photograph a restaurant menu with your camera.
+- **Scan Menu** — Take a photo of a restaurant menu with your camera.
 - **Choose from Library** — Select an existing menu photo.
 - **Stored Menus** — Browse previously scanned menus.
 
