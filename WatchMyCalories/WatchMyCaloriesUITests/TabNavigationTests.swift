@@ -54,6 +54,17 @@ final class TabNavigationTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.staticTexts["Scan Menu"].waitForExistence(timeout: 3))
     }
 
+    func testScanMenuTabOpensSheetWithOptions() {
+        launchEmpty()
+
+        app.tabBars.buttons["Scan Menu"].tap()
+
+        // Scan Menu sheet should appear with all three options
+        XCTAssertTrue(app.staticTexts["Scan Menu"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Choose from Library"].exists)
+        XCTAssertTrue(app.staticTexts["Stored Menus"].exists)
+    }
+
     func testRoundTripTabNavigation() {
         launchEmpty()
 
