@@ -81,7 +81,7 @@ Answer **None** / **No** to all questions:
 
 ### Promotional Text
 
-> Scan restaurant menus for instant calorie estimates! Plus snap food photos or pick from your library for AI-powered tracking. Private, fast, and synced with your fitness goals.
+> Snap a photo of your meal or a restaurant menu — AI instantly estimates calories and macros for every item. Track your nutrition effortlessly. Private and on-device.
 
 *(Promotional text can be updated without a new app version.)*
 

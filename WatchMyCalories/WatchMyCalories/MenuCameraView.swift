@@ -216,7 +216,7 @@ struct MenuCameraRootView: View {
 
     var body: some View {
         #if targetEnvironment(simulator)
-        let _ = cameraManager.simulatorPhotos = ["MenuPhoto1"]
+        let _ = cameraManager.simulatorPhotos = ["MenuPhoto1", "MenuPhoto2"]
         #endif
         NavigationStack {
             MenuCameraView(model: cameraManager) { imageData in
