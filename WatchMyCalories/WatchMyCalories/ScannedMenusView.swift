@@ -118,7 +118,6 @@ struct MenuScanDetailView: View {
     let scan: MenuScan
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @State private var expandedItems: Set<UUID> = []
     @State private var showDeleteConfirmation = false
     @State private var showFullScreenImage = false
 
@@ -210,28 +209,17 @@ struct MenuScanDetailView: View {
                     .foregroundStyle(.secondary)
             }
 
-            if expandedItems.contains(item.id) {
-                HStack(spacing: 16) {
-                    if let p = item.protein { macroLabel("Protein", value: p) }
-                    if let c = item.carbs { macroLabel("Carbs", value: c) }
-                    if let f = item.fat { macroLabel("Fat", value: f) }
-                }
-                .padding(.top, 4)
+            HStack(spacing: 16) {
+                if let p = item.protein { macroLabel("Protein", value: p) }
+                if let c = item.carbs { macroLabel("Carbs", value: c) }
+                if let f = item.fat { macroLabel("Fat", value: f) }
             }
+            .padding(.top, 4)
         }
         .padding()
         .background(Color.cwSurface)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
-        .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                if expandedItems.contains(item.id) {
-                    expandedItems.remove(item.id)
-                } else {
-                    expandedItems.insert(item.id)
-                }
-            }
-        }
     }
 
     private func macroLabel(_ label: String, value: Double) -> some View {

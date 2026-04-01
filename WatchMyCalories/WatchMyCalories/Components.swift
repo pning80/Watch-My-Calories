@@ -352,6 +352,58 @@ struct CompactMacroRow: View {
     }
 }
 
+struct InlineMacroRow: View {
+    let protein: Double?
+    let carbs: Double?
+    let fat: Double?
+
+    private var hasMacroData: Bool {
+        (protein ?? 0) > 0 || (carbs ?? 0) > 0 || (fat ?? 0) > 0
+    }
+
+    init(protein: Double?, carbs: Double?, fat: Double?) {
+        self.protein = protein
+        self.carbs = carbs
+        self.fat = fat
+    }
+
+    init(entry: FoodEntry) {
+        self.protein = entry.protein
+        self.carbs = entry.carbs
+        self.fat = entry.fat
+    }
+
+    init(entries: [FoodEntry]) {
+        let p = entries.compactMap(\.protein).reduce(0, +)
+        let c = entries.compactMap(\.carbs).reduce(0, +)
+        let f = entries.compactMap(\.fat).reduce(0, +)
+        self.protein = p > 0 ? p : nil
+        self.carbs = c > 0 ? c : nil
+        self.fat = f > 0 ? f : nil
+    }
+
+    var body: some View {
+        if hasMacroData {
+            HStack(spacing: 8) {
+                if let p = protein, p > 0 { macroChip("P", grams: p, color: .cwPrimary) }
+                if let c = carbs, c > 0 { macroChip("C", grams: c, color: .cwAccent) }
+                if let f = fat, f > 0 { macroChip("F", grams: f, color: .secondary) }
+            }
+        }
+    }
+
+    private func macroChip(_ label: String, grams: Double, color: Color) -> some View {
+        HStack(spacing: 2) {
+            Circle()
+                .fill(color)
+                .frame(width: 5, height: 5)
+            Text("\(label): \(Int(grams))g")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
 struct StatRow: View {
     let label: String
     let value: String
@@ -477,6 +529,11 @@ struct FoodEntryGroup {
     var totalCalories: Double {
         items.reduce(0) { $0 + $1.calories }
     }
+
+    var totalProtein: Double { items.compactMap(\.protein).reduce(0, +) }
+    var totalCarbs: Double { items.compactMap(\.carbs).reduce(0, +) }
+    var totalFat: Double { items.compactMap(\.fat).reduce(0, +) }
+    var hasMacroData: Bool { totalProtein > 0 || totalCarbs > 0 || totalFat > 0 }
 }
 
 struct FoodEntryGroupCard: View {
@@ -543,6 +600,8 @@ struct FoodEntryGroupCard: View {
                         .font(.caption2)
                         .foregroundStyle(Color.gray)
                 }
+
+                InlineMacroRow(entries: group.items)
             }
 
             Spacer()
@@ -618,22 +677,27 @@ struct FoodEntryGroupCard: View {
                         .padding(.leading, 64)
                     
                     ForEach(group.items) { item in
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 4, height: 4)
-                            
-                            Text(item.name)
-                                .font(.caption)
-                                .foregroundStyle(Color.cwTextPrimary.opacity(0.8))
-                                .lineLimit(1)
-                            
-                            Spacer()
-                            
-                            Text("\(Int(item.calories))")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundStyle(Color.gray)
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(width: 4, height: 4)
+
+                                Text(item.name)
+                                    .font(.caption)
+                                    .foregroundStyle(Color.cwTextPrimary.opacity(0.8))
+                                    .lineLimit(1)
+
+                                Spacer()
+
+                                Text("\(Int(item.calories))")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(Color.gray)
+                            }
+
+                            InlineMacroRow(entry: item)
+                                .padding(.leading, 12)
                         }
                         .padding(.vertical, 8)
                         .padding(.leading, 64)
