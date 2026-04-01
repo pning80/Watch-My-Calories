@@ -298,11 +298,22 @@ struct MacroProportionalBar: View {
 // MARK: - Compact Macro Row (History)
 
 struct CompactMacroRow: View {
-    let entries: [FoodEntry]
+    let totalProtein: Double
+    let totalCarbs: Double
+    let totalFat: Double
 
-    private var totalProtein: Double { entries.compactMap(\.protein).reduce(0, +) }
-    private var totalCarbs: Double { entries.compactMap(\.carbs).reduce(0, +) }
-    private var totalFat: Double { entries.compactMap(\.fat).reduce(0, +) }
+    init(entries: [FoodEntry]) {
+        self.totalProtein = entries.compactMap(\.protein).reduce(0, +)
+        self.totalCarbs = entries.compactMap(\.carbs).reduce(0, +)
+        self.totalFat = entries.compactMap(\.fat).reduce(0, +)
+    }
+
+    init(protein: Double?, carbs: Double?, fat: Double?) {
+        self.totalProtein = protein ?? 0
+        self.totalCarbs = carbs ?? 0
+        self.totalFat = fat ?? 0
+    }
+
     private var hasMacroData: Bool { totalProtein > 0 || totalCarbs > 0 || totalFat > 0 }
     private var proteinCals: Double { totalProtein * 4 }
     private var carbsCals: Double { totalCarbs * 4 }

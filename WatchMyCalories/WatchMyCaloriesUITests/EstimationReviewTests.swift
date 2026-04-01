@@ -129,4 +129,66 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
         let captureButton = app.buttons["camera_captureButton"]
         XCTAssertTrue(captureButton.waitForExistence(timeout: 5))
     }
+
+    // MARK: - Success Screen Content
+
+    func testSuccessScreenShowsLoggedMessage() {
+        startEstimation()
+        let result = waitForEstimationResult()
+
+        if result == "completedLoading" {
+            let viewResults = app.buttons["ads_viewResultsButton"]
+            if viewResults.waitForExistence(timeout: 3) {
+                viewResults.tap()
+            }
+        }
+
+        guard result == "success" || result == "completedLoading" else { return }
+        guard elementExists("review_success") else { return }
+
+        XCTAssertTrue(
+            app.staticTexts["Logged Successfully!"].exists,
+            "Success screen should show 'Logged Successfully!' message"
+        )
+    }
+
+    func testSuccessScreenShowsTotalAdded() {
+        startEstimation()
+        let result = waitForEstimationResult()
+
+        if result == "completedLoading" {
+            let viewResults = app.buttons["ads_viewResultsButton"]
+            if viewResults.waitForExistence(timeout: 3) {
+                viewResults.tap()
+            }
+        }
+
+        guard result == "success" || result == "completedLoading" else { return }
+        guard elementExists("review_success") else { return }
+
+        XCTAssertTrue(
+            app.staticTexts["Total Added"].exists,
+            "Success screen should show 'Total Added' label"
+        )
+    }
+
+    func testDoneButtonVisibleWithoutScrolling() {
+        startEstimation()
+        let result = waitForEstimationResult()
+
+        if result == "completedLoading" {
+            let viewResults = app.buttons["ads_viewResultsButton"]
+            if viewResults.waitForExistence(timeout: 3) {
+                viewResults.tap()
+            }
+        }
+
+        guard result == "success" || result == "completedLoading" else { return }
+
+        let doneButton = app.buttons["review_doneButton"]
+        guard doneButton.waitForExistence(timeout: 5) else { return }
+
+        // Done button should be hittable without scrolling (pinned at bottom)
+        XCTAssertTrue(doneButton.isHittable, "Done button should be visible without scrolling")
+    }
 }

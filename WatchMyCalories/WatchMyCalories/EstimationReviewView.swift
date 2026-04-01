@@ -199,61 +199,99 @@ struct EstimationReviewView: View {
                     .padding()
                     .accessibilityIdentifier(AccessibilityID.EstimationReview.noFoodView)
                 } else {
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 64))
-                                .foregroundStyle(Color.cwPrimary)
-                                .transition(.scale.combined(with: .opacity))
+                    VStack(spacing: 0) {
+                        ScrollView {
+                            VStack(spacing: 24) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 64))
+                                    .foregroundStyle(Color.cwPrimary)
+                                    .transition(.scale.combined(with: .opacity))
 
-                            Text("Logged Successfully!")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundStyle(Color.cwTextPrimary)
+                                Text("Logged Successfully!")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(Color.cwTextPrimary)
 
-                            VStack(spacing: 16) {
-                                ForEach(result.items.indices, id: \.self) { idx in
-                                    HStack {
-                                        Text(result.items[idx].name)
+                                VStack(spacing: 16) {
+                                    ForEach(result.items.indices, id: \.self) { idx in
+                                        let item = result.items[idx]
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            HStack {
+                                                Text(item.name)
+                                                    .font(.headline)
+                                                    .foregroundStyle(Color.cwTextPrimary)
+                                                Spacer()
+                                                Text("\(Int(item.calories)) kcal")
+                                                    .fontWeight(.bold)
+                                                    .foregroundStyle(Color.cwPrimary)
+                                            }
+                                            CompactMacroRow(
+                                                protein: item.protein,
+                                                carbs: item.carbs,
+                                                fat: item.fat
+                                            )
+                                        }
+                                        .padding()
+                                        .background(Color.cwSurface)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                                    }
+
+                                    VStack(spacing: 10) {
+                                        Text("Total Added")
                                             .font(.headline)
                                             .foregroundStyle(Color.cwTextPrimary)
-                                        Spacer()
-                                        Text("\(Int(result.items[idx].calories)) kcal")
+
+                                        Text("\(Int(result.totalCalories)) kcal")
+                                            .font(.title2)
                                             .fontWeight(.bold)
-                                            .foregroundStyle(Color.cwPrimary)
+                                            .foregroundStyle(Color.cwAccent)
+
+                                        if result.totalProtein > 0 || result.totalCarbs > 0 || result.totalFat > 0 {
+                                            let proteinCals = result.totalProtein * 4
+                                            let carbsCals = result.totalCarbs * 4
+                                            let fatCals = result.totalFat * 9
+                                            let totalMacroCals = proteinCals + carbsCals + fatCals
+
+                                            Divider()
+
+                                            HStack(spacing: 0) {
+                                                macroLabel("Protein", grams: result.totalProtein, cals: proteinCals, totalCals: totalMacroCals, color: .cwPrimary)
+                                                Spacer()
+                                                macroLabel("Carbs", grams: result.totalCarbs, cals: carbsCals, totalCals: totalMacroCals, color: .cwAccent)
+                                                Spacer()
+                                                macroLabel("Fat", grams: result.totalFat, cals: fatCals, totalCals: totalMacroCals, color: .secondary)
+                                            }
+
+                                            MacroProportionalBar(
+                                                proteinCals: proteinCals,
+                                                carbsCals: carbsCals,
+                                                fatCals: fatCals,
+                                                height: 10
+                                            )
+                                            .padding(.top, 4)
+                                        }
                                     }
+                                    .frame(maxWidth: .infinity)
                                     .padding()
-                                    .background(Color.cwSurface)
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                                    .background(Color.cwSecondary)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
                                 }
-
-                                Divider()
-
-                                HStack {
-                                    Text("Total Added")
-                                        .font(.headline)
-                                        .foregroundStyle(Color.cwTextPrimary)
-                                    Spacer()
-                                    Text("\(Int(result.totalCalories)) kcal")
-                                        .font(.title3)
-                                        .fontWeight(.bold)
-                                        .foregroundStyle(Color.cwAccent)
-                                }
-                                .padding(.top, 8)
+                                .padding(.horizontal)
                             }
-                            .padding(.horizontal)
-
-                            Button("Done") {
-                                onDone()
-                                dismiss()
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(Color.cwPrimary)
-                            .padding(.top)
-                            .accessibilityIdentifier(AccessibilityID.EstimationReview.doneButton)
+                            .padding()
                         }
+
+                        Divider()
+
+                        Button("Done") {
+                            onDone()
+                            dismiss()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Color.cwPrimary)
                         .padding()
+                        .accessibilityIdentifier(AccessibilityID.EstimationReview.doneButton)
                     }
                     .transition(.opacity)
                     .accessibilityIdentifier(AccessibilityID.EstimationReview.successView)
@@ -320,6 +358,27 @@ struct EstimationReviewView: View {
         }
     }
     
+    private func macroLabel(_ label: String, grams: Double, cals: Double, totalCals: Double, color: Color) -> some View {
+        let pct = totalCals > 0 ? Int((cals / totalCals * 100).rounded()) : 0
+        return VStack(spacing: 2) {
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(color)
+                    .frame(width: 8, height: 8)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            Text("\(Int(grams))g")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundStyle(Color.cwTextPrimary)
+            Text("\(pct)%")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+    }
+
     private func saveToHistory(_ result: EstimationResult) {
         var savedImageID: UUID? = nil
         if let firstImageData = images.first {
