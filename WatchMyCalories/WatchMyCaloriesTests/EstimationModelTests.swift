@@ -76,4 +76,43 @@ final class EstimationModelTests: XCTestCase {
         XCTAssertNil(result.items[0].carbs)
         XCTAssertNil(result.items[0].fat)
     }
+
+    // MARK: - Total Macro Computed Properties
+
+    func testTotalMacrosSumsItems() {
+        let result = EstimationResult(items: [
+            EstimationItem(name: "Chicken", quantity: "6 oz", calories: 280, confidence: 0.9, protein: 40, carbs: 0, fat: 12),
+            EstimationItem(name: "Rice", quantity: "1 cup", calories: 200, confidence: 0.85, protein: 4, carbs: 45, fat: 0.5),
+        ])
+        XCTAssertEqual(result.totalProtein, 44)
+        XCTAssertEqual(result.totalCarbs, 45)
+        XCTAssertEqual(result.totalFat, 12.5)
+    }
+
+    func testTotalMacrosWithNilValues() {
+        let result = EstimationResult(items: [
+            EstimationItem(name: "Apple", quantity: "1 medium", calories: 95, confidence: 0.9, protein: 0.5, carbs: 25, fat: 0.3),
+            EstimationItem(name: "Mystery", quantity: "1 serving", calories: 300, confidence: 0.5),
+        ])
+        XCTAssertEqual(result.totalProtein, 0.5)
+        XCTAssertEqual(result.totalCarbs, 25)
+        XCTAssertEqual(result.totalFat, 0.3)
+    }
+
+    func testTotalMacrosEmptyItems() {
+        let result = EstimationResult(items: [])
+        XCTAssertEqual(result.totalProtein, 0)
+        XCTAssertEqual(result.totalCarbs, 0)
+        XCTAssertEqual(result.totalFat, 0)
+    }
+
+    func testTotalMacrosAllNil() {
+        let result = EstimationResult(items: [
+            EstimationItem(name: "A", quantity: "1", calories: 100, confidence: 0.5),
+            EstimationItem(name: "B", quantity: "1", calories: 200, confidence: 0.5),
+        ])
+        XCTAssertEqual(result.totalProtein, 0)
+        XCTAssertEqual(result.totalCarbs, 0)
+        XCTAssertEqual(result.totalFat, 0)
+    }
 }

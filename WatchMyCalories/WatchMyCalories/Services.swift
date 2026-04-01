@@ -49,6 +49,9 @@ struct EstimationResult: Codable {
     var totalCalories: Double {
         items.reduce(0) { $0 + $1.calories }
     }
+    var totalProtein: Double { items.compactMap(\.protein).reduce(0, +) }
+    var totalCarbs: Double { items.compactMap(\.carbs).reduce(0, +) }
+    var totalFat: Double { items.compactMap(\.fat).reduce(0, +) }
 }
 
 // MARK: - Menu Analysis Models
