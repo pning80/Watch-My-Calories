@@ -169,10 +169,13 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
 
         // Seed data: Oatmeal (P:10 C:50 F:6) + Salad (P:35 C:20 F:18)
         // Total: P=45g C=70g F=24g
-        // Cals: P=180 C=280 F=216 = 676 total
-        // Pct: P=27% C=41% F=32%
-        // Verify percentage text appears in the macro row
-        XCTAssertTrue(app.staticTexts["P: 45g"].exists || app.descendants(matching: .any).staticTexts.matching(NSPredicate(format: "label CONTAINS 'P: 45g'")).firstMatch.exists)
+        // CompactMacroRow shows "P: 45g", "C: 70g", "F: 24g" with percentages
+        let macroRow = app.descendants(matching: .any)["history_dayCard_macros"].firstMatch
+        XCTAssertTrue(macroRow.waitForExistence(timeout: 3))
+
+        // Verify the macro row contains protein gram text
+        let hasMacroText = app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'P: 45g'")).firstMatch
+        XCTAssertTrue(hasMacroText.waitForExistence(timeout: 3))
     }
 
     func testDayCardMacroRowHiddenWhenNoMacros() {
@@ -183,6 +186,27 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         // No entries at all, so no macro row
         let macroRow = app.descendants(matching: .any)["history_dayCard_macros"].firstMatch
         XCTAssertFalse(macroRow.waitForExistence(timeout: 2))
+    }
+
+    // MARK: - Meal Card Macro Display in Expanded Day Card
+
+    func testExpandedMealCardShowsProportionalBarNotGramLabels() {
+        launchWithSeedData()
+
+        app.tabBars.buttons["History"].tap()
+
+        // Expand the day card
+        let caloriesText = app.staticTexts["750"]
+        XCTAssertTrue(caloriesText.waitForExistence(timeout: 3))
+        caloriesText.tap()
+
+        // Wait for entries to appear
+        XCTAssertTrue(app.staticTexts["Oatmeal with Berries"].waitForExistence(timeout: 3))
+
+        // The collapsed meal entry cards should NOT show gram labels (replaced by proportional bar).
+        // "P: 10g" was the old InlineMacroRow text for Oatmeal's protein at the card level.
+        XCTAssertFalse(app.staticTexts["P: 10g"].exists,
+                        "Meal entry card should show proportional bar, not gram labels")
     }
 
     // MARK: - Day Card Accessibility ID

@@ -77,7 +77,7 @@ Answer **None** / **No** to all questions:
 
 ### Promotional Text
 
-> Snap a photo of your meal or a restaurant menu — AI instantly estimates calories and macros for every item. Now with detailed nutrition breakdowns after every scan. Private and on-device.
+> Snap a photo of your meal or a restaurant menu — AI estimates calories and macros for every item. Now with detailed nutrition breakdowns. Private and on-device.
 
 *(Promotional text can be updated without a new app version.)*
 
