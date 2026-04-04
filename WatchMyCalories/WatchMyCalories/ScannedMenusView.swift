@@ -42,6 +42,7 @@ struct ScannedMenusView: View {
                 .padding(.horizontal, 40)
             Spacer()
         }
+        .accessibilityIdentifier(AccessibilityID.ScannedMenus.emptyState)
     }
 
     private var scanList: some View {

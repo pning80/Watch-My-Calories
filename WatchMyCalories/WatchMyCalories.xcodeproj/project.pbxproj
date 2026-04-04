@@ -25,6 +25,7 @@
 		4159F38C94746981F65F4AA3 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A183F7D8BD4CC28FF50CBB /* LocationManager.swift */; };
 		42B758579E7D620D2FA3981C /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5FC4E6815399CA6558FAD0F /* CameraView.swift */; };
 		43D458D0B1FE8F668DA16EFB /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F790BA5108CE14854D3685A8 /* HealthKitManager.swift */; };
+		48772539AD8A9542326C76E0 /* ScanMenuTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4085B320C9BC32691B222CDD /* ScanMenuTests.swift */; };
 		4F538006A10C9D081B43F790 /* NativeAdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C03D2C9FF1F834198D18BF /* NativeAdView.swift */; };
 		50013F5700BD1ADD96DF2069 /* SKILL.md in Resources */ = {isa = PBXBuildFile; fileRef = 75FCDEBA4F5691C0D2B3FD4C /* SKILL.md */; };
 		556C5B6499FA9CFFE7B61FF9 /* WatchMyCaloriesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EB7749679EE565E30EFBBC7 /* WatchMyCaloriesApp.swift */; };
@@ -110,6 +111,7 @@
 		3029DABB2C822A0EB88922A2 /* UnitConversionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitConversionTests.swift; sourceTree = "<group>"; };
 		369CDA3EF5CEF31AB53CD2D7 /* DataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModels.swift; sourceTree = "<group>"; };
 		36BB370EFDD1A8C8BB2F64BF /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
+		4085B320C9BC32691B222CDD /* ScanMenuTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanMenuTests.swift; sourceTree = "<group>"; };
 		43E36EE49FCC374E73606CE6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		450ECAAF3A341F54606FFC9A /* HealthKit_Integration_Prompt.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = HealthKit_Integration_Prompt.md; sourceTree = "<group>"; };
 		48A49C397A1E694DBE38C172 /* FoodEntryEdgeCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodEntryEdgeCaseTests.swift; sourceTree = "<group>"; };
@@ -206,6 +208,7 @@
 				07709D1A389FF826BE86478D /* HistoryTests.swift */,
 				084E91EBD7DC4B38C41CBA6A /* ManualEntryTests.swift */,
 				1F54FB0C36AAEF2B30ACE55A /* OnboardingTests.swift */,
+				4085B320C9BC32691B222CDD /* ScanMenuTests.swift */,
 				5945C40A62C1547DE7787237 /* SettingsTests.swift */,
 				A55250D05BADD440A2577C15 /* TabNavigationTests.swift */,
 				61B9C866156ABBB3FD65A249 /* WatchMyCaloriesUITestBase.swift */,
@@ -452,6 +455,7 @@
 				058F3C540D3F47EAC0E72737 /* HistoryTests.swift in Sources */,
 				916C198D4023DECAA2D5D14B /* ManualEntryTests.swift in Sources */,
 				1F095FDC1661581BF3E502A6 /* OnboardingTests.swift in Sources */,
+				48772539AD8A9542326C76E0 /* ScanMenuTests.swift in Sources */,
 				A0CDAF3EB62A888ADE48E289 /* SettingsTests.swift in Sources */,
 				1B294522DAA8F72CEC2F1FC5 /* TabNavigationTests.swift in Sources */,
 				FDEBA1EA44C49E30A6588813 /* WatchMyCaloriesUITestBase.swift in Sources */,

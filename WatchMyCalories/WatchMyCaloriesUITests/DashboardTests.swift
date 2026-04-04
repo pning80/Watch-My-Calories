@@ -161,6 +161,23 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         XCTAssertFalse(app.staticTexts["Snack"].exists)
     }
 
+    // MARK: - Meal Card Macro Display
+
+    func testMealCardShowsProportionalBarNotGramLabels() {
+        launchWithSeedData()
+
+        // Seed data: Oatmeal (P:10 C:50 F:6), Chicken Salad (P:35 C:20 F:18)
+        XCTAssertTrue(app.staticTexts["Breakfast"].waitForExistence(timeout: 5))
+
+        // The old InlineMacroRow showed "P: 10g" on the collapsed meal card.
+        // The new proportional bar replaces those gram labels.
+        // Verify gram labels do NOT appear at the meal card level.
+        XCTAssertFalse(app.staticTexts["P: 10g"].exists,
+                        "Collapsed meal card should show proportional bar, not gram labels")
+        XCTAssertFalse(app.staticTexts["P: 35g"].exists,
+                        "Collapsed meal card should show proportional bar, not gram labels")
+    }
+
     // MARK: - Delete from Dashboard
 
     func testDeleteEntryFromDashboard() {
