@@ -612,7 +612,14 @@ struct FoodEntryGroupCard: View {
                         .foregroundStyle(Color.gray)
                 }
 
-                InlineMacroRow(entries: group.items)
+                if group.hasMacroData {
+                    MacroProportionalBar(
+                        proteinCals: group.totalProtein * 4,
+                        carbsCals: group.totalCarbs * 4,
+                        fatCals: group.totalFat * 9,
+                        height: 4
+                    )
+                }
             }
 
             Spacer()
