@@ -34,6 +34,14 @@ xcuserdata/
 #
 Pods/
 
+# Android
+#
+.gradle/
+.idea/
+local.properties
+*.iml
+captures/
+
 # Node
 node_modules/
 dist/
