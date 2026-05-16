@@ -8,7 +8,7 @@ Before I (the AI) can securely deploy the Cloud Run backend to your GCP account,
 2. Duplicate the file named `.env.example` and rename the copy to `.env`.
 3. Open `.env` and paste your actual, valid Google AI Studio Gemini API Key beside `GEMINI_API_KEY=`.
     * Ensure there are no surrounding quotes (e.g., `GEMINI_API_KEY=AIzaSyA...`)
-4. Confirm that the `GEMINI_MODEL_NAME` suits your needs (the default is `gemini-2.0-flash-exp`).
+4. Confirm that the `GEMINI_MODEL_NAME` suits your needs (the default is `gemini-3.1-flash-lite`).
 5. (Optional) You may change the `APP_BACKEND_API_KEY` to any custom password of your choosing. This key secures your Cloud Run endpoint from public abuse.
 
 Once you have saved your `.env` file, let me know, and I will execute the deployment!
