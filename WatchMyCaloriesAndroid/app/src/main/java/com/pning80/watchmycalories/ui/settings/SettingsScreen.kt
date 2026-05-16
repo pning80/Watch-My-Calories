@@ -1,470 +1,462 @@
 package com.pning80.watchmycalories.ui.settings
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.pning80.watchmycalories.R
-import com.pning80.watchmycalories.data.model.ActivityLevel
-import com.pning80.watchmycalories.data.model.Gender
-import com.pning80.watchmycalories.ui.theme.*
-import java.util.*
+import com.pning80.watchmycalories.data.CalorieCalculator
+import com.pning80.watchmycalories.data.CalorieCalculator.Gender
+import com.pning80.watchmycalories.data.CalorieCalculator.ActivityLevel
+import com.pning80.watchmycalories.data.UserProfile
+import com.pning80.watchmycalories.ads.AdManager
+import com.pning80.watchmycalories.ui.components.AppIconView
+import androidx.activity.compose.BackHandler
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = hiltViewModel(),
-    onSave: () -> Unit,
+    settingsDataStore: SettingsDataStore,
+    currentProfile: UserProfile? = null,
+    onSaveProfile: ((UserProfile) -> Unit)? = null
 ) {
-    val apiKey by viewModel.apiKey.collectAsState()
-    val userProfile by viewModel.userProfile.collectAsState()
-    val models by viewModel.models.collectAsState()
-    val selectedModel by viewModel.selectedModel.collectAsState()
+    val isMetric by settingsDataStore.isMetricFlow.collectAsState(initial = true)
+    val appTheme by settingsDataStore.appThemeFlow.collectAsState(initial = "System")
+    val aiConsent by settingsDataStore.aiConsentFlow.collectAsState(initial = "notAsked")
+    val coroutineScope = rememberCoroutineScope()
 
-    var apiKeyText by remember(apiKey) { mutableStateOf(apiKey ?: "") }
+    // Profile state — initialized from currentProfile or defaults
+    var heightCm by remember(currentProfile) { mutableIntStateOf(currentProfile?.height?.roundToInt() ?: 173) }
+    var weightKg by remember(currentProfile) { mutableIntStateOf(currentProfile?.weight?.roundToInt() ?: 68) }
+    var heightFeet by remember(currentProfile) {
+        val totalInches = (currentProfile?.height ?: 173.0) / 2.54
+        mutableIntStateOf(totalInches.toInt() / 12)
+    }
+    var heightInches by remember(currentProfile) {
+        val totalInches = (currentProfile?.height ?: 173.0) / 2.54
+        mutableIntStateOf(totalInches.toInt() % 12)
+    }
+    var weightLbs by remember(currentProfile) {
+        mutableIntStateOf(((currentProfile?.weight ?: 68.0) * 2.20462).roundToInt())
+    }
+    var age by remember(currentProfile) { mutableIntStateOf(currentProfile?.age ?: 30) }
+    var gender by remember(currentProfile) {
+        mutableStateOf(Gender.fromRaw(currentProfile?.genderRaw))
+    }
+    var activityLevel by remember(currentProfile) {
+        mutableStateOf(ActivityLevel.fromRaw(currentProfile?.activityLevelRaw))
+    }
+    var targetCaloriesText by remember(currentProfile) {
+        mutableStateOf(
+            if (currentProfile != null && currentProfile.targetCalories > 0)
+                currentProfile.targetCalories.toInt().toString()
+            else ""
+        )
+    }
+    
+    val isPrivacyOptionsRequired by AdManager.isPrivacyOptionsRequired.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    var showDiscardDialog by remember { mutableStateOf(false) }
 
-    // State for imperial units
-    var heightFeet by remember { mutableStateOf(5) }
-    var heightInches by remember { mutableStateOf(9) }
-    var weightLbs by remember { mutableStateOf(160f) }
-    var age by remember { mutableStateOf(30f) }
-    var gender by remember { mutableStateOf(Gender.MALE) }
-    var activityLevel by remember { mutableStateOf(ActivityLevel.SEDENTARY) }
-    var targetCalories by remember { mutableStateOf(2000) }
-    var expanded by remember { mutableStateOf(false) }
-
-    // When userProfile is loaded, update the local states
-    LaunchedEffect(userProfile) {
-        userProfile?.let {
-            val totalInches = it.heightCm / 2.54
-            heightFeet = (totalInches / 12).toInt()
-            heightInches = (totalInches % 12).roundToInt()
-            weightLbs = (it.weightKg * 2.20462).toFloat()
-            age = it.age.toFloat()
-            gender = it.gender
-            activityLevel = it.activityLevel
-            targetCalories = it.targetCalories.toInt()
-        }
+    // Detected changes
+    val hasUnsavedChanges = remember(
+        heightCm, weightKg, heightFeet, heightInches, weightLbs, age, gender, activityLevel, targetCaloriesText, isMetric, appTheme
+    ) {
+        val originalTarget = if (currentProfile != null && currentProfile.targetCalories > 0)
+            currentProfile.targetCalories.toInt().toString() else ""
+            
+        heightCm != (currentProfile?.height?.roundToInt() ?: 173) ||
+        weightKg != (currentProfile?.weight?.roundToInt() ?: 68) ||
+        age != (currentProfile?.age ?: 30) ||
+        gender != Gender.fromRaw(currentProfile?.genderRaw) ||
+        activityLevel != ActivityLevel.fromRaw(currentProfile?.activityLevelRaw) ||
+        targetCaloriesText != originalTarget
     }
 
-    val uriHandler = LocalUriHandler.current
+    BackHandler(enabled = hasUnsavedChanges) {
+        showDiscardDialog = true
+    }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = CWBackground,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_app_logo_modern),
-                            contentDescription = "App Logo",
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                        )
-                        Text(
-                            text = "Settings",
-                            style = MaterialTheme.typography.headlineLarge.copy(
-                                fontFamily = TitleFontFamily,
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = CWPrimary
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        viewModel.saveApiKey(apiKeyText)
-                        selectedModel?.let { viewModel.saveSelectedModel(it) }
-                        val heightInCm = (heightFeet * 12 + heightInches) * 2.54
-                        val weightInKg = weightLbs / 2.20462
-                        viewModel.saveProfile(
-                            heightInCm,
-                            weightInKg,
-                            age.toInt(),
-                            gender,
-                            activityLevel,
-                            targetCalories
-                        )
-                        onSave()
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Save,
-                            contentDescription = "Save",
-                            tint = CWPrimary
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = CWBackground
-                )
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = { Text("Discard changes?") },
+            text = { Text("You have unsaved changes. Are you sure you want to discard them?") },
+            confirmButton = {
+                TextButton(onClick = { 
+                    showDiscardDialog = false
+                    // In a real app, we might need a way to pass a "dismiss" higher up
+                    // But for now, we just let them go back.
+                }) { Text("Discard") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDialog = false }) { Text("Keep Editing") }
+            }
+        )
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            AppIconView(modifier = Modifier.size(44.dp))
+            Text(
+                "Settings",
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.testTag("SettingsTitle")
             )
-        },
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // AI Configuration
-            SettingsSection(title = "AI Configuration", icon = Icons.Filled.SmartToy) {
-                OutlinedTextField(
-                    value = apiKeyText,
-                    onValueChange = { apiKeyText = it },
-                    label = { Text("Gemini API Key") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = CWPrimary,
-                        unfocusedBorderColor = Color.Gray,
-                        cursorColor = CWPrimary,
-                        focusedTextColor = CWTextPrimary,
-                        unfocusedTextColor = CWTextPrimary,
-                    )
-                )
-                if (models.isNotEmpty()) {
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = !expanded },
-                    ) {
-                        OutlinedTextField(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(),
-                            readOnly = true,
-                            value = selectedModel ?: "gemini-1.5-flash",
-                            onValueChange = {},
-                            label = { Text("Model") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = CWPrimary,
-                                unfocusedBorderColor = Color.Gray,
-                                cursorColor = CWPrimary,
-                                focusedTextColor = CWTextPrimary,
-                                unfocusedTextColor = CWTextPrimary,
-                                focusedLabelColor = CWPrimary,
-                            ),
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false },
-                        ) {
-                            models.forEach { selectionOption ->
-                                DropdownMenuItem(
-                                    text = { Text(selectionOption) },
-                                    onClick = {
-                                        viewModel.saveSelectedModel(selectionOption)
-                                        expanded = false
-                                    },
-                                )
-                            }
-                        }
-                    }
+        }
 
+        // ── App Appearance ──
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("App Appearance", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+
+                // Theme picker
+                Text("Theme", style = MaterialTheme.typography.bodyMedium)
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    listOf("System", "Light", "Dark").forEachIndexed { index, theme ->
+                        SegmentedButton(
+                            selected = appTheme == theme,
+                            onClick = { coroutineScope.launch { settingsDataStore.setAppTheme(theme) } },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
+                        ) { Text(theme) }
+                    }
                 }
-                TextButton(
-                    onClick = { uriHandler.openUri("https://aistudio.google.com/app/apikey") },
-                    contentPadding = PaddingValues(0.dp)
+
+                // Unit System
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Get API Key from Google AI Studio", color = CWPrimary)
+                    Column {
+                        Text("Metric System", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Uses g and ml instead of oz and fl oz",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = isMetric,
+                        onCheckedChange = { newState ->
+                            coroutineScope.launch { settingsDataStore.setMetric(newState) }
+                            // Cross-sync unit values
+                            if (newState) {
+                                // Imperial → Metric
+                                val totalInches = heightFeet * 12 + heightInches
+                                heightCm = (totalInches * 2.54).roundToInt()
+                                weightKg = (weightLbs / 2.20462).roundToInt()
+                            } else {
+                                // Metric → Imperial
+                                val totalInches = (heightCm / 2.54).toInt()
+                                heightFeet = totalInches / 12
+                                heightInches = totalInches % 12
+                                weightLbs = (weightKg * 2.20462).roundToInt()
+                            }
+                        },
+                        modifier = Modifier.testTag("settings_metricToggle")
+                    )
                 }
             }
+        }
 
-            // User Profile
-            SettingsSection(title = "User Profile", icon = Icons.Filled.AccountCircle) {
-                Text(
-                    "Height",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = CWTextPrimary
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        LabeledSlider(
-                            label = "",
-                            value = heightFeet.toFloat(),
-                            onValueChange = { heightFeet = it.roundToInt() },
-                            valueRange = 3f..7f,
-                            steps = 4,
-                            valueText = "$heightFeet ft"
-                        )
+        // ── Profile ──
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Profile", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+
+                if (isMetric) {
+                    // Height (cm)
+                    ProfileSliderRow(
+                        label = "Height",
+                        value = heightCm,
+                        range = 100..250,
+                        unit = "cm",
+                        onValueChange = { heightCm = it }
+                    )
+                    // Weight (kg)
+                    ProfileSliderRow(
+                        label = "Weight",
+                        value = weightKg,
+                        range = 20..200,
+                        unit = "kg",
+                        onValueChange = { weightKg = it }
+                    )
+                } else {
+                    // Height (ft/in)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Height", style = MaterialTheme.typography.bodyMedium)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            ProfileDropdown(
+                                value = heightFeet,
+                                options = (4..7).toList(),
+                                suffix = "ft",
+                                onValueChange = { heightFeet = it }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            ProfileDropdown(
+                                value = heightInches,
+                                options = (0..11).toList(),
+                                suffix = "in",
+                                onValueChange = { heightInches = it }
+                            )
+                        }
                     }
-                    Column(modifier = Modifier.weight(1f)) {
-                        LabeledSlider(
-                            label = "",
-                            value = heightInches.toFloat(),
-                            onValueChange = { heightInches = it.roundToInt() },
-                            valueRange = 0f..11f,
-                            steps = 11,
-                            valueText = "$heightInches in"
-                        )
-                    }
+                    // Weight (lbs)
+                    ProfileSliderRow(
+                        label = "Weight",
+                        value = weightLbs,
+                        range = 50..400,
+                        unit = "lbs",
+                        onValueChange = { weightLbs = it }
+                    )
                 }
-                LabeledSlider(
-                    label = "Weight",
-                    value = weightLbs,
-                    onValueChange = { weightLbs = it },
-                    valueRange = 80f..400f,
-                    steps = (400 - 80),
-                    valueText = "${weightLbs.roundToInt()} lbs"
-                )
-                LabeledSlider(
+
+                // Age
+                ProfileSliderRow(
                     label = "Age",
                     value = age,
-                    onValueChange = { age = it },
-                    valueRange = 13f..100f,
-                    steps = (100 - 13) - 1,
-                    valueText = "${age.roundToInt()} years"
+                    range = 1..100,
+                    unit = "",
+                    onValueChange = { age = it }
                 )
 
-                Text(
-                    "Gender",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = CWTextPrimary
-                )
+                // Gender
+                Text("Gender", style = MaterialTheme.typography.bodyMedium)
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     Gender.entries.forEachIndexed { index, g ->
                         SegmentedButton(
-                            modifier = Modifier.weight(1f),
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = Gender.entries.size
-                            ),
-                            onClick = { gender = g },
                             selected = gender == g,
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = CWPrimary,
-                                activeContentColor = Color.White,
-                                inactiveContainerColor = CWSecondary,
-                                inactiveContentColor = CWPrimary,
-                            ),
-                        ) { Text(g.name.replaceFirstChar { it.titlecase(Locale.getDefault()) }) }
+                            onClick = { gender = g },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = Gender.entries.size),
+                            modifier = Modifier.testTag("settings_gender_${g.displayName}")
+                        ) { Text(g.displayName) }
                     }
                 }
 
-                var activityLevelExpanded by remember { mutableStateOf(false) }
-                val activityLevels = ActivityLevel.entries.toTypedArray()
-                Text(
-                    text = "Activity Level",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = CWTextPrimary
-                )
+                // Activity Level
+                Text("Activity Level", style = MaterialTheme.typography.bodyMedium)
+                var activityExpanded by remember { mutableStateOf(false) }
                 ExposedDropdownMenuBox(
-                    expanded = activityLevelExpanded,
-                    onExpandedChange = { activityLevelExpanded = !activityLevelExpanded },
+                    expanded = activityExpanded,
+                    onExpandedChange = { activityExpanded = it }
                 ) {
                     OutlinedTextField(
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth(),
-                        readOnly = true,
-                        value = activityLevel.name.replace("_", " ").lowercase()
-                            .replaceFirstChar {
-                                it.titlecase(
-                                    Locale.getDefault()
-                                )
-                            },
+                        value = activityLevel.displayName,
                         onValueChange = {},
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = activityLevelExpanded) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = CWPrimary,
-                            unfocusedBorderColor = Color.Gray,
-                            cursorColor = CWPrimary,
-                            focusedTextColor = CWTextPrimary,
-                            unfocusedTextColor = CWTextPrimary,
-                            focusedLabelColor = CWPrimary,
-                        ),
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = activityExpanded) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor()
                     )
                     ExposedDropdownMenu(
-                        expanded = activityLevelExpanded,
-                        onDismissRequest = { activityLevelExpanded = false },
+                        expanded = activityExpanded,
+                        onDismissRequest = { activityExpanded = false }
                     ) {
-                        activityLevels.forEach { selectionOption ->
+                        ActivityLevel.entries.forEach { level ->
                             DropdownMenuItem(
-                                text = {
-                                    Text(selectionOption.name.replace("_", " ").lowercase()
-                                        .replaceFirstChar {
-                                            it.titlecase(
-                                                Locale.getDefault()
-                                            )
-                                        })
-                                },
+                                text = { Text(level.displayName) },
                                 onClick = {
-                                    activityLevel = selectionOption
-                                    activityLevelExpanded = false
-                                },
+                                    activityLevel = level
+                                    activityExpanded = false
+                                }
                             )
                         }
                     }
                 }
             }
+        }
 
-            // Calorie Target
-            SettingsSection(title = "Calorie Target", icon = Icons.Filled.Flag) {
-                LabeledSlider(
-                    label = "Calorie Target",
-                    value = targetCalories.toFloat(),
-                    onValueChange = { targetCalories = it.roundToInt() },
-                    valueRange = 1000f..3000f,
-                    steps = (3000 - 1000) / 50 - 1,
-                    valueText = "$targetCalories kcal"
+        // ── Daily Goals ──
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Daily Goals", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+
+                OutlinedTextField(
+                    value = targetCaloriesText,
+                    onValueChange = { targetCaloriesText = it },
+                    label = { Text("Target Calories") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().testTag("settings_targetCalories")
                 )
 
                 Button(
                     onClick = {
-                        val heightInCm = (heightFeet * 12 + heightInches) * 2.54
-                        val weightInKg = weightLbs / 2.20462
-                        val bmr = if (gender == Gender.MALE) {
-                            (10 * weightInKg) + (6.25 * heightInCm) - (5 * age) + 5
-                        } else {
-                            (10 * weightInKg) + (6.25 * heightInCm) - (5 * age) - 161
-                        }
-                        val tdee = bmr * when (activityLevel) {
-                            ActivityLevel.SEDENTARY -> 1.2
-                            ActivityLevel.LIGHTLY_ACTIVE -> 1.375
-                            ActivityLevel.MODERATELY_ACTIVE -> 1.55
-                            ActivityLevel.VERY_ACTIVE -> 1.725
-                            ActivityLevel.EXTRA_ACTIVE -> 1.9
-                        }
-                        targetCalories = tdee.roundToInt()
+                        val hCm = if (isMetric) heightCm.toDouble() else (heightFeet * 12 + heightInches) * 2.54
+                        val wKg = if (isMetric) weightKg.toDouble() else weightLbs / 2.20462
+                        val recommended = CalorieCalculator.recommended(hCm, wKg, age, gender, activityLevel)
+                        targetCaloriesText = recommended.toInt().toString()
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = CWPrimary)
+                    modifier = Modifier.fillMaxWidth().testTag("settings_calculateGoal")
                 ) {
-                    Text("Auto-Calculate")
+                    Text("Calculate Recommended Goal")
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        // ── Privacy ──
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Privacy", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    Icons.Default.PrivacyTip,
-                    contentDescription = "Privacy",
-                    tint = CWTextPrimary.copy(alpha = 0.8f),
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("AI Photo Analysis", style = MaterialTheme.typography.bodyMedium)
+                    Switch(
+                        checked = aiConsent == "accepted",
+                        onCheckedChange = { enabled ->
+                            coroutineScope.launch {
+                                settingsDataStore.setAiConsent(if (enabled) "accepted" else "declined")
+                            }
+                        },
+                        modifier = Modifier.testTag("settings_aiConsentToggle")
+                    )
+                }
                 Text(
-                    text = "Calorie Watcher keeps your data on device.",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = CWTextPrimary.copy(alpha = 0.8f)
+                    "When enabled, food photos are sent to Google Gemini for calorie estimation. All other data stays on-device.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                if (isPrivacyOptionsRequired) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { AdManager.presentPrivacyOptionsForm(context as android.app.Activity) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                    ) {
+                        Text("Manage Privacy Choices")
+                    }
+                }
             }
         }
-    }
-}
 
+        // ── Save Button ──
+        Button(
+            onClick = {
+                val hCm = if (isMetric) heightCm.toDouble() else (heightFeet * 12 + heightInches) * 2.54
+                val wKg = if (isMetric) weightKg.toDouble() else weightLbs / 2.20462
+                val target = targetCaloriesText.toDoubleOrNull() ?: 2000.0
 
-@Composable
-fun SettingsSection(
-    title: String,
-    icon: ImageVector,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(modifier = Modifier.padding(vertical = 12.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(bottom = 12.dp)
+                val profile = UserProfile(
+                    id = 1,
+                    height = hCm,
+                    weight = wKg,
+                    age = age,
+                    genderRaw = gender.displayName,
+                    activityLevelRaw = activityLevel.displayName,
+                    targetCalories = target
+                )
+                onSaveProfile?.invoke(profile)
+            },
+            modifier = Modifier.fillMaxWidth().testTag("settings_saveButton")
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = CWPrimary,
-                modifier = Modifier.size(28.dp)
-            )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontFamily = TitleFontFamily,
-                    fontWeight = FontWeight.Bold
-                ),
-                color = CWTextPrimary
-            )
+            Text("Save Settings")
         }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color.White)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            content()
-        }
+
+        Spacer(modifier = Modifier.height(80.dp))
     }
 }
 
 @Composable
-fun LabeledSlider(
+private fun ProfileSliderRow(
     label: String,
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    valueRange: ClosedFloatingPointRange<Float>,
-    steps: Int,
-    valueText: String
+    value: Int,
+    range: IntRange,
+    unit: String,
+    onValueChange: (Int) -> Unit
 ) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            Text(label, style = MaterialTheme.typography.bodyMedium)
             Text(
-                label,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                color = CWTextPrimary
+                if (unit.isNotEmpty()) "$value $unit" else "$value",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
             )
-            Text(valueText, style = MaterialTheme.typography.bodyLarge, color = CWTextPrimary)
         }
-        Spacer(modifier = Modifier.height(4.dp))
         Slider(
-            value = value,
-            onValueChange = onValueChange,
-            valueRange = valueRange,
-            steps = steps,
-            modifier = Modifier.fillMaxWidth(),
-            colors = SliderDefaults.colors(
-                thumbColor = CWPrimary,
-                activeTrackColor = CWPrimary,
-                inactiveTrackColor = CWSecondary
-            )
+            value = value.toFloat(),
+            onValueChange = { onValueChange(it.roundToInt()) },
+            valueRange = range.first.toFloat()..range.last.toFloat(),
+            steps = range.last - range.first - 1
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProfileDropdown(
+    value: Int,
+    options: List<Int>,
+    suffix: String,
+    onValueChange: (Int) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = "$value $suffix",
+            onValueChange = {},
+            readOnly = true,
+            modifier = Modifier.width(80.dp).menuAnchor(),
+            textStyle = MaterialTheme.typography.bodySmall
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { opt ->
+                DropdownMenuItem(
+                    text = { Text("$opt $suffix") },
+                    onClick = {
+                        onValueChange(opt)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }
