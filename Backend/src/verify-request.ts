@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAppAttestAssertion } from './assertion';
+import { verifyAndroidRequest } from './verify-request-android';
 import { legacyKeyLimiter } from './rate-limiters';
 import { createLogger } from './logger';
 import { counters } from './metrics';
@@ -9,6 +10,13 @@ const log = createLogger('verify-request');
 export const verifyRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const assertionHeader = req.headers['x-app-attest-assertion'] as string | undefined;
     const keyID = req.headers['x-app-attest-key-id'] as string | undefined;
+    const androidKeyID = req.headers['x-android-key-id'] as string | undefined;
+
+    // Path 0: Android per-request HMAC (PORTING_CRITERIA.md T1.8, T1.9.d).
+    // Dispatched by presence of X-Android-Key-Id, which iOS clients never send.
+    if (androidKeyID) {
+        return verifyAndroidRequest(req, res, next);
+    }
 
     // Path 1: App Attest assertion (production)
     if (assertionHeader && keyID) {
