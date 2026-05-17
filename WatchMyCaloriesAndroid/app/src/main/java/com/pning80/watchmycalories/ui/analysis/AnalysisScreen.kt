@@ -18,12 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.pning80.watchmycalories.ads.NativeAdView
 import com.pning80.watchmycalories.ai.EstimationItem
 import com.pning80.watchmycalories.ai.EstimationResult
 import com.pning80.watchmycalories.ai.GeminiRepository
+import com.pning80.watchmycalories.utils.AccessibilityTags
 
 @Composable
 fun AnalysisScreen(
@@ -81,7 +84,8 @@ fun AnalysisScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(16.dp)
+                        .testTag(AccessibilityTags.EstimationReview.DONE_BUTTON),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Save to Log", modifier = Modifier.padding(vertical = 4.dp))
@@ -96,14 +100,27 @@ fun AnalysisScreen(
                 .background(MaterialTheme.colorScheme.background)
         ) {
             if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                        Text("Analyzing food...", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .testTag(AccessibilityTags.EstimationReview.LOADING_VIEW),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    Text("Analyzing food...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.weight(1f))
+                    NativeAdView()
                 }
             } else if (errorMessage != null) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag(AccessibilityTags.EstimationReview.ERROR_VIEW),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -125,14 +142,22 @@ fun AnalysisScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Button(onClick = onNavigateBack) {
+                        Button(
+                            onClick = onNavigateBack,
+                            modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
+                        ) {
                             Text("Try Again")
                         }
                     }
                 }
             } else if (rawResult != null) {
                 if (editableItems.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag(AccessibilityTags.EstimationReview.NO_FOOD_VIEW),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             Icon(
                                 Icons.Filled.Warning,
@@ -145,7 +170,10 @@ fun AnalysisScreen(
                                 "We couldn't identify any food items.",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Button(onClick = onNavigateBack) {
+                            Button(
+                                onClick = onNavigateBack,
+                                modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
+                            ) {
                                 Text("Try Again")
                             }
                         }
@@ -154,7 +182,9 @@ fun AnalysisScreen(
                     LazyColumn(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW),
                     ) {
                         item {
                             // Thumbnail header

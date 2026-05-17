@@ -16,6 +16,10 @@ class SettingsDataStore(private val context: Context) {
         val APP_THEME = stringPreferencesKey("app_theme")
         val AI_CONSENT = stringPreferencesKey("ai_consent")
         val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
+        // Whether the user has dismissed the one-time "estimates are approximate"
+        // disclaimer (PORTING_CRITERIA.md T1.1, parity with iOS SettingsStore
+        // hasSeenEstimateDisclaimer).
+        val HAS_SEEN_ESTIMATE_DISCLAIMER = booleanPreferencesKey("has_seen_estimate_disclaimer")
     }
 
     // --- Unit System ---
@@ -63,6 +67,18 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setOnboardingCompleted(completed: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[HAS_COMPLETED_ONBOARDING] = completed
+        }
+    }
+
+    // --- Estimate disclaimer (one-time) ---
+    val hasSeenEstimateDisclaimerFlow: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[HAS_SEEN_ESTIMATE_DISCLAIMER] ?: false
+        }
+
+    suspend fun setSeenEstimateDisclaimer(seen: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[HAS_SEEN_ESTIMATE_DISCLAIMER] = seen
         }
     }
 }

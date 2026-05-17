@@ -18,10 +18,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.pning80.watchmycalories.security.PlayIntegrityManager
+import com.pning80.watchmycalories.utils.AccessibilityTags
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,7 +31,7 @@ import kotlinx.coroutines.launch
 fun AboutScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val isVerified by PlayIntegrityManager.isVerified.collectAsState()
+    val isVerified by PlayIntegrityManager.isAttested.collectAsState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -66,7 +68,8 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
             Text(
                 "Version 1.4.1",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag(AccessibilityTags.About.VERSION_LABEL)
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
@@ -75,7 +78,9 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
             ListItem(
                 headlineContent = { Text("Rate on Play Store") },
                 leadingContent = { Icon(Icons.Filled.Star, contentDescription = "Rate") },
-                modifier = Modifier.clickable {
+                modifier = Modifier
+                    .testTag(AccessibilityTags.About.RATE_ON_APP_STORE)
+                    .clickable {
                     val manager = ReviewManagerFactory.create(context)
                     val request = manager.requestReviewFlow()
                     request.addOnCompleteListener { task ->
@@ -99,19 +104,23 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
             ListItem(
                 headlineContent = { Text("Help & Support") },
                 leadingContent = { Icon(Icons.Filled.Info, contentDescription = "Help") },
-                modifier = Modifier.clickable {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470"))
-                    context.startActivity(intent)
-                }
+                modifier = Modifier
+                    .testTag(AccessibilityTags.About.HELP_AND_SUPPORT)
+                    .clickable {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://gist.github.com/pning80/7dc8a85c83edcc03845d182386cab470"))
+                        context.startActivity(intent)
+                    }
             )
 
             ListItem(
                 headlineContent = { Text("Privacy Policy") },
                 leadingContent = { Icon(Icons.Filled.Info, contentDescription = "Privacy") },
-                modifier = Modifier.clickable {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb"))
-                    context.startActivity(intent)
-                }
+                modifier = Modifier
+                    .testTag(AccessibilityTags.About.PRIVACY_POLICY)
+                    .clickable {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://gist.github.com/pning80/fc4cc0aab367f96202371566241ec7cb"))
+                        context.startActivity(intent)
+                    }
             )
 
             // Device Attestation

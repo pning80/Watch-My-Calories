@@ -17,6 +17,7 @@ import com.pning80.watchmycalories.data.CalorieCalculator.Gender
 import com.pning80.watchmycalories.data.CalorieCalculator.ActivityLevel
 import com.pning80.watchmycalories.data.UserProfile
 import com.pning80.watchmycalories.ads.AdManager
+import com.pning80.watchmycalories.ads.BannerAdView
 import com.pning80.watchmycalories.ui.components.AppIconView
 import androidx.activity.compose.BackHandler
 import kotlinx.coroutines.launch
@@ -123,6 +124,10 @@ fun SettingsScreen(
             )
         }
 
+        // Top-of-form banner ad — mirrors iOS SettingsView.swift:51
+        // (BannerAdView in its own Section above "App Appearance").
+        BannerAdView()
+
         // ── App Appearance ──
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -131,9 +136,11 @@ fun SettingsScreen(
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("App Appearance", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
-                // Theme picker
+                // Theme picker — labels match iOS AppTheme rawValues exactly
                 Text("Theme", style = MaterialTheme.typography.bodyMedium)
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.THEME_PICKER)
+                ) {
                     listOf("System", "Light", "Dark").forEachIndexed { index, theme ->
                         SegmentedButton(
                             selected = appTheme == theme,
@@ -143,40 +150,31 @@ fun SettingsScreen(
                     }
                 }
 
-                // Unit System
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                // Unit System picker — labels and options match iOS UnitSystem rawValues exactly
+                Text("Unit System", style = MaterialTheme.typography.bodyMedium)
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.UNIT_PICKER)
                 ) {
-                    Column {
-                        Text("Metric System", style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            "Uses g and ml instead of oz and fl oz",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    listOf("US Customary" to false, "Metric" to true).forEachIndexed { index, (label, metric) ->
+                        SegmentedButton(
+                            selected = isMetric == metric,
+                            onClick = {
+                                if (isMetric == metric) return@SegmentedButton
+                                coroutineScope.launch { settingsDataStore.setMetric(metric) }
+                                if (metric) {
+                                    val totalInches = heightFeet * 12 + heightInches
+                                    heightCm = (totalInches * 2.54).roundToInt()
+                                    weightKg = (weightLbs / 2.20462).roundToInt()
+                                } else {
+                                    val totalInches = (heightCm / 2.54).toInt()
+                                    heightFeet = totalInches / 12
+                                    heightInches = totalInches % 12
+                                    weightLbs = (weightKg * 2.20462).roundToInt()
+                                }
+                            },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = 2)
+                        ) { Text(label) }
                     }
-                    Switch(
-                        checked = isMetric,
-                        onCheckedChange = { newState ->
-                            coroutineScope.launch { settingsDataStore.setMetric(newState) }
-                            // Cross-sync unit values
-                            if (newState) {
-                                // Imperial → Metric
-                                val totalInches = heightFeet * 12 + heightInches
-                                heightCm = (totalInches * 2.54).roundToInt()
-                                weightKg = (weightLbs / 2.20462).roundToInt()
-                            } else {
-                                // Metric → Imperial
-                                val totalInches = (heightCm / 2.54).toInt()
-                                heightFeet = totalInches / 12
-                                heightInches = totalInches % 12
-                                weightLbs = (weightKg * 2.20462).roundToInt()
-                            }
-                        },
-                        modifier = Modifier.testTag("settings_metricToggle")
-                    )
                 }
             }
         }
@@ -251,7 +249,9 @@ fun SettingsScreen(
 
                 // Gender
                 Text("Gender", style = MaterialTheme.typography.bodyMedium)
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.GENDER_PICKER)
+                ) {
                     Gender.entries.forEachIndexed { index, g ->
                         SegmentedButton(
                             selected = gender == g,
@@ -274,7 +274,10 @@ fun SettingsScreen(
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = activityExpanded) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.ACTIVITY_PICKER)
                     )
                     ExposedDropdownMenu(
                         expanded = activityExpanded,
@@ -308,7 +311,7 @@ fun SettingsScreen(
                     label = { Text("Target Calories") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth().testTag("settings_targetCalories")
+                    modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.TARGET_CALORIES)
                 )
 
                 Button(
@@ -318,7 +321,7 @@ fun SettingsScreen(
                         val recommended = CalorieCalculator.recommended(hCm, wKg, age, gender, activityLevel)
                         targetCaloriesText = recommended.toInt().toString()
                     },
-                    modifier = Modifier.fillMaxWidth().testTag("settings_calculateGoal")
+                    modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.CALCULATE_GOAL)
                 ) {
                     Text("Calculate Recommended Goal")
                 }
@@ -346,7 +349,7 @@ fun SettingsScreen(
                                 settingsDataStore.setAiConsent(if (enabled) "accepted" else "declined")
                             }
                         },
-                        modifier = Modifier.testTag("settings_aiConsentToggle")
+                        modifier = Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.AI_CONSENT_TOGGLE)
                     )
                 }
                 Text(
@@ -386,7 +389,7 @@ fun SettingsScreen(
                 )
                 onSaveProfile?.invoke(profile)
             },
-            modifier = Modifier.fillMaxWidth().testTag("settings_saveButton")
+            modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.SAVE_BUTTON)
         ) {
             Text("Save Settings")
         }

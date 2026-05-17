@@ -17,9 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.gson.Gson
+import com.pning80.watchmycalories.ads.NativeAdView
+import com.pning80.watchmycalories.utils.AccessibilityTags
 import com.pning80.watchmycalories.ai.GeminiRepository
 import com.pning80.watchmycalories.location.LocationData
 import com.pning80.watchmycalories.location.LocationManager
@@ -81,12 +84,17 @@ fun MenuAnalysisScreen(
             if (!isLoading && result?.items != null && result?.items!!.isNotEmpty()) {
                 Button(
                     onClick = {
+                        // T1.4 — persist the menu photo on Save (not at capture). Same imageID
+                        // is used as the on-disk filename so a future MenuScanDetail can render
+                        // from disk by `ImageStorage.getImageFile(context, scan.imageID)`.
+                        val imageID = com.pning80.watchmycalories.data.ImageStorage.newImageID()
+                        com.pning80.watchmycalories.data.ImageStorage.saveJpeg(context, image, imageID)
                         val scan = MenuScan(
                             id = UUID.randomUUID().toString(),
                             restaurantName = result?.restaurantName ?: "Unknown Restaurant",
-                            imageId = null,
+                            imageID = imageID,
                             timestamp = System.currentTimeMillis(),
-                            itemsJson = Gson().toJson(result?.items)
+                            itemsData = Gson().toJson(result?.items)
                         )
                         onSaveScan(scan)
                     },
@@ -107,14 +115,27 @@ fun MenuAnalysisScreen(
                 .background(MaterialTheme.colorScheme.background)
         ) {
             if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                        Text("Analyzing menu...", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .testTag(AccessibilityTags.EstimationReview.LOADING_VIEW),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    Text("Analyzing menu...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.weight(1f))
+                    NativeAdView()
                 }
             } else if (errorMessage != null) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag(AccessibilityTags.EstimationReview.ERROR_VIEW),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -129,18 +150,29 @@ fun MenuAnalysisScreen(
                         Text("Analysis Failed", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         val text = if (errorMessage == "not_a_menu") "This doesn't look like a menu." else errorMessage ?: "An error occurred."
                         Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Button(onClick = onNavigateBack) { Text("Try Again") }
+                        Button(
+                            onClick = onNavigateBack,
+                            modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
+                        ) { Text("Try Again") }
                     }
                 }
             } else if (result?.items != null) {
                 val items = result!!.items!!
                 if (items.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag(AccessibilityTags.EstimationReview.NO_FOOD_VIEW),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             Icon(Icons.Filled.Warning, contentDescription = "None", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(64.dp))
                             Text("No Dishes Found", style = MaterialTheme.typography.titleLarge)
                             Text("We couldn't identify any menu items.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Button(onClick = onNavigateBack) { Text("Try Again") }
+                            Button(
+                                onClick = onNavigateBack,
+                                modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
+                            ) { Text("Try Again") }
                         }
                     }
                 } else {

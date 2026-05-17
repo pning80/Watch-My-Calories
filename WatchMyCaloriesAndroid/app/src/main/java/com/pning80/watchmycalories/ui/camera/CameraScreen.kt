@@ -25,9 +25,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.pning80.watchmycalories.utils.AccessibilityTags
 import java.util.concurrent.Executor
 
 @Composable
@@ -95,7 +97,8 @@ fun CameraScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 80.dp)
-                .size(72.dp),
+                .size(72.dp)
+                .testTag(AccessibilityTags.Camera.CAPTURE_BUTTON),
             shape = CircleShape,
             colors = ButtonDefaults.buttonColors(containerColor = Color.White)
         ) {}
@@ -106,7 +109,10 @@ fun CameraScreen(
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
             ) {
-                Button(onClick = { onPhotosCaptured(capturedImages) }) {
+                Button(
+                    onClick = { onPhotosCaptured(capturedImages) },
+                    modifier = Modifier.testTag(AccessibilityTags.Camera.USE_PHOTO_BUTTON)
+                ) {
                     Text("Analyze ${capturedImages.size}")
                 }
             }

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -87,25 +88,41 @@ private fun MainAppContent(
 ) {
     val navController = rememberNavController()
     var showLogFoodSheet by remember { mutableStateOf(false) }
-    
+
     // Shared state for images to avoid Parcelable size limits in navigation
     var analysisImages by remember { mutableStateOf<List<Bitmap>?>(null) }
-    val geminiRepository = remember { GeminiRepository("YOUR_API_KEY") } // Replace with real later
+    // Raw bytes of the picked photo (kept around for EXIF extraction on the
+    // review screen — Bitmap loses EXIF on decode).
+    var photoLibraryReviewBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var photoLibraryReviewBytes by remember { mutableStateOf<ByteArray?>(null) }
+    // User-chosen meal type from the review screen, flowed into Save (otherwise
+    // null → falls back to MealType.fromTimestamp at save time).
+    var chosenMealType by remember { mutableStateOf<com.pning80.watchmycalories.data.MealType?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
+    val geminiRepository = remember { GeminiRepository(context) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         uri?.let {
             try {
+                // Read the raw bytes once; we need them for both Bitmap decode and
+                // EXIF extraction (Bitmap.decode strips EXIF metadata).
+                val rawBytes = context.contentResolver.openInputStream(it)?.use { stream ->
+                    stream.readBytes()
+                } ?: throw Exception("Could not open picked image")
                 val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it))
                 } else {
                     @Suppress("DEPRECATION")
                     MediaStore.Images.Media.getBitmap(context.contentResolver, it)
                 }
-                analysisImages = listOf(bitmap)
-                navController.navigate("analysis")
+                photoLibraryReviewBitmap = bitmap
+                photoLibraryReviewBytes = rawBytes
+                // Reset any prior chosen meal type so the review screen recomputes
+                // from EXIF for this new image.
+                chosenMealType = null
+                navController.navigate("photoLibraryReview")
             } catch (e: Exception) {
                 Log.e("PhotoPicker", "Failed to load image", e)
             }
@@ -176,7 +193,10 @@ private fun MainAppContent(
                 TopAppBar(
                     title = { Text("Watch My Calories") },
                     actions = {
-                        IconButton(onClick = { topMenuExpanded = true }) {
+                        IconButton(
+                            onClick = { topMenuExpanded = true },
+                            modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.AppMenu.MENU_BUTTON)
+                        ) {
                             Icon(Icons.Filled.Settings, contentDescription = "Menu")
                         }
                         DropdownMenu(
@@ -213,13 +233,15 @@ private fun MainAppContent(
                         navController.navigate("dashboard") {
                             popUpTo("dashboard") { inclusive = true }
                         }
-                    }
+                    },
+                    modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.DASHBOARD),
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Filled.AddCircle, contentDescription = "Log Food") },
                     label = { Text("Log Food") },
                     selected = false,
-                    onClick = { showLogFoodSheet = true }
+                    onClick = { showLogFoodSheet = true },
+                    modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.CAMERA),
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "History") },
@@ -229,7 +251,8 @@ private fun MainAppContent(
                         navController.navigate("history") {
                             popUpTo("dashboard")
                         }
-                    }
+                    },
+                    modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.HISTORY),
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Filled.Settings, contentDescription = "Settings") },
@@ -239,7 +262,8 @@ private fun MainAppContent(
                         navController.navigate("settings") {
                             popUpTo("dashboard")
                         }
-                    }
+                    },
+                    modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.SETTINGS),
                 )
                 }
             }
@@ -264,7 +288,7 @@ private fun MainAppContent(
                     onLogFood = { showLogFoodSheet = true },
                     onDeleteEntry = { id -> viewModel.deleteEntry(id) },
                     onEditEntry = { id -> navController.navigate("manualEntry?entryId=$id") },
-                    onEditGroup = { imageId -> navController.navigate("editMealGroup/$imageId") }
+                    onEditGroup = { imageID -> navController.navigate("editMealGroup/$imageID") }
                 )
             }
             composable("scannedMenus") {
@@ -320,10 +344,38 @@ private fun MainAppContent(
                 AboutScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable("camera") {
-                CameraScreen(onPhotosCaptured = { bitmaps -> 
+                CameraScreen(onPhotosCaptured = { bitmaps ->
                     analysisImages = bitmaps
                     navController.navigate("analysis")
                 })
+            }
+            composable("photoLibraryReview") {
+                val bmp = photoLibraryReviewBitmap
+                if (bmp != null) {
+                    com.pning80.watchmycalories.ui.photolib.PhotoLibraryReviewScreen(
+                        bitmap = bmp,
+                        rawBytesForExif = photoLibraryReviewBytes,
+                        settingsDataStore = settingsDataStore,
+                        onReselect = {
+                            // Pop this screen, re-launch the picker.
+                            navController.popBackStack()
+                            photoPickerLauncher.launch(
+                                androidx.activity.result.PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
+                        },
+                        onUse = { mealType ->
+                            chosenMealType = mealType
+                            analysisImages = listOf(bmp)
+                            // Free the raw bytes now that we've forwarded.
+                            photoLibraryReviewBytes = null
+                            navController.navigate("analysis") {
+                                popUpTo("dashboard")
+                            }
+                        },
+                    )
+                }
             }
             composable("analysis") {
                 val images = analysisImages
@@ -334,7 +386,20 @@ private fun MainAppContent(
                         isMetric = isMetric,
                         onNavigateBack = { navController.popBackStack() },
                         onSaveLog = { result ->
-                            // Convert EstimationResult to FoodEntry entities
+                            // Persist the first captured image (mirrors iOS one-JPEG-per-session).
+                            // All entries from this capture share the same imageID — used for
+                            // grouping in History/Dashboard and as the on-disk filename. T1.4.
+                            val sharedImageID = images.firstOrNull()?.let { firstBitmap ->
+                                val id = com.pning80.watchmycalories.data.ImageStorage.newImageID()
+                                com.pning80.watchmycalories.data.ImageStorage.saveJpeg(context, firstBitmap, id)
+                                id
+                            }
+                            // Meal type: the photo-library review flow sets `chosenMealType` from
+                            // the user's pick (defaulted from EXIF DateTimeOriginal). Camera-capture
+                            // and direct flows leave it null → fall back to now-based bucketing.
+                            val mealTypeRaw = (chosenMealType
+                                ?: com.pning80.watchmycalories.data.MealType.fromTimestamp(System.currentTimeMillis())
+                            ).displayName
                             result.items.forEach { item ->
                                 val entry = com.pning80.watchmycalories.data.FoodEntry(
                                     name = item.name,
@@ -344,13 +409,15 @@ private fun MainAppContent(
                                     protein = item.protein,
                                     carbs = item.carbs,
                                     fat = item.fat,
-                                    imageId = null, // Future: save image locally
+                                    imageID = sharedImageID,
                                     mealName = result.mealName,
-                                    mealTypeRaw = com.pning80.watchmycalories.data.MealType.fromTimestamp(System.currentTimeMillis()).displayName
+                                    mealTypeRaw = mealTypeRaw,
                                 )
                                 viewModel.addEntry(entry)
                             }
                             analysisImages = null
+                            photoLibraryReviewBitmap = null
+                            chosenMealType = null
                             navController.navigate("history") {
                                 popUpTo("dashboard")
                             }
@@ -389,12 +456,12 @@ private fun MainAppContent(
                 )
             }
             composable(
-                route = "editMealGroup/{imageId}",
-                arguments = listOf(androidx.navigation.navArgument("imageId") { type = androidx.navigation.NavType.StringType })
+                route = "editMealGroup/{imageID}",
+                arguments = listOf(androidx.navigation.navArgument("imageID") { type = androidx.navigation.NavType.StringType })
             ) { backStackEntry ->
-                val imageId = backStackEntry.arguments?.getString("imageId")
-                val entriesInGroup = remember(imageId, allEntries) {
-                    allEntries.filter { it.imageId == imageId }
+                val imageID = backStackEntry.arguments?.getString("imageID")
+                val entriesInGroup = remember(imageID, allEntries) {
+                    allEntries.filter { it.imageID == imageID }
                 }
 
                 if (entriesInGroup.isNotEmpty()) {

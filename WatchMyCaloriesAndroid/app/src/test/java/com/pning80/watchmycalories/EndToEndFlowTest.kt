@@ -2,6 +2,7 @@ package com.pning80.watchmycalories
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import com.pning80.watchmycalories.utils.AccessibilityTags
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,9 +23,9 @@ class EndToEndFlowTest {
 
         // The app may start with onboarding (DataStore defaults to false for new installs).
         // Skip it if visible, then wait for navigation to re-compose.
-        val skipNodes = composeTestRule.onAllNodesWithTag("onboarding_skip").fetchSemanticsNodes()
+        val skipNodes = composeTestRule.onAllNodesWithTag(AccessibilityTags.Onboarding.SKIP_BUTTON).fetchSemanticsNodes()
         if (skipNodes.isNotEmpty()) {
-            composeTestRule.onNodeWithTag("onboarding_skip").performClick()
+            composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.SKIP_BUTTON).performClick()
             composeTestRule.waitForIdle()
             // After skip, the onboarding writes to DataStore and calls onComplete.
             // Give the recomposition time to settle.

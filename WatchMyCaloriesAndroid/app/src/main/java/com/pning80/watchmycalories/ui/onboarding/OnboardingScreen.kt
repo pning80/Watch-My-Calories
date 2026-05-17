@@ -25,6 +25,7 @@ import com.pning80.watchmycalories.data.CalorieCalculator.Gender
 import com.pning80.watchmycalories.data.CalorieCalculator.ActivityLevel
 import com.pning80.watchmycalories.data.UserProfile
 import com.pning80.watchmycalories.ui.settings.SettingsDataStore
+import com.pning80.watchmycalories.utils.AccessibilityTags
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -96,7 +97,7 @@ fun OnboardingScreen(
                 )
                 onComplete(defaultProfile)
             },
-            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).testTag("onboarding_skip")
+            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).testTag(AccessibilityTags.Onboarding.SKIP_BUTTON)
         ) {
             Text("Skip", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
         }
@@ -155,7 +156,7 @@ private fun WelcomeStep(onNext: () -> Unit) {
 
         Button(
             onClick = onNext,
-            modifier = Modifier.fillMaxWidth().height(52.dp).testTag("onboarding_getStarted"),
+            modifier = Modifier.fillMaxWidth().height(52.dp).testTag(AccessibilityTags.Onboarding.GET_STARTED_BUTTON),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
@@ -200,7 +201,7 @@ private fun PrivacyStep(
                                 settingsDataStore.setAiConsent(if (enabled) "accepted" else "declined")
                             }
                         },
-                        modifier = Modifier.testTag("onboarding_aiConsent")
+                        modifier = Modifier.testTag(AccessibilityTags.Onboarding.AI_CONSENT_TOGGLE)
                     )
                 }
                 Text(
@@ -224,7 +225,7 @@ private fun PrivacyStep(
 
         Button(
             onClick = onNext,
-            modifier = Modifier.fillMaxWidth().height(52.dp).testTag("onboarding_next"),
+            modifier = Modifier.fillMaxWidth().height(52.dp).testTag(AccessibilityTags.Onboarding.NEXT_BUTTON),
             shape = RoundedCornerShape(14.dp)
         ) {
             Text("Next", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
@@ -323,7 +324,7 @@ private fun GoalStep(
                     label = { Text("Target Calories") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth().testTag("onboarding_targetCalories")
+                    modifier = Modifier.fillMaxWidth().testTag(AccessibilityTags.Onboarding.TARGET_CALORIES_FIELD)
                 )
 
                 Button(
@@ -333,7 +334,7 @@ private fun GoalStep(
                         )
                         onCaloriesTextChanged(recommended.toInt().toString())
                     },
-                    modifier = Modifier.fillMaxWidth().testTag("onboarding_calculateGoal")
+                    modifier = Modifier.fillMaxWidth().testTag(AccessibilityTags.Onboarding.CALCULATE_GOAL_BUTTON)
                 ) {
                     Text("Calculate Recommended Goal")
                 }
@@ -344,7 +345,7 @@ private fun GoalStep(
 
         Button(
             onClick = onFinish,
-            modifier = Modifier.fillMaxWidth().height(52.dp).testTag("onboarding_finish"),
+            modifier = Modifier.fillMaxWidth().height(52.dp).testTag(AccessibilityTags.Onboarding.FINISH_BUTTON),
             shape = RoundedCornerShape(14.dp)
         ) {
             Text("Start Tracking", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
