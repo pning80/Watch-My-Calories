@@ -4,9 +4,16 @@ Step-by-step guide for capturing the iOS-facing wire contract against the
 pre-port dev backend, so that T1.10.b structural-replay and T1.10.c contract
 snapshots have real fixtures to assert against.
 
-**This must run BEFORE the Stage 1 backend PR lands** — otherwise the
-"baseline" the snapshots compare against has already drifted to include the
-new Android dispatch code, defeating the purpose of the regression guard.
+**Status (2026-05-17):** Stage 1 backend code has landed in source but **no
+new deploy has happened yet** — both the current dev revision
+`watchmycalories-backend-dev-00016-xmw` (2026-05-16) and the current prod
+revision `watchmycalories-backend-00010-pxt` (2026-05-16) were built from a
+tree that did *not* contain the Stage 1 changes. This means baseline capture
+against the current dev backend is still valid as a "pre-port" baseline —
+**but only until the first `./deploy.sh dev`**. Capture before deploying. Once
+the Stage 1 backend is deployed to dev, this baseline can only be reconstructed
+by rolling dev back to `watchmycalories-backend-dev-00016-xmw` first (see
+PORTING_RUNBOOK.md Stage 0.3 for the one-line rollback command).
 
 You will need:
 - A **Test iPhone 14** (per the deploy-target preference recorded in memory)
