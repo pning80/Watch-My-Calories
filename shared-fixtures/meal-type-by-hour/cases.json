@@ -1,0 +1,17 @@
+{
+  "description": "Hour-of-day → MealType mapping. Both platforms must produce identical results for hours 0..23 in the device's local time zone.",
+  "platformNotes": {
+    "ios": "Uses exclusive upper bounds: 7..<10 = BREAKFAST, 11..<15 = LUNCH, 17..<21 = DINNER.",
+    "android": "Uses inclusive ranges: 7..9 = BREAKFAST, 11..14 = LUNCH, 17..20 = DINNER.",
+    "convergence": "Both expressions cover exactly the same hours; this fixture is the single source of truth."
+  },
+  "byHour": {
+    "0": "SNACK", "1": "SNACK", "2": "SNACK", "3": "SNACK", "4": "SNACK", "5": "SNACK", "6": "SNACK",
+    "7": "BREAKFAST", "8": "BREAKFAST", "9": "BREAKFAST",
+    "10": "SNACK",
+    "11": "LUNCH", "12": "LUNCH", "13": "LUNCH", "14": "LUNCH",
+    "15": "SNACK", "16": "SNACK",
+    "17": "DINNER", "18": "DINNER", "19": "DINNER", "20": "DINNER",
+    "21": "SNACK", "22": "SNACK", "23": "SNACK"
+  }
+}
