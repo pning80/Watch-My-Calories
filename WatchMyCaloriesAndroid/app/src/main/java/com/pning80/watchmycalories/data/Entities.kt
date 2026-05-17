@@ -26,7 +26,8 @@ data class FoodEntry(
     val protein: Double?,
     val carbs: Double?,
     val fat: Double?,
-    val imageId: String?,
+    // iOS uses `imageID` (capital ID). Match exactly per PORTING_CRITERIA.md T1.2.
+    val imageID: String?,
     val mealName: String?,
     val mealTypeRaw: String
 )
@@ -35,9 +36,11 @@ data class FoodEntry(
 data class MenuScan(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val restaurantName: String?,
-    val imageId: String?,
+    val imageID: String?,
     val timestamp: Long,
-    val itemsJson: String // Serialized array of MenuItemResult
+    // iOS field is `itemsData` (typed as Data on iOS, JSON String on Android via
+    // TypeConverter equivalence — same payload). PORTING_CRITERIA.md T1.2.
+    val itemsData: String
 )
 
 data class MenuItemResult(

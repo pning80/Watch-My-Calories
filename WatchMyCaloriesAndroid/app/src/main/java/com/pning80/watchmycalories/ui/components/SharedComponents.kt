@@ -74,7 +74,7 @@ fun HeroSummaryCard(targetCalories: Double, burnedCalories: Double, entries: Lis
             .background(MaterialTheme.colorScheme.surface)
             .padding(20.dp)
             .fillMaxWidth()
-            .testTag("HeroSummaryCard")
+            .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Dashboard.HERO_CARD)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

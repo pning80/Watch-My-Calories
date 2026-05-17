@@ -11,10 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pning80.watchmycalories.ads.BannerAdView
 import com.pning80.watchmycalories.data.MenuScan
+import com.pning80.watchmycalories.utils.AccessibilityTags
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -49,7 +51,13 @@ fun ScannedMenusScreen(
         }
     ) { padding ->
         if (scans.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .testTag(AccessibilityTags.ScannedMenus.EMPTY_STATE),
+                contentAlignment = Alignment.Center
+            ) {
                 Text("No scanned menus yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {

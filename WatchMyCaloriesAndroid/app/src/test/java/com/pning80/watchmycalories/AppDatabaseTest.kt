@@ -71,7 +71,7 @@ class AppDatabaseTest {
             quantity = "1",
             timestamp = 1000000L, // Older
             protein = 20.0, carbs = 30.0, fat = 10.0,
-            imageId = null, mealName = null, mealTypeRaw = "Lunch"
+            imageID = null, mealName = null, mealTypeRaw = "Lunch"
         )
 
         val entry2 = FoodEntry(
@@ -81,7 +81,7 @@ class AppDatabaseTest {
             quantity = "1",
             timestamp = 2000000L, // Newer
             protein = 30.0, carbs = 40.0, fat = 15.0,
-            imageId = null, mealName = null, mealTypeRaw = "Dinner"
+            imageID = null, mealName = null, mealTypeRaw = "Dinner"
         )
 
         // Insert out of order
@@ -104,7 +104,7 @@ class AppDatabaseTest {
             quantity = "1",
             timestamp = 1500000L,
             protein = 5.0, carbs = 20.0, fat = 5.0,
-            imageId = null, mealName = null, mealTypeRaw = "Snack"
+            imageID = null, mealName = null, mealTypeRaw = "Snack"
         )
 
         foodDao.insertEntry(entry)

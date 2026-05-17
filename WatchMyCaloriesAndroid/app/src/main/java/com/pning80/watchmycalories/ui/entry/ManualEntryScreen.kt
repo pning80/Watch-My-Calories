@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.data.MealType
+import com.pning80.watchmycalories.utils.AccessibilityTags
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +45,10 @@ fun ManualEntryScreen(
             TopAppBar(
                 title = { Text(if (initialEntry == null) "Log Food" else "Edit Food") },
                 navigationIcon = {
-                    IconButton(onClick = onCancel) {
+                    IconButton(
+                        onClick = onCancel,
+                        modifier = Modifier.testTag(AccessibilityTags.ManualEntry.CANCEL_BUTTON)
+                    ) {
                         Icon(Icons.Default.Close, contentDescription = "Cancel")
                     }
                 },
@@ -68,14 +72,14 @@ fun ManualEntryScreen(
                                 protein = proteinText.trim().toDoubleOrNull(),
                                 carbs = carbsText.trim().toDoubleOrNull(),
                                 fat = fatText.trim().toDoubleOrNull(),
-                                imageId = null,
+                                imageID = null,
                                 mealName = null,
                                 mealTypeRaw = mealType.displayName
                             )
                             onSave(entry)
                         },
                         enabled = canSave,
-                        modifier = Modifier.testTag("manualEntry_saveButton")
+                        modifier = Modifier.testTag(AccessibilityTags.ManualEntry.SAVE_BUTTON)
                     ) {
                         Text("Save", style = MaterialTheme.typography.titleSmall)
                     }
@@ -105,7 +109,7 @@ fun ManualEntryScreen(
                         onValueChange = { name = it },
                         label = { Text("Food name") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth().testTag("manualEntry_foodName")
+                        modifier = Modifier.fillMaxWidth().testTag(AccessibilityTags.ManualEntry.FOOD_NAME)
                     )
 
                     OutlinedTextField(
@@ -114,7 +118,7 @@ fun ManualEntryScreen(
                         label = { Text("Calories") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.fillMaxWidth().testTag("manualEntry_calories")
+                        modifier = Modifier.fillMaxWidth().testTag(AccessibilityTags.ManualEntry.CALORIES)
                     )
 
                     OutlinedTextField(
@@ -122,7 +126,7 @@ fun ManualEntryScreen(
                         onValueChange = { quantity = it },
                         label = { Text("Quantity (e.g. 1 cup, 200 g)") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth().testTag("manualEntry_quantity")
+                        modifier = Modifier.fillMaxWidth().testTag(AccessibilityTags.ManualEntry.QUANTITY)
                     )
                 }
             }
@@ -135,7 +139,7 @@ fun ManualEntryScreen(
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Meal", style = MaterialTheme.typography.titleSmall)
 
-                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().testTag(AccessibilityTags.ManualEntry.MEAL_PICKER)) {
                         MealType.displayOrder.forEachIndexed { index, type ->
                             SegmentedButton(
                                 selected = mealType == type,

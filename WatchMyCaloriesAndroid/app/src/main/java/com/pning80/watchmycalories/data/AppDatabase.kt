@@ -5,7 +5,11 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [UserProfile::class, FoodEntry::class, MenuScan::class], version = 2, exportSchema = false)
+// Version bumped to 3 for PORTING_CRITERIA.md T1.2: FoodEntry.imageID → imageID,
+// MenuScan.imageID → imageID, MenuScan.itemsData → itemsData. `fallbackToDestructive-
+// Migration` wipes existing dev installs (acceptable pre-launch; remove the fallback
+// and write real migrations when the app first ships to Play Store).
+@Database(entities = [UserProfile::class, FoodEntry::class, MenuScan::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userProfileDao(): UserProfileDao
     abstract fun foodEntryDao(): FoodEntryDao

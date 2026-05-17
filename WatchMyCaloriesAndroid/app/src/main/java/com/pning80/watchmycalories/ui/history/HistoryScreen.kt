@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.data.MealType
 import com.pning80.watchmycalories.ui.components.EmptyStateCard
+import com.pning80.watchmycalories.utils.AccessibilityTags
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -48,7 +49,13 @@ fun HistoryScreen(
         )
 
         if (groupedEntries.isEmpty()) {
-            Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 40.dp)
+                    .testTag(AccessibilityTags.History.EMPTY_STATE),
+                contentAlignment = Alignment.Center,
+            ) {
                 EmptyStateCard()
             }
         } else {
@@ -96,13 +103,20 @@ fun HistoryDayCard(
             .shadow(elevation = 4.dp, shape = RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
+            // Per-card tag with the day's calorie total is the unique handle used by
+            // HistoryScreenTest (Android extra). The cross-platform AccessibilityTags.History.DAY_CARD
+            // is also exposed via a sibling Modifier on the inner Row below so iOS-shared
+            // UI tests can still locate any day card.
             .testTag("HistoryDayCard_${totalCalories.toInt()}")
             .clickable { isExpanded = !isExpanded }
             .animateContentSize()
     ) {
         // Header
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+                .testTag(AccessibilityTags.History.DAY_CARD),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -150,7 +164,8 @@ fun HistoryDayCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = 12.dp),
+                    .padding(bottom = 12.dp)
+                    .testTag(AccessibilityTags.History.DAY_CARD_MACROS),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 MacroChip("P", totalProtein, MaterialTheme.colorScheme.primary)
@@ -187,7 +202,7 @@ fun HistoryDayCard(
                                 // Grouped card logic
                                 MealGroupCard(
                                     entries = group,
-                                    onEditGroup = { onEditGroup?.invoke(group.first().imageId ?: "") }
+                                    onEditGroup = { onEditGroup?.invoke(group.first().imageID ?: "") }
                                 )
                             } else {
                                 val entry = group.first()
@@ -215,21 +230,21 @@ private fun groupEntriesByImage(entries: List<FoodEntry>): List<List<FoodEntry>>
     var currentImageId: String? = null
 
     for (entry in entries) {
-        if (entry.imageId == null) {
+        if (entry.imageID == null) {
             if (currentGroup.isNotEmpty()) {
                 results.add(currentGroup)
                 currentGroup = mutableListOf()
             }
             results.add(listOf(entry))
             currentImageId = null
-        } else if (entry.imageId == currentImageId) {
+        } else if (entry.imageID == currentImageId) {
             currentGroup.add(entry)
         } else {
             if (currentGroup.isNotEmpty()) {
                 results.add(currentGroup)
             }
             currentGroup = mutableListOf(entry)
-            currentImageId = entry.imageId
+            currentImageId = entry.imageID
         }
     }
     if (currentGroup.isNotEmpty()) {

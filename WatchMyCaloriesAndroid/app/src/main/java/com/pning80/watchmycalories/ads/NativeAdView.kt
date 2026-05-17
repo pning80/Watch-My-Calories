@@ -14,11 +14,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView as GmsNativeAdView
+import com.pning80.watchmycalories.utils.AccessibilityTags
 
 @Composable
 fun NativeAdView() {
@@ -42,25 +44,28 @@ fun NativeAdView() {
         AndroidView(
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight(),
+                .wrapContentHeight()
+                .testTag(AccessibilityTags.Ads.NATIVE),
             factory = { ctx ->
                 // Basic NativeAdView Layout logic without explicit XML
                 val adView = GmsNativeAdView(ctx)
-                
+
                 // Simple programmatic view setup for Native Ad parity
                 val linearLayout = android.widget.LinearLayout(ctx).apply {
                     orientation = android.widget.LinearLayout.VERTICAL
                     setPadding(32, 32, 32, 32)
                 }
-                
+
                 val headlineView = TextView(ctx).apply {
                     textSize = 16f
                     setTextColor(android.graphics.Color.BLACK)
                 }
                 linearLayout.addView(headlineView)
                 adView.headlineView = headlineView
-                
-                val callToActionView = Button(ctx)
+
+                val callToActionView = Button(ctx).apply {
+                    tag = AccessibilityTags.Ads.VIEW_RESULTS_BUTTON
+                }
                 linearLayout.addView(callToActionView)
                 adView.callToActionView = callToActionView
                 

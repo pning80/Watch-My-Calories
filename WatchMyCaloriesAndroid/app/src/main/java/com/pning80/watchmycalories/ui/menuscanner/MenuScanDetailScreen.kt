@@ -30,9 +30,9 @@ fun MenuScanDetailScreen(
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    val items: List<MenuItemResult> = remember(scan.itemsJson) {
+    val items: List<MenuItemResult> = remember(scan.itemsData) {
         val type = object : TypeToken<List<MenuItemResult>>() {}.type
-        Gson().fromJson(scan.itemsJson, type) ?: emptyList()
+        Gson().fromJson(scan.itemsData, type) ?: emptyList()
     }
 
     Scaffold(

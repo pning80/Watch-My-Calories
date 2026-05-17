@@ -93,7 +93,9 @@ fun DashboardScreen(
                         onClick = onLogFood,
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background),
                         contentPadding = PaddingValues(0.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Dashboard.EMPTY_STATE_CARD)
                     ) {
                         EmptyStateCard()
                     }
@@ -103,7 +105,7 @@ fun DashboardScreen(
                         onClick = onLogFood,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .testTag("dashboard_manualEntryLink")
+                            .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Dashboard.MANUAL_ENTRY_LINK)
                     ) {
                         Text(
                             "✏️ or log manually",
@@ -123,6 +125,7 @@ fun DashboardScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Dashboard.MEAL_SECTION)
                                     .padding(horizontal = 16.dp)
                                     .padding(top = 20.dp, bottom = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -166,21 +169,21 @@ private fun groupEntriesByImage(entries: List<FoodEntry>): List<List<FoodEntry>>
     var currentImageId: String? = null
 
     for (entry in entries) {
-        if (entry.imageId == null) {
+        if (entry.imageID == null) {
             if (currentGroup.isNotEmpty()) {
                 results.add(currentGroup)
                 currentGroup = mutableListOf()
             }
             results.add(listOf(entry))
             currentImageId = null
-        } else if (entry.imageId == currentImageId) {
+        } else if (entry.imageID == currentImageId) {
             currentGroup.add(entry)
         } else {
             if (currentGroup.isNotEmpty()) {
                 results.add(currentGroup)
             }
             currentGroup = mutableListOf(entry)
-            currentImageId = entry.imageId
+            currentImageId = entry.imageID
         }
     }
     if (currentGroup.isNotEmpty()) {

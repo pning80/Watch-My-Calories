@@ -1,8 +1,18 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
 }
+
+// local.properties values (dev-only secrets; never committed)
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) load(FileInputStream(f))
+}
+val appBackendApiKey: String = localProps.getProperty("APP_BACKEND_API_KEY", "")
 
 android {
     namespace = "com.pning80.watchmycalories"
@@ -19,11 +29,28 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Dev legacy-key fallback for emulators without Play Services. Sourced from
+        // local.properties; absent in release builds anyway (BackendConfig.devLegacyKey
+        // gates by BuildConfig.DEBUG). See PORTING_CRITERIA.md T1.8.
+        buildConfigField("String", "APP_BACKEND_API_KEY", "\"$appBackendApiKey\"")
     }
 
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+        }
+    }
+
+    // Expose cross-platform fixtures (shared-fixtures/) on the JVM test classpath.
+    // Tests load them via ClassLoader.getResource — same JSON the iOS suite reads.
+    // gate-script source trees (schema-diff/, accessibility-diff/) also get bundled
+    // into test resources; that's a few KB of bloat with no behavioral effect.
+    sourceSets {
+        getByName("test") {
+            resources.srcDir(
+                rootProject.layout.projectDirectory.dir("../shared-fixtures")
+            )
         }
     }
 
@@ -45,6 +72,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
@@ -86,9 +114,11 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
     implementation("androidx.camera:camera-view:$cameraxVersion")
     
-    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("com.google.code.gson:gson:2.10.1")
+    // OkHttp — used by GeminiRepository to talk to the Cloud Run backend
+    // (PORTING_CRITERIA.md T1.5; replaces the Google AI SDK we removed).
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("androidx.health.connect:connect-client:1.1.0-alpha07")
     implementation("com.google.guava:guava:32.1.3-android")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
@@ -96,6 +126,15 @@ dependencies {
     implementation("com.google.android.ump:user-messaging-platform:2.2.0")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     
+    // EncryptedSharedPreferences for the per-key Android assertion secret
+    // (PORTING_CRITERIA.md T1.8). AES256.
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    // EXIF read for photo-library review screen (PhotoLibraryReviewScreen.kt) —
+    // auto-detects meal type from the photo's DateTimeOriginal tag, mirroring
+    // iOS PhotoLibraryReviewView.swift extractCreationDate().
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+
     // Play Integrity & Review
     implementation("com.google.android.play:integrity:1.3.0")
     implementation("com.google.android.play:review:2.0.1")
