@@ -31,7 +31,15 @@ cd WatchMyCaloriesAndroid
 ```
 - Requires physical device (API 26+) for camera; Health Connect needs Android 14+
 - Test device: Pixel 9a
-- Tests are boilerplate only (ExampleUnitTest, ExampleInstrumentedTest) — no real test coverage yet
+- Unit tests exist for `CalorieCalculator`, `NutritionCalculator`, `MealType`, `GeminiParser` (including 16 degradation-contract edge cases), plus the shared-fixture-driven tests in `app/src/test/.../CalorieCalculatorTest.kt` and `MealTypeTest.kt`. The `EndToEndFlowTest` (Robolectric) and `HistoryScreenTest` exercise UI flows.
+
+### Cross-cutting porting gates
+```bash
+bash scripts/schema-diff.sh           # T1.2 iOS↔Android schema diff (allowlisted via PORTING_DEVIATIONS.md)
+bash scripts/accessibility-diff.sh    # T2.4 Android testTag superset of iOS AccessibilityIdentifiers.swift
+bash scripts/check-android-no-gemini-sdk.sh  # T1.5 no Gemini SDK / hardcoded keys on Android
+```
+All three are wired into CI by `.github/workflows/porting-gates.yml`, along with `npm test` (Backend) and `./gradlew :app:testDebugUnitTest` (Android).
 
 ### Backend (`Backend/`)
 ```bash
@@ -60,12 +68,16 @@ npm run dev                      # Start with --watch for development
 - **Health**: `HealthKitManager` reads `activeEnergyBurned` with `HKObserverQuery` + background delivery.
 - **Tab navigation**: `ContentView` hosts 4 tabs — Dashboard, Camera, History, Settings.
 
-### Android — MVVM + Hilt + Jetpack Compose + Room
-- **Repository layer**: `GeminiRepository` (delegates to `GeminiRemoteDataSource`; `GeminiLocalDataSource` is a stub/TODO, always returns failure), `HealthRepository`, `SettingsRepository` — all Hilt-injected.
-- **ViewModels**: Expose `StateFlow<UiState>` to composables. `AnalysisViewModel` uses sealed class `AnalysisUiState` (Idle, Loading, Success, Error). No direct DAO access from UI.
-- **Navigation**: Single `NavHost` in `MainActivity` with routes: `dashboard`, `camera`, `analysis/{imagePaths}` (URL-encoded), `history`, `settings`. Bottom navigation bar with 4 tabs.
-- **Secure storage**: `EncryptedSharedPreferences` (AES256) for API key; Jetpack DataStore for model preference. `BuildConfig.GEMINI_API_KEY` fallback from `local.properties`.
-- **DI**: Hilt module in `di/AppModule.kt` provides `AppDatabase`, DAOs, and repositories.
+### Android — Jetpack Compose + Room (no Hilt; manual wiring in MainActivity)
+- **AI layer**: `ai/GeminiRepository.kt` is an HTTP client over OkHttp that POSTs to the Cloud Run backend (same endpoint iOS uses, with `X-App-Platform: android` for dispatch). `ai/GeminiParser.kt` parses responses. The Google AI SDK is gone; `scripts/check-android-no-gemini-sdk.sh` enforces this.
+- **Data layer**: Room entities (`FoodEntry`, `UserProfile`, `MenuScan`) consolidated in `data/Entities.kt`. DAOs in `data/Daos.kt`. DB in `data/AppDatabase.kt` (current schema version 3). `data/CalorieCalculator.kt` does BMR/TDEE. `FoodEntry` uses camelCase fields `imageID` and `itemsData` (matching iOS field names; see `PORTING_DEVIATIONS.md` for any field divergences).
+- **State**: ViewModels expose `StateFlow<UiState>`. `AnalysisViewModel` uses sealed `AnalysisUiState` (Idle, Loading, Success, Error).
+- **Navigation**: Single `NavHost` in `MainActivity` with routes: `dashboard`, `camera`, `analysis/{imagePaths}` (URL-encoded), `photoLibraryReview`, `history`, `settings`, `scannedMenus`, `about`. Bottom nav for 4 tabs.
+- **Secure storage**: `EncryptedSharedPreferences` (AES256-GCM) stores the per-key Android assertion secret used by the T1.8 per-request HMAC protocol. There is **no** Gemini API key on-device; the backend holds it. `BuildConfig.APP_BACKEND_API_KEY` (sourced from `local.properties`) is the dev-only `x-backend-key` fallback for emulators without Play Services and is absent in release builds.
+- **Image storage**: `data/ImageStorage.kt` writes JPEGs (quality 80, matching iOS 0.8) to `filesDir/{imageID}.jpg`; `JpegConfig.QUALITY` keeps the constant single-sourced.
+- **Attestation**: `security/PlayIntegrityManager.kt` calls Play Integrity Standard API, persists `(keyID, secret, counter)` in EncryptedSharedPreferences, and provides `assertionHeaders(context, bodyBytes)` returning the `X-Android-{Key-Id,Counter,Assertion}` triple that `GeminiRepository` adds to each request. On 401 `android_assertion_invalid`, the repository re-attests and retries once.
+- **Accessibility tags**: `utils/AccessibilityTags.kt` is the canonical Android testTag registry. Per T2.4 it is a strict superset of iOS `AccessibilityIdentifiers.swift` — enforced by `scripts/accessibility-diff.sh` on every PR.
+- **Shared fixtures**: `app/src/test/...CalorieCalculatorTest.kt` and `MealTypeTest.kt` load `shared-fixtures/{bmr-mifflin-st-jeor,meal-type-by-hour}/cases.json` (wired via the `sourceSets` block in `app/build.gradle.kts`). The iOS test target will consume the same files once added.
 
 ## Key Data Conventions
 
@@ -73,14 +85,14 @@ npm run dev                      # Start with --watch for development
 - **Food quantity units (Gemini prompt)**: iOS adjusts the prompt based on the user's unit system preference (US customary or metric). Android does **not** enforce this — its prompt is unit-agnostic.
 - **MealType auto-assignment**: Breakfast 7–9, Lunch 11–14, Dinner 17–20, Snack otherwise (based on entry hour). iOS uses exclusive upper bounds (`7..<10`, `11..<15`, `17..<21`); Android uses inclusive ranges (`7..9`, `11..14`, `17..20`).
 - **Calorie goal**: Mifflin-St Jeor BMR × activity multiplier. Effective goal = target + active calories burned (from HealthKit/Health Connect). BMR calculated on-demand, not persisted.
-- **Backend proxy (iOS)**: Food images are sent to a Cloud Run backend (`BackendConfig.swift`) which forwards them to Google Gemini AI. All other data is on-device. Android sends directly to Google AI SDK.
+- **Backend proxy (both platforms)**: Food images are sent to the same Cloud Run backend, which forwards to Google Gemini. All other data is on-device. The backend dispatches on the `X-App-Platform` header (`ios` default, `android` when sent by the Android client) so the two clients can share one endpoint.
 
 ## Gemini API Integration
 
-The two platforms use **different integration methods**:
+Both platforms POST to the same Cloud Run endpoint (`/v1beta/models/default:generateContent`) with base64-encoded JPEGs:
 
-- **iOS**: REST calls to a Cloud Run backend proxy (`BackendConfig.baseURL`) which forwards to Gemini. Base64-encoded images sent via `POST /v1beta/models/default:generateContent`. API key is XOR-obfuscated in `BackendConfig.swift` (not user-provided). Debug builds target the dev backend; Release/Archive builds target prod (`#if DEBUG` in `BackendConfig.swift`). Response includes `confidence` field. Prompt adapts to user's unit system preference.
-- **Android**: Google AI SDK (`com.google.ai.client.generativeai.GenerativeModel`) with `Bitmap` images. Model list is curated/hardcoded in `SettingsViewModel` with friendly name → API name mapping. Response includes `imageIndex` field (0-based). No unit enforcement in prompt. API key is user-provided at runtime (Settings screen), stored in EncryptedSharedPreferences.
+- **iOS**: `X-App-Platform: ios` (default if header is omitted). Authenticated via App Attest (production); the simulator/dev fallback uses the legacy `x-backend-key` from XOR-obfuscated `BackendConfig.swift`. `#if DEBUG` picks dev vs prod backend. Prompt adapts to user's unit system preference. Response includes `confidence`.
+- **Android**: `X-App-Platform: android`. Authenticated via the T1.8 per-request HMAC protocol (`X-Android-Key-Id` + `X-Android-Counter` + `X-Android-Assertion`); the dev fallback uses the same `x-backend-key` header (build-config-gated). No Gemini SDK on the device; the backend forwards to Google. Prompt is unit-agnostic; response includes `imageIndex` (0-based).
 
 Both parse JSON responses with food items containing `{ name, quantity, calories, protein, carbs, fat }`.
 
@@ -99,22 +111,37 @@ Both parse JSON responses with food items containing `{ name, quantity, calories
 | `SettingsStore.swift` | App theme, unit system, AI consent (UserDefaults) |
 | `BackendConfig.swift` | Cloud Run backend URL + XOR-obfuscated API key (`#if DEBUG` → dev, else → prod) |
 
-| Android (under `WatchMyCaloriesAndroid/app/src/main/java/.../`) | Purpose |
+| Android (under `WatchMyCaloriesAndroid/app/src/main/java/com/pning80/watchmycalories/`) | Purpose |
 |----------------------------------------------------------------|---------|
-| `data/repository/GeminiRepository.kt` | AI orchestrator (remote + local stub) |
-| `data/repository/GeminiRemoteDataSource.kt` | Google AI SDK calls |
-| `data/model/FoodEntry.kt` | Room entity + `MealType` enum |
-| `data/model/UserProfile.kt` | Room entity |
-| `ui/today/TodayScreen.kt` + `TodayViewModel.kt` | Main "Today" screen (active) |
-| `ui/analysis/AnalysisScreen.kt` + `AnalysisViewModel.kt` | Post-capture analysis + save |
-| `ui/theme/Color.kt` | Color system (mirrors iOS palette) |
-| `util/CalorieCalculator.kt` | BMR/TDEE computation |
-| `di/AppModule.kt` | Hilt DI configuration |
+| `ai/GeminiRepository.kt` | OkHttp client → Cloud Run backend; per-request HMAC + 401 re-attest |
+| `ai/GeminiParser.kt` | JSON parsing for food/menu responses |
+| `data/Entities.kt` | Room entities (`FoodEntry`, `UserProfile`, `MenuScan`) + `MealType` |
+| `data/Daos.kt` | Room DAOs |
+| `data/AppDatabase.kt` | Room database (version 3) |
+| `data/ImageStorage.kt` | JPEG persistence to `filesDir/{imageID}.jpg` (T1.4) |
+| `data/CalorieCalculator.kt` | BMR/TDEE computation |
+| `ui/dashboard/DashboardScreen.kt` | Main "Today" screen |
+| `ui/photolib/PhotoLibraryReviewScreen.kt` | Library-photo review with EXIF auto-meal-type |
+| `ui/analysis/AnalysisScreen.kt` | Post-capture analysis + save |
+| `ui/menuscanner/MenuAnalysisScreen.kt` + `ScannedMenusScreen.kt` + `MenuScanDetailScreen.kt` | Scan-menu flow |
+| `ui/logfood/LogFoodSheet.kt` | "Add food" entry-point sheet |
+| `ui/settings/SettingsScreen.kt` + `SettingsDataStore.kt` | Settings + DataStore |
+| `ui/theme/Color.kt` / `Theme.kt` / `Type.kt` | Color system + Material theme (mirrors iOS palette) |
+| `ads/NativeAdView.kt` / `BannerAdView.kt` / `AdManager.kt` | Ad components |
+| `security/BackendConfig.kt` | Backend URL + dev-only legacy key getter |
+| `security/PlayIntegrityManager.kt` | Standard Play Integrity flow + per-request HMAC headers |
+| `security/JpegConfig.kt` | `QUALITY = 80` constant (matches iOS 0.8) |
+| `health/HealthConnectManager.kt` | Health Connect integration |
+| `utils/AccessibilityTags.kt` | Test-tag registry (strict superset of iOS `AccessibilityIdentifiers.swift`; enforced by `scripts/accessibility-diff.sh`) |
 
 ## Important Notes
 
 - **Dual codebase**: Changes to shared logic (e.g., calorie formula) must be applied to both platforms independently. Note that meal time windows already differ between platforms (see above).
 - **Legacy/deprecated files**:
   - **iOS**: `TodayView.swift`, `CaptureView.swift`, `CoreDataService.swift`, and `GeminiEstimationService.swift` (in parent `WatchMyCalories/` directory) are stubs or superseded — the active implementations are `DashboardView.swift` and `Services.swift`.
-  - **Android**: `ui/dashboard/DashboardScreen.kt` and `DashboardViewModel.kt` are deprecated — the active implementation is `ui/today/TodayScreen.kt` and `TodayViewModel.kt`.
-- **Android `local.properties`**: Can pre-seed `GEMINI_API_KEY=...` for development (accessed via `BuildConfig`).
+  - **Android**: `ui/dashboard/DashboardScreen.kt` is the active dashboard. There is no `ui/today/` directory in the current code despite older docs referencing one.
+- **Android `local.properties`**: `APP_BACKEND_API_KEY=...` is the dev-only legacy `x-backend-key` fallback used by debug builds on emulators (no Gemini key on the device). Release builds rely on Play Integrity per-request HMAC headers instead (see T1.8).
+
+## Porting
+
+The Android app is mid-port to faithfully mirror the iOS app. The authoritative rubric is **`PORTING_CRITERIA.md`** (release-gating tiers, operating principles, known gaps). The staged execution plan is **`PORTING_RUNBOOK.md`**. Per-screen evidence lands in **`PORTING_MATRIX.md`**; intentional divergences are recorded in **`PORTING_DEVIATIONS.md`**. Cross-platform numeric fixtures live under **`shared-fixtures/`**. Before changing anything in `WatchMyCalories/` (iOS) or `Backend/` while porting work is in flight, read the operating principles in `PORTING_CRITERIA.md` — iOS app code is frozen, and backend changes must preserve the iOS-facing wire contract byte-for-byte.
