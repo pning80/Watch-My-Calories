@@ -39,10 +39,11 @@ jobs:
       - run: npm ci
       - run: npm test
 
-  # Android unit tests — runs the Robolectric + JVM suite including the
-  # shared-fixture-driven CalorieCalculator + MealType cases.
+  # Android unit tests + lint — runs the Robolectric + JVM suite (including
+  # the shared-fixture-driven CalorieCalculator + MealType cases) and the
+  # Android lint gate (errors fail the build; warnings are visible in logs).
   android-tests:
-    name: Android unit tests (./gradlew testDebugUnitTest)
+    name: Android unit tests + lint
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -55,3 +56,4 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v3
       - run: ./gradlew :app:testDebugUnitTest
+      - run: ./gradlew :app:lintDebug

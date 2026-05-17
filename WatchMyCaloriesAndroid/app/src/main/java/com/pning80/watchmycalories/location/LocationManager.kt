@@ -1,6 +1,7 @@
 package com.pning80.watchmycalories.location
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Geocoder
@@ -21,6 +22,7 @@ class LocationManager(private val context: Context) {
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
     private val geocoder = Geocoder(context, Locale.getDefault())
 
+    @SuppressLint("MissingPermission") // hasLocationPermissions() at line above is the runtime guard; lint can't track it
     suspend fun getCurrentLocation(): LocationData {
         if (!hasLocationPermissions()) {
             return LocationData(null, null)
@@ -33,6 +35,7 @@ class LocationManager(private val context: Context) {
             ).await()
 
             if (location != null) {
+                @Suppress("DEPRECATION") // async getFromLocation requires API 33+; minSdk=26
                 val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
                 val locality = addresses?.firstOrNull()?.locality
                 LocationData(location, locality)

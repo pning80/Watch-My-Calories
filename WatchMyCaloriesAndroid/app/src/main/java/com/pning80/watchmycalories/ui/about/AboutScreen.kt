@@ -5,7 +5,7 @@ import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Star
@@ -14,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,13 +23,11 @@ import androidx.compose.ui.unit.dp
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.pning80.watchmycalories.security.PlayIntegrityManager
 import com.pning80.watchmycalories.utils.AccessibilityTags
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val isVerified by PlayIntegrityManager.isAttested.collectAsState()
     Scaffold(
         topBar = {
@@ -38,7 +35,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 title = { Text("About Watch My Calories") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
