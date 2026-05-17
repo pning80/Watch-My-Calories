@@ -26,6 +26,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// onLogFood and onDeleteEntry are reserved hooks — wired by the caller (MainActivity)
+// but not yet surfaced in the Compose tree. iOS HistoryView.swift exposes a per-row
+// swipe-to-delete and an empty-state log-food action; Android port has not yet
+// reached parity on those two interactions. Tracked separately; do not delete the
+// parameters or the warning will mask actual unused-parameter regressions later.
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun HistoryScreen(
     entries: List<FoodEntry>,
@@ -77,6 +83,7 @@ fun HistoryScreen(
     }
 }
 
+@Suppress("UNUSED_PARAMETER") // onDeleteEntry plumbed for parity with iOS swipe-to-delete; not yet wired
 @Composable
 fun HistoryDayCard(
     dateMillis: Long,
