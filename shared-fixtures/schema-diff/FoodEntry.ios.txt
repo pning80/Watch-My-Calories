@@ -1,0 +1,11 @@
+calories
+carbs
+fat
+id
+imageID
+mealName
+mealTypeRaw
+name
+protein
+quantity
+timestamp

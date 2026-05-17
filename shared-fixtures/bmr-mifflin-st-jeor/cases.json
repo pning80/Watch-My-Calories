@@ -1,0 +1,77 @@
+{
+  "formula": {
+    "description": "Mifflin-St Jeor BMR + activity multiplier (TDEE).",
+    "bmr": "10*weightKg + 6.25*heightCm - 5*age + (gender == MALE ? +5 : -161)",
+    "tdee": "round(bmr * activityMultiplier)",
+    "rounding": "Half rounds away from zero (kotlin.math.roundToInt, Swift Double.rounded()). Tolerance: ±1 kcal."
+  },
+  "activityMultipliers": {
+    "SEDENTARY": 1.2,
+    "LIGHTLY_ACTIVE": 1.375,
+    "MODERATELY_ACTIVE": 1.55,
+    "VERY_ACTIVE": 1.725
+  },
+  "genderOffsets": {
+    "MALE": 5,
+    "FEMALE": -161,
+    "OTHER": -161
+  },
+  "cases": [
+    {
+      "id": "male_70kg_175cm_30y_sedentary",
+      "input": { "weightKg": 70, "heightCm": 175, "age": 30, "gender": "MALE", "activity": "SEDENTARY" },
+      "expectedBmr": 1648.75,
+      "expectedTdee": 1979,
+      "tolerance": 1
+    },
+    {
+      "id": "female_60kg_165cm_30y_sedentary",
+      "input": { "weightKg": 60, "heightCm": 165, "age": 30, "gender": "FEMALE", "activity": "SEDENTARY" },
+      "expectedBmr": 1320.25,
+      "expectedTdee": 1584,
+      "tolerance": 1
+    },
+    {
+      "id": "male_70kg_175cm_30y_lightly_active",
+      "input": { "weightKg": 70, "heightCm": 175, "age": 30, "gender": "MALE", "activity": "LIGHTLY_ACTIVE" },
+      "expectedBmr": 1648.75,
+      "expectedTdee": 2267,
+      "tolerance": 1
+    },
+    {
+      "id": "male_70kg_175cm_30y_moderately_active",
+      "input": { "weightKg": 70, "heightCm": 175, "age": 30, "gender": "MALE", "activity": "MODERATELY_ACTIVE" },
+      "expectedBmr": 1648.75,
+      "expectedTdee": 2556,
+      "tolerance": 1
+    },
+    {
+      "id": "male_70kg_175cm_30y_very_active",
+      "input": { "weightKg": 70, "heightCm": 175, "age": 30, "gender": "MALE", "activity": "VERY_ACTIVE" },
+      "expectedBmr": 1648.75,
+      "expectedTdee": 2844,
+      "tolerance": 1
+    },
+    {
+      "id": "female_40kg_150cm_80y_sedentary",
+      "input": { "weightKg": 40, "heightCm": 150, "age": 80, "gender": "FEMALE", "activity": "SEDENTARY" },
+      "expectedBmr": 776.5,
+      "expectedTdee": 932,
+      "tolerance": 1
+    },
+    {
+      "id": "male_100kg_190cm_25y_very_active",
+      "input": { "weightKg": 100, "heightCm": 190, "age": 25, "gender": "MALE", "activity": "VERY_ACTIVE" },
+      "expectedBmr": 2067.5,
+      "expectedTdee": 3566,
+      "tolerance": 2
+    },
+    {
+      "id": "other_65kg_170cm_30y_sedentary",
+      "input": { "weightKg": 65, "heightCm": 170, "age": 30, "gender": "OTHER", "activity": "SEDENTARY" },
+      "expectedBmr": 1401.5,
+      "expectedTdee": 1682,
+      "tolerance": 1
+    }
+  ]
+}

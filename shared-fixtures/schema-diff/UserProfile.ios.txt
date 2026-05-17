@@ -1,0 +1,7 @@
+activityLevelRaw
+age
+createdAt
+genderRaw
+height
+targetCalories
+weight
