@@ -11,6 +11,17 @@ import { getHmacSecret } from './hmac-secret';
 import { createLogger } from './logger';
 import { counters } from './metrics';
 import { keyIdToDocId } from './firestore-key';
+import { resolvePlatform } from './platform';
+import { verifyPlayIntegrityToken, DecoderFn } from './play-integrity';
+
+/**
+ * Optional override for the Play Integrity decoder, used by tests to stub the
+ * Google API call. Production code leaves this null and the verifier uses ADC.
+ */
+let androidDecoderOverride: DecoderFn | null = null;
+export function setAndroidDecoderForTest(fn: DecoderFn | null): void {
+    androidDecoderOverride = fn;
+}
 
 const log = createLogger('attestation');
 
@@ -18,6 +29,14 @@ export function registerRoutes(app: Express, attestLimiter: any): void {
     // POST /attest/verify — verifies attestation and stores the public key
     app.post('/attest/verify', attestLimiter, express.json({ limit: '1mb' }), async (req, res) => {
         try {
+            // Platform dispatch (PORTING_CRITERIA.md T1.9.a, T1.10.b).
+            // Missing/unknown X-App-Platform → 'ios', preserving in-field iOS client behavior.
+            const platform = resolvePlatform(req.headers['x-app-platform']);
+            counters.increment('attest_verify_total', { platform });
+            if (platform === 'android') {
+                return handleAndroidAttestVerify(req, res);
+            }
+
             const { keyID, attestation, challenge } = req.body;
 
             if (!keyID || !attestation || !challenge) {
@@ -152,10 +171,13 @@ export function registerRoutes(app: Express, attestLimiter: any): void {
                 .update(publicKeyPem + keyID)
                 .digest('hex');
 
-            // Store in memory
-            attestedKeys.set(keyID, { publicKey, counter: 0, hmac });
+            // Store in memory — iOS path explicitly tags platform='ios' (T1.9.c)
+            attestedKeys.set(keyID, { publicKey, counter: 0, hmac, platform: 'ios' });
 
-            // Persist to Firestore (awaited to guarantee durability across cold starts)
+            // Persist to Firestore (awaited to guarantee durability across cold starts).
+            // The `platform` field is always written for new docs going forward; existing
+            // iOS docs written before this change read back as `undefined` and are treated
+            // as 'ios' by callers (see attested-keys.ts and types.ts).
             const db = getDb();
             if (db) {
                 try {
@@ -165,6 +187,7 @@ export function registerRoutes(app: Express, attestLimiter: any): void {
                         hmac,
                         createdAt: new Date(),
                         lastUsedAt: new Date(),
+                        platform: 'ios',
                     });
                 } catch (err: any) {
                     log.error({ keyId: keyID.substring(0, 8), error: err.message }, 'Firestore write error (attestation)');
@@ -181,4 +204,126 @@ export function registerRoutes(app: Express, attestLimiter: any): void {
             res.status(400).json({ error: 'Attestation verification failed.' });
         }
     });
+}
+
+/**
+ * Android `/attest/verify` handler — Play Integrity path (T1.9.b + T1.8).
+ *
+ * Body shape (sent by the Android client):
+ *   { keyID, attestation: <play-integrity-token>, challenge }
+ *
+ * On success returns:
+ *   { success: true, androidAssertionSecret: "<hex>" }
+ *
+ * The secret is returned ONCE — the client stores it in EncryptedSharedPreferences
+ * and uses it to sign every subsequent /v1beta/models/* request (see T1.8 +
+ * verify-request-android.ts). Loss of the secret requires re-attestation.
+ *
+ * All failure modes return 401 with a stable `{ error }` body. The error code
+ * indicates the *category* (so the client can decide whether to retry or back
+ * off), but does not leak Google's internal verdict reasons.
+ */
+async function handleAndroidAttestVerify(req: express.Request, res: express.Response): Promise<express.Response | void> {
+    const { keyID, attestation, challenge } = req.body || {};
+
+    if (!keyID || !attestation || !challenge) {
+        counters.increment('android_attest_total', { result: 'missing_field' });
+        return res.status(400).json({ error: 'missing_field' });
+    }
+
+    const packageName = process.env.PLAY_INTEGRITY_PACKAGE_NAME;
+    if (!packageName) {
+        // Server not yet configured for Play Integrity. iOS path remains unaffected
+        // (this branch is only reached when X-App-Platform=android). T1.10.e.
+        log.warn('PLAY_INTEGRITY_PACKAGE_NAME unset — Android attest unavailable');
+        counters.increment('android_attest_total', { result: 'not_configured' });
+        return res.status(503).json({ error: 'play_integrity_not_configured' });
+    }
+
+    // Validate challenge (same TTL semantics as iOS path)
+    const challengeEntry = challenges.get(challenge);
+    if (!challengeEntry) {
+        counters.increment('android_attest_total', { result: 'bad_challenge' });
+        return res.status(401).json({ error: 'attestation_invalid' });
+    }
+    if (Date.now() - challengeEntry.createdAt > CHALLENGE_TTL_MS) {
+        challenges.delete(challenge);
+        counters.increment('android_attest_total', { result: 'expired_challenge' });
+        return res.status(401).json({ error: 'attestation_invalid' });
+    }
+    challenges.delete(challenge); // one-time use, same as iOS
+
+    // Verify the Play Integrity token. Decoder may be overridden by tests.
+    try {
+        await verifyPlayIntegrityToken({
+            token: attestation,
+            challenge,
+            packageName,
+            decoder: androidDecoderOverride ?? undefined,
+        });
+    } catch (err: any) {
+        counters.increment('android_attest_total', { result: err.message });
+        log.warn({ reason: err.message, keyId: String(keyID).substring(0, 8) }, 'Play Integrity verification failed');
+        return res.status(401).json({ error: 'attestation_invalid' });
+    }
+
+    // Issue the per-key HMAC secret used for subsequent request signing (T1.8).
+    const androidAssertionSecret = crypto.randomBytes(32).toString('hex');
+
+    // HMAC for tamper detection on the Firestore key doc, using the same formula
+    // as the iOS path (HMAC(serverSecret, publicKeyPem + keyID)) so verify-request-
+    // android.ts can validate Android docs with the same routine. Android keys have
+    // no real public key, so we use a placeholder PEM (SPKI of a throwaway key) as
+    // the "publicKeyPem" — it's just bytes that participate in tamper detection.
+    //
+    // NOTE: this scheme protects against substitution of publicKeyPem but does NOT
+    // include androidAssertionSecret in the HMAC. An attacker with Firestore write
+    // access could swap in a different secret, causing the client's HMACs to fail
+    // (a DoS — the client recovers via re-attest on 401). The runtime SA's IAM is
+    // restrictive enough that this is acceptable for now; tighten if the threat
+    // model changes.
+    const hmacSecret = getHmacSecret();
+    if (!hmacSecret) {
+        log.error('HMAC secret unavailable — cannot persist attested Android key');
+        return res.status(500).json({ error: 'server_misconfigured' });
+    }
+    const placeholderKey = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' }).publicKey;
+    const placeholderPem = placeholderKey.export({ type: 'spki', format: 'pem' }) as string;
+    const hmac = crypto.createHmac('sha256', hmacSecret)
+        .update(placeholderPem + keyID)
+        .digest('hex');
+
+    // Store in memory. publicKey is required by AttestedKeyData (iOS shape) but
+    // is unused on the Android path; the placeholder keeps the cache layout uniform.
+    attestedKeys.set(keyID, {
+        publicKey: placeholderKey,
+        counter: 0,
+        hmac,
+        platform: 'android',
+        androidAssertionSecret,
+    });
+
+    // Persist to Firestore. The placeholder PEM round-trips through attested-keys.ts
+    // loadKeysFromFirestore unchanged because the load path doesn't actually use the
+    // public key for verification on Android — it just reconstructs the cache entry.
+    const db = getDb();
+    if (db) {
+        try {
+            await db.collection(ATTESTED_KEYS_COLLECTION).doc(keyIdToDocId(keyID)).set({
+                publicKeyPem: placeholderPem,
+                counter: 0,
+                hmac,
+                createdAt: new Date(),
+                lastUsedAt: new Date(),
+                platform: 'android',
+                androidAssertionSecret,
+            });
+        } catch (err: any) {
+            log.error({ keyId: String(keyID).substring(0, 8), error: err.message }, 'Firestore write error (android attestation)');
+        }
+    }
+
+    counters.increment('android_attest_total', { result: 'success' });
+    log.info({ keyId: String(keyID).substring(0, 8) }, 'Android key attested successfully');
+    return res.json({ success: true, androidAssertionSecret });
 }

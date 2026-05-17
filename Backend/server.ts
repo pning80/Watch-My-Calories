@@ -6,6 +6,7 @@ import { requestLogger, createLogger, setLogger } from './src/logger';
 import { globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter } from './src/rate-limiters';
 import { captureRawBody } from './src/capture-raw-body';
 import { verifyRequest } from './src/verify-request';
+import { verifyAndroidRequest } from './src/verify-request-android';
 import { attestedKeys, loadKeysFromFirestore } from './src/attested-keys';
 import { challenges, registerRoutes as registerChallengeRoutes } from './src/challenge';
 import { getAppleRootCa, setAppleRootCa } from './src/apple-root-ca';
@@ -14,7 +15,7 @@ import { initHmacSecret, setHmacSecret } from './src/hmac-secret';
 import { extractNonceFromCert, parseDerLength } from './src/cert-utils';
 import { keyIdToDocId, docIdToKeyId } from './src/firestore-key';
 import { counters, Counter, timer } from './src/metrics';
-import { registerRoutes as registerAttestationRoutes } from './src/attestation';
+import { registerRoutes as registerAttestationRoutes, setAndroidDecoderForTest } from './src/attestation';
 import { registerRoutes as registerMainRoutes } from './src/routes';
 
 // Apply request logger (assigns req.log with requestId + timing)
@@ -51,4 +52,4 @@ if (require.main === module) {
     })();
 }
 
-export { app, attestedKeys, challenges, extractNonceFromCert, parseDerLength, setAppleRootCa, setDb, setHmacSecret, setLogger, captureRawBody, verifyRequest, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter, loadKeysFromFirestore, counters, Counter, timer, keyIdToDocId, docIdToKeyId };
+export { app, attestedKeys, challenges, extractNonceFromCert, parseDerLength, setAppleRootCa, setDb, setHmacSecret, setLogger, captureRawBody, verifyRequest, verifyAndroidRequest, setAndroidDecoderForTest, globalLimiter, geminiLimiter, attestLimiter, legacyKeyLimiter, loadKeysFromFirestore, counters, Counter, timer, keyIdToDocId, docIdToKeyId };

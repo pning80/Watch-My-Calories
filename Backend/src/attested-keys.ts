@@ -56,7 +56,16 @@ export async function loadKeysFromFirestore(): Promise<number> {
                     key: data.publicKeyPem,
                     format: 'pem',
                 });
-                attestedKeys.set(keyID, { publicKey, counter: data.counter, hmac: data.hmac });
+                // Pass through the optional platform + androidAssertionSecret fields if
+                // present (T1.9.c). Missing platform → undefined; callers treat as 'ios'
+                // for backward-compat with iOS docs created before T1.9.c.
+                attestedKeys.set(keyID, {
+                    publicKey,
+                    counter: data.counter,
+                    hmac: data.hmac,
+                    platform: data.platform,
+                    androidAssertionSecret: data.androidAssertionSecret,
+                });
                 loaded++;
             } catch (err: any) {
                 log.warn({ keyId: keyID.substring(0, 8), error: err.message }, 'Key preload: Skipping — invalid key');
