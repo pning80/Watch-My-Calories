@@ -46,11 +46,14 @@ digest).
 
 ---
 
-## 2 — `/healthz` reachable
+## 2 — Root route reachable
+
+The backend exposes `GET /` (`Backend/src/routes.ts:80`), not `/healthz` — use that
+as the basic boot signal.
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" \
-  https://watchmycalories-backend-dev-657698311127.us-central1.run.app/healthz
+  https://watchmycalories-backend-dev-657698311127.us-central1.run.app/
 ```
 
 Expect: `200`. Any non-200 → roll back immediately, the service didn't boot.
