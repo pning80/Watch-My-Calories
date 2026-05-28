@@ -14,15 +14,32 @@ val localProps = Properties().apply {
 }
 val appBackendApiKey: String = localProps.getProperty("APP_BACKEND_API_KEY", "")
 
+// Upload-key signing config for release builds. Absent on CI / fresh checkouts —
+// we fall back to no signingConfig on release in that case, which lets ./gradlew
+// :app:assembleDebug / lintDebug keep working without the keystore. A real
+// ./gradlew :app:bundleRelease will fail clearly if these are missing or wrong.
+val releaseStoreFile: String? = localProps.getProperty("RELEASE_STORE_FILE")
+val releaseKeyAlias: String? = localProps.getProperty("RELEASE_KEY_ALIAS")
+// Passwords prefer env vars (scripts/build-release.sh prompts and exports them)
+// so they never persist to disk. local.properties is a fallback for CI.
+val releaseStorePassword: String? =
+    System.getenv("RELEASE_STORE_PASSWORD") ?: localProps.getProperty("RELEASE_STORE_PASSWORD")
+val releaseKeyPassword: String? =
+    System.getenv("RELEASE_KEY_PASSWORD") ?: localProps.getProperty("RELEASE_KEY_PASSWORD")
+val hasReleaseSigning =
+    releaseStoreFile != null && releaseKeyAlias != null &&
+    releaseStorePassword != null && releaseKeyPassword != null &&
+    file(releaseStoreFile).exists()
+
 android {
     namespace = "com.pning80.watchmycalories"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.pning80.watchmycalories"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 141
+        targetSdk = 35
+        versionCode = 142
         versionName = "1.4.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -54,6 +71,17 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -61,6 +89,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
