@@ -7,7 +7,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
@@ -44,8 +43,10 @@ fun WatchMyCaloriesTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
+            // Edge-to-edge is enabled in MainActivity via enableEdgeToEdge(). We only
+            // sync the status-bar icon color to the active theme so icons stay legible
+            // against whatever background sits under the transparent status bar.
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }

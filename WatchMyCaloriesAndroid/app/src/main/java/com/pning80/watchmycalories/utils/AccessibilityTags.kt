@@ -23,6 +23,7 @@ object AccessibilityTags {
         const val CAMERA = "tab_camera"
         const val HISTORY = "tab_history"
         const val SETTINGS = "tab_settings"
+        const val SCAN_MENU = "tab_scanMenu"
     }
 
     object Dashboard {

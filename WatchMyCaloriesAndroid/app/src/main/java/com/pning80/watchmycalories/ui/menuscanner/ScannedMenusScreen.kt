@@ -25,21 +25,11 @@ import java.util.Locale
 @Composable
 fun ScannedMenusScreen(
     scans: List<MenuScan>,
-    onNavigateBack: () -> Unit,
+    @Suppress("UNUSED_PARAMETER") onNavigateBack: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
     onScanNewMenu: () -> Unit
 ) {
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Scanned Menus") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onScanNewMenu,

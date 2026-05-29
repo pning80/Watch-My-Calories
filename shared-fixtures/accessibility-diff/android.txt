@@ -68,4 +68,5 @@ settings_unitPicker
 tab_camera
 tab_dashboard
 tab_history
+tab_scanMenu
 tab_settings

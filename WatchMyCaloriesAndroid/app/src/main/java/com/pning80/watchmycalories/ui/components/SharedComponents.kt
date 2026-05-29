@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
@@ -32,11 +35,11 @@ import com.pning80.watchmycalories.ui.theme.*
 import kotlin.math.min
 
 fun Modifier.cwCard() = this
-    .padding(horizontal = 16.dp, vertical = 6.dp)
-    .shadow(elevation = 8.dp, shape = RoundedCornerShape(24.dp))
-    .clip(RoundedCornerShape(24.dp))
+    .padding(horizontal = Spacing.pageHorizontal, vertical = 6.dp)
+    .shadow(elevation = 8.dp, shape = RoundedCornerShape(Spacing.cardCorner))
+    .clip(RoundedCornerShape(Spacing.cardCorner))
     .background(Color.White)
-    .padding(16.dp)
+    .padding(Spacing.l)
 
 // ─── Hero Summary Card ───────────────────────────────────────────
 
@@ -155,20 +158,26 @@ fun HeroSummaryCard(targetCalories: Double, burnedCalories: Double, entries: Lis
                 StatRow(
                     label = "Goal",
                     value = "${targetCalories.toInt()}",
-                    dotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    icon = Icons.Filled.Flag,
+                    badgeColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    iconTint = Color.White,
                     testTag = "dashboard_goalValue"
                 )
                 if (burnedCalories > 0) {
                     StatRow(
                         label = "Burned",
                         value = "${burnedCalories.toInt()}",
-                        dotColor = accentColor
+                        icon = Icons.Filled.LocalFireDepartment,
+                        badgeColor = accentColor,
+                        iconTint = Color.White
                     )
                 }
                 StatRow(
                     label = "Remaining",
                     value = "${remaining.toInt()}",
-                    dotColor = secondaryColor,
+                    icon = Icons.AutoMirrored.Filled.ShowChart,
+                    badgeColor = secondaryColor,
+                    iconTint = primaryColor,
                     testTag = "dashboard_remainingValue"
                 )
             }
@@ -183,17 +192,33 @@ fun HeroSummaryCard(targetCalories: Double, burnedCalories: Double, entries: Lis
 }
 
 @Composable
-private fun StatRow(label: String, value: String, dotColor: Color, testTag: String? = null) {
+private fun StatRow(
+    label: String,
+    value: String,
+    icon: ImageVector,
+    badgeColor: Color,
+    iconTint: Color,
+    testTag: String? = null,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = if (testTag != null) Modifier.testTag(testTag) else Modifier
     ) {
         Surface(
             shape = CircleShape,
-            color = dotColor,
-            modifier = Modifier.size(8.dp)
-        ) {}
+            color = badgeColor,
+            modifier = Modifier.size(28.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+        }
         Column {
             Text(
                 text = label,
@@ -326,21 +351,21 @@ fun EmptyStateCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .padding(40.dp),
+            .padding(horizontal = 24.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(64.dp)
+            modifier = Modifier.size(56.dp)
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(28.dp)
                 )
             }
         }

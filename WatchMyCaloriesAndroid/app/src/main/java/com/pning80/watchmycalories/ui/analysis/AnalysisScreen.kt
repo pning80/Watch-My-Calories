@@ -26,6 +26,8 @@ import com.pning80.watchmycalories.ads.NativeAdView
 import com.pning80.watchmycalories.ai.EstimationItem
 import com.pning80.watchmycalories.ai.EstimationResult
 import com.pning80.watchmycalories.ai.GeminiRepository
+import com.pning80.watchmycalories.data.MealType
+import com.pning80.watchmycalories.ui.photolib.MealTypePicker
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
 @Composable
@@ -33,8 +35,9 @@ fun AnalysisScreen(
     images: List<Bitmap>,
     geminiRepository: GeminiRepository,
     isMetric: Boolean,
+    initialMealType: MealType = MealType.fromTimestamp(System.currentTimeMillis()),
     onNavigateBack: () -> Unit,
-    onSaveLog: (EstimationResult) -> Unit
+    onSaveLog: (EstimationResult, MealType) -> Unit
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var rawResult by remember { mutableStateOf<EstimationResult?>(null) }
@@ -43,6 +46,7 @@ fun AnalysisScreen(
     // Editable state mapping
     var editableMealName by remember { mutableStateOf("") }
     val editableItems = remember { mutableStateListOf<EditableEstimationItem>() }
+    var selectedMealType by remember { mutableStateOf(initialMealType) }
 
     LaunchedEffect(images) {
         isLoading = true
@@ -80,10 +84,11 @@ fun AnalysisScreen(
                             mealName = editableMealName,
                             items = editableItems.map { it.toEstimationItem() }
                         )
-                        onSaveLog(finalResult)
+                        onSaveLog(finalResult, selectedMealType)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
+                        .imePadding()
                         .padding(16.dp)
                         .testTag(AccessibilityTags.EstimationReview.DONE_BUTTON),
                     shape = RoundedCornerShape(12.dp)
@@ -235,6 +240,28 @@ fun AnalysisScreen(
                                 label = { Text("Meal Context") },
                                 modifier = Modifier.fillMaxWidth()
                             )
+                        }
+
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    "Meal Type",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Surface(
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                    shape = RoundedCornerShape(50),
+                                    modifier = Modifier.padding(vertical = 4.dp),
+                                ) {
+                                    MealTypePicker(
+                                        selection = selectedMealType,
+                                        onSelect = { selectedMealType = it },
+                                        modifier = Modifier.padding(vertical = 6.dp),
+                                    )
+                                }
+                            }
                         }
 
                         itemsIndexed(editableItems) { _, itemState ->
