@@ -66,13 +66,13 @@ npm run dev                      # Start with --watch for development
 - **Camera flow**: `CameraManager` (AVFoundation, `@MainActor`) → `CameraView` → `EstimationReviewView` (calls Gemini, saves to SwiftData). One photo per capture session, persisted as JPEG in Documents.
 - **Images**: Stored in Documents directory as `{UUID}.jpg`, keyed by `FoodEntry.imageID`.
 - **Health**: `HealthKitManager` reads `activeEnergyBurned` with `HKObserverQuery` + background delivery.
-- **Tab navigation**: `ContentView` hosts 4 tabs — Dashboard, Camera, History, Settings.
+- **Tab navigation**: `ContentView` hosts 4 tabs — Dashboard, Log Food, Scan Menu, History. Settings is reached via the toolbar gear icon (not a tab).
 
 ### Android — Jetpack Compose + Room (no Hilt; manual wiring in MainActivity)
 - **AI layer**: `ai/GeminiRepository.kt` is an HTTP client over OkHttp that POSTs to the Cloud Run backend (same endpoint iOS uses, with `X-App-Platform: android` for dispatch). `ai/GeminiParser.kt` parses responses. The Google AI SDK is gone; `scripts/check-android-no-gemini-sdk.sh` enforces this.
 - **Data layer**: Room entities (`FoodEntry`, `UserProfile`, `MenuScan`) consolidated in `data/Entities.kt`. DAOs in `data/Daos.kt`. DB in `data/AppDatabase.kt` (current schema version 3). `data/CalorieCalculator.kt` does BMR/TDEE. `FoodEntry` uses camelCase fields `imageID` and `itemsData` (matching iOS field names; see `PORTING_DEVIATIONS.md` for any field divergences).
 - **State**: ViewModels expose `StateFlow<UiState>`. `AnalysisViewModel` uses sealed `AnalysisUiState` (Idle, Loading, Success, Error).
-- **Navigation**: Single `NavHost` in `MainActivity` with routes: `dashboard`, `camera`, `analysis/{imagePaths}` (URL-encoded), `photoLibraryReview`, `history`, `settings`, `scannedMenus`, `about`. Bottom nav for 4 tabs.
+- **Navigation**: Single `NavHost` in `MainActivity` with routes: `dashboard`, `camera`, `analysis/{imagePaths}` (URL-encoded), `photoLibraryReview`, `history`, `settings`, `scannedMenus`, `about`. Bottom nav for 4 tabs — Dashboard, Log Food (opens `LogFoodSheet`), Scan Menu (→ `scannedMenus`), History. Settings is reached via the `TopAppBar` gear icon.
 - **Secure storage**: `EncryptedSharedPreferences` (AES256-GCM) stores the per-key Android assertion secret used by the T1.8 per-request HMAC protocol. There is **no** Gemini API key on-device; the backend holds it. `BuildConfig.APP_BACKEND_API_KEY` (sourced from `local.properties`) is the dev-only `x-backend-key` fallback for emulators without Play Services and is absent in release builds.
 - **Image storage**: `data/ImageStorage.kt` writes JPEGs (quality 80, matching iOS 0.8) to `filesDir/{imageID}.jpg`; `JpegConfig.QUALITY` keeps the constant single-sourced.
 - **Attestation**: `security/PlayIntegrityManager.kt` calls Play Integrity Standard API, persists `(keyID, secret, counter)` in EncryptedSharedPreferences, and provides `assertionHeaders(context, bodyBytes)` returning the `X-Android-{Key-Id,Counter,Assertion}` triple that `GeminiRepository` adds to each request. On 401 `android_assertion_invalid`, the repository re-attests and retries once.
