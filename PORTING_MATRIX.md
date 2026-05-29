@@ -47,19 +47,21 @@ Rows below stay `⏳` for criteria that genuinely need human visual/state eviden
 
 ## Tier 2 (visual/behavioral parity — ≥95% to ship)
 
+> **Honest baseline (2026-05-29):** The earlier "≥ 95%" claim was refuted by `PORT_AUDIT.md` and Phases B–F of the audit-correction plan landed the bulk of the visible-parity gap (Dashboard StatRow icons, AnalysisScreen MealTypePicker, swipe-to-delete on History, 4-tab bottom nav + gear-icon Settings, edge-to-edge). All remaining `⏳ device` cells still need a paired iOS↔Android screenshot diff before flipping to `✅ device`; the cells below carry `✅ device (Android-only render verified)` only where we have a Pixel 9a screenshot proving the Android side renders cleanly post-fix — the iOS-comparison half is still pending.
+
 | Screen / Surface | T2.1 Visual diff | T2.2 Interaction | T2.3 State matrix | T2.4 Accessibility | T2.5 Ad parity |
 |---|---|---|---|---|---|
-| Dashboard | ⏳ device | ⏳ device | ⏳ device | ✅ auto | ✅ code (banner) |
-| Camera capture | ⏳ device | ⏳ device | ⏳ device | ✅ auto | n/a |
+| Dashboard | ⚠ partial — StatRow icons match iOS (`PortingEvidence/screenshots/android/dashboard-phaseB-statrow-icons.png`, edge-to-edge in `dashboard-phaseF-edge-to-edge.png`); paired iOS diff pending | ⏳ device (4-tab bottom nav lands via `MainActivity.kt:230-273` — gear icon → Settings) | ⏳ device | ✅ auto | ✅ code (banner) |
+| Camera capture | ⏳ device | ✅ code — haptic feedback on capture button (`ui/camera/CameraScreen.kt`, `view.performHapticFeedback(LONG_PRESS)`) | ⏳ device | ✅ auto | n/a |
 | Photo Library Review | ⏳ device | ⏳ device | ⏳ device | ✅ auto | n/a |
-| Estimation Review (Analysis) | ⏳ device | ⏳ device | ⏳ device | ✅ auto | ✅ code (native in Loading) |
+| Estimation Review (Analysis) | ⏳ device | ✅ code — MealTypePicker state hoisted into `AnalysisScreen.kt`, propagated via `onSaveLog(EstimationResult, MealType)`; Save row gets `Modifier.imePadding()` | ⏳ device | ✅ auto | ✅ code (native in Loading) |
 | Manual Entry | ⏳ device | ⏳ device | ⏳ device | ✅ auto | ⏳ device (banner) |
-| History | ⏳ device | ⏳ device | ⏳ device | ✅ auto | ✅ code (banner) |
-| Settings | ⏳ device | ⏳ device | ⏳ device | ✅ auto | ✅ code (banner — see iOS `SettingsView.swift:51`) |
+| History | ⚠ partial — empty state matches iOS book icon (`PortingEvidence/screenshots/android/history-empty-phaseF.png`); paired iOS diff pending | ✅ code — swipe-to-delete via `SwipeToDismissBox` on `FoodEntryItem` (`ui/history/HistoryScreen.kt:349-386`) | ⏳ device (empty-state verified on device — see screenshot) | ✅ auto | ✅ code (banner) |
+| Settings | ⚠ partial — segmented controls + sliders render cleanly (`PortingEvidence/screenshots/android/settings-phaseF.png`); paired iOS diff pending | ⏳ device | ⏳ device | ✅ auto | ✅ code (banner — see iOS `SettingsView.swift:51`) |
 | Onboarding | ⏳ device | ⏳ device | ⏳ device | ✅ auto | n/a |
 | Scan Menu sheet | n/a (D-002) | n/a (D-002) | n/a (D-002) | ✅ auto (IDs reserved) | n/a |
 | Menu Analysis | ⏳ device | ⏳ device | ⏳ device | ✅ auto | ✅ code (native in Loading) |
-| Stored Menus | ⏳ device | ⏳ device | ⏳ device | ✅ auto | ✅ code (banner) |
+| Stored Menus | ⚠ partial — empty state renders cleanly (`PortingEvidence/screenshots/android/scannedMenus-empty-phaseF.png`); paired iOS diff pending | ⏳ device | ✅ device (empty state) | ✅ auto | ✅ code (banner) |
 | LogFoodSheet | ⏳ device | ⏳ device | ⏳ device | ✅ auto | n/a (no ads on bottom sheets) |
 
 ---
@@ -70,11 +72,12 @@ For each row that touches user-visible state, walk every state the iOS app exhib
 
 | Screen | Empty | Loading | Err: network | Err: 429 | Err: invalid JSON | Err: not-a-menu | Perm: camera | Perm: health | AI consent off | Offline + cache |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Dashboard | ⏳ | n/a | ⏳ | n/a | n/a | n/a | n/a | ⏳ | n/a | ⏳ |
+| Dashboard | ✅ device (`dashboard-phaseF-edge-to-edge.png` — empty meal sections) | n/a | ⏳ | n/a | n/a | n/a | n/a | ⏳ | n/a | ⏳ |
 | Camera capture | n/a | n/a | n/a | n/a | n/a | n/a | ⏳ | n/a | ⏳ | n/a |
 | Estimation Review | n/a | ⏳ | ⏳ | ⏳ | ⏳ | n/a | n/a | n/a | n/a | n/a |
 | Menu Analysis | n/a | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | n/a | n/a | n/a | n/a |
-| History | ⏳ | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | ⏳ |
+| History | ✅ device (`history-empty-phaseF.png`) | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | ⏳ |
+| Stored Menus | ✅ device (`scannedMenus-empty-phaseF.png`) | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 
 ---
 

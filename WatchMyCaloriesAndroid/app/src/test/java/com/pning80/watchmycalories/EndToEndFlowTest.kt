@@ -44,13 +44,14 @@ class EndToEndFlowTest {
         composeTestRule.onAllNodesWithText("History")[0].performClick()
         composeTestRule.waitForIdle()
         
-        // Ensure History screen is displayed
+        // Ensure History screen is displayed (title now lives on MainActivity's TopAppBar)
         composeTestRule.onNodeWithTag("HistoryTitle").assertIsDisplayed()
-        
-        // Click "Settings" in Bottom navigation
-        composeTestRule.onAllNodesWithText("Settings")[0].performClick()
+
+        // Settings is no longer in the bottom nav; reach it via the gear icon in the
+        // TopAppBar (AppMenu.MENU_BUTTON), mirroring the iOS toolbar gear affordance.
+        composeTestRule.onNodeWithTag(AccessibilityTags.AppMenu.MENU_BUTTON).performClick()
         composeTestRule.waitForIdle()
-        
+
         // Ensure Settings screen is displayed
         composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
         

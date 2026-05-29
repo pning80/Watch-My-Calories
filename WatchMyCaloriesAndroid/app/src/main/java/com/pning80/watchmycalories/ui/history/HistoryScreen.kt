@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,16 +29,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// onLogFood and onDeleteEntry are reserved hooks — wired by the caller (MainActivity)
-// but not yet surfaced in the Compose tree. iOS HistoryView.swift exposes a per-row
-// swipe-to-delete and an empty-state log-food action; Android port has not yet
-// reached parity on those two interactions. Tracked separately; do not delete the
-// parameters or the warning will mask actual unused-parameter regressions later.
-@Suppress("UNUSED_PARAMETER")
+// onLogFood is wired by the caller but the empty-state log-food action that iOS
+// HistoryView.swift exposes is not yet surfaced in the Compose tree. Suppressed
+// only for that parameter, not the active onDelete/onEdit callbacks below.
 @Composable
 fun HistoryScreen(
     entries: List<FoodEntry>,
-    onLogFood: () -> Unit,
+    @Suppress("UNUSED_PARAMETER") onLogFood: () -> Unit,
     onDeleteEntry: ((String) -> Unit)? = null,
     onEditEntry: ((String) -> Unit)? = null,
     onEditGroup: ((String) -> Unit)? = null
@@ -81,7 +79,6 @@ fun HistoryScreen(
     }
 }
 
-@Suppress("UNUSED_PARAMETER") // onDeleteEntry plumbed for parity with iOS swipe-to-delete; not yet wired
 @Composable
 fun HistoryDayCard(
     dateMillis: Long,
@@ -211,10 +208,14 @@ fun HistoryDayCard(
                                 )
                             } else {
                                 val entry = group.first()
-                                FoodEntryItem(
-                                    entry = entry,
-                                    onEdit = { onEditEntry?.invoke(entry.id) }
-                                )
+                                SwipeToDeleteRow(
+                                    onDelete = { onDeleteEntry?.invoke(entry.id) }
+                                ) {
+                                    FoodEntryItem(
+                                        entry = entry,
+                                        onEdit = { onEditEntry?.invoke(entry.id) }
+                                    )
+                                }
                             }
                             HorizontalDivider(
                                 modifier = Modifier.padding(start = 56.dp),
@@ -343,6 +344,45 @@ private fun MealGroupCard(entries: List<FoodEntry>, onEditGroup: (List<FoodEntry
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeToDeleteRow(
+    onDelete: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val state = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+                true
+            } else {
+                false
+            }
+        }
+    )
+    SwipeToDismissBox(
+        state = state,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.error)
+                    .padding(horizontal = 24.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = "Delete",
+                    tint = MaterialTheme.colorScheme.onError,
+                )
+            }
+        },
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
+        content = { content() },
+    )
 }
 
 @Composable

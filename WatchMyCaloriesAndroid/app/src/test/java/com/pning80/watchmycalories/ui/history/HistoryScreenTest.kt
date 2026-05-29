@@ -3,6 +3,7 @@ package com.pning80.watchmycalories.ui.history
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.pning80.watchmycalories.BaseComposeTest
+import com.pning80.watchmycalories.utils.AccessibilityTags
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,8 +26,10 @@ class HistoryScreenTest : BaseComposeTest() {
             )
         }
 
-        composeTestRule.onNodeWithTag("HistoryTitle").assertIsDisplayed()
-        composeTestRule.onNodeWithText("No meals tracked yet").assertIsDisplayed()
+        // Title is hosted by MainActivity's TopAppBar (not the standalone HistoryScreen),
+        // so we only verify the empty-state body here.
+        composeTestRule.onNodeWithTag(AccessibilityTags.History.EMPTY_STATE).assertIsDisplayed()
+        composeTestRule.onNodeWithText("No history yet").assertIsDisplayed()
     }
 
     @Test

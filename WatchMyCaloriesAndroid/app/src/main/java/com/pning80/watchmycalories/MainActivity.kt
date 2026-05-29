@@ -3,10 +3,12 @@ package com.pning80.watchmycalories
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.AddCircle
@@ -49,6 +51,7 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         val settingsDataStore = SettingsDataStore(this)
         
@@ -184,54 +187,48 @@ private fun MainAppContent(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    var topMenuExpanded by remember { mutableStateOf(false) }
-
     Scaffold(
         topBar = {
-            if (currentRoute in listOf("dashboard", "history", "settings")) {
+            if (currentRoute in listOf("dashboard", "history", "settings", "scannedMenus")) {
                 @OptIn(ExperimentalMaterial3Api::class)
                 TopAppBar(
                     title = {
+                        val titleText = when (currentRoute) {
+                            "history" -> "History"
+                            "settings" -> "Settings"
+                            "scannedMenus" -> "Scanned Menus"
+                            else -> ""
+                        }
+                        val titleTag = when (currentRoute) {
+                            "history" -> "HistoryTitle"
+                            "settings" -> "SettingsTitle"
+                            "scannedMenus" -> "ScannedMenusTitle"
+                            else -> null
+                        }
                         Text(
-                            when (currentRoute) {
-                                "history" -> "History"
-                                "settings" -> "Settings"
-                                else -> ""
-                            }
+                            text = titleText,
+                            modifier = titleTag?.let {
+                                androidx.compose.ui.Modifier.testTag(it)
+                            } ?: androidx.compose.ui.Modifier
                         )
                     },
                     actions = {
                         IconButton(
-                            onClick = { topMenuExpanded = true },
+                            onClick = {
+                                navController.navigate("settings") {
+                                    popUpTo("dashboard")
+                                }
+                            },
                             modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.AppMenu.MENU_BUTTON)
                         ) {
-                            Icon(Icons.Filled.Settings, contentDescription = "Menu")
-                        }
-                        DropdownMenu(
-                            expanded = topMenuExpanded,
-                            onDismissRequest = { topMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Scanned Menus") },
-                                onClick = {
-                                    topMenuExpanded = false
-                                    navController.navigate("scannedMenus")
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("About") },
-                                onClick = {
-                                    topMenuExpanded = false
-                                    navController.navigate("about")
-                                }
-                            )
+                            Icon(Icons.Filled.Settings, contentDescription = "Settings")
                         }
                     }
                 )
             }
         },
         bottomBar = {
-            if (currentRoute in listOf("dashboard", "history", "settings")) {
+            if (currentRoute in listOf("dashboard", "history", "settings", "scannedMenus")) {
                 val navItemColors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
                     selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -261,6 +258,18 @@ private fun MainAppContent(
                     modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.CAMERA),
                 )
                 NavigationBarItem(
+                    icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = "Scan Menu") },
+                    label = { Text("Scan Menu") },
+                    selected = currentRoute == "scannedMenus",
+                    onClick = {
+                        navController.navigate("scannedMenus") {
+                            popUpTo("dashboard")
+                        }
+                    },
+                    colors = navItemColors,
+                    modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.SCAN_MENU),
+                )
+                NavigationBarItem(
                     icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "History") },
                     label = { Text("History") },
                     selected = currentRoute == "history",
@@ -271,18 +280,6 @@ private fun MainAppContent(
                     },
                     colors = navItemColors,
                     modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.HISTORY),
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Filled.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") },
-                    selected = currentRoute == "settings",
-                    onClick = {
-                        navController.navigate("settings") {
-                            popUpTo("dashboard")
-                        }
-                    },
-                    colors = navItemColors,
-                    modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.SETTINGS),
                 )
                 }
             }
@@ -403,8 +400,10 @@ private fun MainAppContent(
                         images = images,
                         geminiRepository = geminiRepository,
                         isMetric = isMetric,
+                        initialMealType = chosenMealType
+                            ?: com.pning80.watchmycalories.data.MealType.fromTimestamp(System.currentTimeMillis()),
                         onNavigateBack = { navController.popBackStack() },
-                        onSaveLog = { result ->
+                        onSaveLog = { result, pickedMealType ->
                             // Persist the first captured image (mirrors iOS one-JPEG-per-session).
                             // All entries from this capture share the same imageID — used for
                             // grouping in History/Dashboard and as the on-disk filename. T1.4.
@@ -413,12 +412,10 @@ private fun MainAppContent(
                                 com.pning80.watchmycalories.data.ImageStorage.saveJpeg(context, firstBitmap, id)
                                 id
                             }
-                            // Meal type: the photo-library review flow sets `chosenMealType` from
-                            // the user's pick (defaulted from EXIF DateTimeOriginal). Camera-capture
-                            // and direct flows leave it null → fall back to now-based bucketing.
-                            val mealTypeRaw = (chosenMealType
-                                ?: com.pning80.watchmycalories.data.MealType.fromTimestamp(System.currentTimeMillis())
-                            ).displayName
+                            // Meal type comes from the picker in AnalysisScreen, which itself
+                            // defaults to chosenMealType (EXIF-derived from the photo-library flow)
+                            // or now-based bucketing for direct camera capture.
+                            val mealTypeRaw = pickedMealType.displayName
                             result.items.forEach { item ->
                                 val entry = com.pning80.watchmycalories.data.FoodEntry(
                                     name = item.name,
