@@ -101,6 +101,7 @@ fun CameraScreen(
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .imePadding()
                 .padding(bottom = 80.dp)
                 .size(72.dp)
                 .testTag(AccessibilityTags.Camera.CAPTURE_BUTTON),
