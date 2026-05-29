@@ -1,0 +1,5 @@
+{
+  "keyID": "__KEY_ID__",
+  "challenge": "__CHALLENGE__",
+  "attestation": "__ATTESTATION_B64__"
+}

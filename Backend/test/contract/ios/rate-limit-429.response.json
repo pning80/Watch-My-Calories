@@ -1,0 +1,11 @@
+{
+  "_meta": {
+    "capturedAt": "2026-05-29T05:59:59Z",
+    "endpoint": "/v1beta/models/default:generateContent",
+    "status": 429,
+    "retryAfter": "563"
+  },
+  "body": {
+    "error": "Too many analysis requests, please try again later."
+  }
+}

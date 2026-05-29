@@ -11,8 +11,10 @@
  *
  * Authentication uses Application Default Credentials via the existing Cloud
  * Run runtime service account (the same SA used for Firestore + Secret Manager).
- * No JSON key file is downloaded; granting the SA `roles/playintegrity.user`
- * on the Play-Console-linked GCP project is sufficient. See T1.9.e.
+ * No JSON key file is downloaded and no extra GCP IAM role binding is required:
+ * linking the Cloud project in Play Console + enabling `playintegrity.googleapis.com`
+ * on that project is the access grant. The SA just needs the `playintegrity`
+ * OAuth scope (set below) and ADC. See T1.9.e.
  *
  * The `decoder` function is injectable so tests can mock the Google API call
  * without needing real network/auth. Production code passes the default
@@ -122,10 +124,10 @@ export async function verifyPlayIntegrityToken({
  * Decode a Play Integrity token by calling Google's
  * `playintegrity.googleapis.com/v1/{packageName}:decodeIntegrityToken`.
  *
- * Auth: Application Default Credentials from the runtime service account. The
- * SA must have `roles/playintegrity.user` on the GCP project the Play Console
- * app is linked to. If ADC is unavailable (no creds at all), throws
- * `play_integrity_auth_unavailable`.
+ * Auth: Application Default Credentials from the runtime service account in
+ * the GCP project the Play Console app is linked to (no extra IAM role
+ * binding required — linking + API enablement is the grant). If ADC is
+ * unavailable (no creds at all), throws `play_integrity_auth_unavailable`.
  */
 async function decodeViaGoogleApi(token: string, packageName: string): Promise<DecodedIntegrityPayload> {
     const auth = new GoogleAuth({

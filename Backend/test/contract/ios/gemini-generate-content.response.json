@@ -1,0 +1,36 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\n  \"items\": [\n    {\n      \"name\": \"Water\",\n      \"quantity\": \"8 fl oz\",\n      \"calories\": 0,\n      \"protein\": 0,\n      \"carbs\": 0,\n      \"fat\": 0,\n      \"confidence\": 0.95\n    }\n  ]\n}",
+            "thoughtSignature": "__THOUGHT_SIG__"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1252,
+    "candidatesTokenCount": 79,
+    "totalTokenCount": 1643,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 188
+      },
+      {
+        "modality": "IMAGE",
+        "tokenCount": 1064
+      }
+    ],
+    "thoughtsTokenCount": 312,
+    "serviceTier": "standard"
+  },
+  "modelVersion": "gemini-3.1-flash-lite",
+  "responseId": "__RESPONSE_ID__"
+}
