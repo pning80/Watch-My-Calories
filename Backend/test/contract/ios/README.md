@@ -12,10 +12,8 @@ Frozen captures of the iOS-facing wire contract, used by `PORTING_CRITERIA.md` T
 | `gemini-generate-content.request.json` | Request shape for `POST /v1beta/models/default:generateContent` | mitmproxy; image bytes redacted to short placeholder |
 | `gemini-generate-content.response.json` | Response shape | same capture |
 | `rate-limit-429.response.json` | 429 body + `Retry-After` header | curl loop until limiter trips; capture last response (status, body, headers) |
-| `captured-attest-verify-request.bin` | Verbatim binary HTTP request from iOS | mitmproxy raw export; used by `legacy-ios-no-platform-header.test.ts` for structural replay |
-| `captured-gemini-request.bin` | Verbatim binary Gemini request from iOS | same; used by the same replay test |
-| `baseline-latency.md` | Pre-port p50/p95 latency for `/attest/verify` and `/v1beta/models/default:generateContent`, plus pinned Cloud Run revision tags | run 100 requests from Test iPhone 14 against current dev backend; record per `PORTING_RUNBOOK.md` 0.3 |
-| `live-equivalence.md` | Runbook for the manual live-device equivalence test (T1.10.b test 2) | written once; followed each time the backend is redeployed |
+| `baseline-latency.md` | Pre-port p50/p95 latency for `/attest/challenge` (proxy for `/attest/verify`) and `/v1beta/models/default:generateContent`, plus pinned Cloud Run revision tags | `Backend/scripts/capture-latency.sh N` |
+| `STAGE_1_DIFF.md` | Head-to-head diff of pre-port (`watchmycalories-backend-dev-00016-xmw`) vs post-Stage-1 (`watchmycalories-backend-dev-00017-xvk`) captures — evidence for the T1.10.c iOS non-regression gate | written once per major backend change |
 
 ## Redaction template
 
@@ -29,7 +27,9 @@ Where a field is redacted from a real iOS request, use these placeholders so rep
 | image bytes | `__IMAGE_B64__` |
 | assertion blob | `__ASSERTION_B64__` |
 
-The replay test reads the binary fixture, regex-substitutes the placeholders with synthesized-and-signed values, and replays against the post-port server with App Attest verification stubbed.
+## Why no `.bin` captures are committed
+
+Verbatim binary captures (raw HTTP request bytes from a real iPhone) embed real App Attest blobs and a real JPEG. They were captured once during Stage 0.3 (see `STAGE_1_DIFF.md`) and used as evidence for the iOS-non-regression check, but are not committed: the JSON fixtures above cover the contract-shape needs of every existing test. When the structural-replay test is written, captures will be regenerated via `Backend/scripts/mitm-capture.py` and either downloaded from artifact storage at CI time or synthesized at test setup time (deterministic, no real device data). The placeholder names listed in the redaction template above are the contract that future test will rely on.
 
 ## Snapshot update policy
 

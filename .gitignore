@@ -53,3 +53,7 @@ test-results/
 #
 .env
 .env.*
+
+# Stage 0.3 capture intermediates — raw, un-redacted mitmproxy output.
+# Only the redacted files in Backend/test/contract/ios/ (no .intermediate prefix) are committed.
+Backend/test/contract/ios/.intermediate*/

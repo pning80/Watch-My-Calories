@@ -23,16 +23,16 @@ Scope: locked-in decisions, scaffolding, baselines, external enrollment. No port
 
 ### 0.2 — External enrollment (human-paced, blocks Stage 1)
 
-**Design note:** authentication uses Application Default Credentials via the existing Cloud Run runtime service account. **No JSON key is downloaded or stored anywhere.** The runtime SA gets one extra IAM role; the backend's existing Firestore/Secret-Manager auth pattern handles the rest.
+**Design note:** authentication uses Application Default Credentials via the existing Cloud Run runtime service account. **No JSON key is downloaded or stored anywhere.** Play Integrity access is granted implicitly by (a) linking the Cloud project in Play Console + (b) enabling `playintegrity.googleapis.com` on that project — no separate GCP IAM role binding is required. The backend's existing Firestore/Secret-Manager auth pattern handles the rest.
 
 Human-paced (Play Console UI; identity verification takes 2–14 days):
-- [ ] Create a Google Play developer account ($25, https://play.google.com/console/signup). Identity verification gates everything else here.
-- [ ] In Play Console, create an app entry. Set the package name to exactly `com.pning80.watchmycalories` (case matters; cannot be changed later). No build upload required at this stage.
-- [ ] In Play Console → app → **Test and release** → **App integrity** → **Play Integrity API** tab → **Link Cloud project**. Pick `gen-lang-client-0629636941` (project number `657698311127`).
+- [x] Create a Google Play developer account ($25, https://play.google.com/console/signup). Identity verification gates everything else here. **Done (user-confirmed 2026-05-28).**
+- [x] In Play Console, create an app entry. Set the package name to exactly `com.pning80.watchmycalories` (case matters; cannot be changed later). No build upload required at this stage. **Done (user-confirmed 2026-05-28).**
+- [x] In Play Console → app → **Test and release** → **App integrity** → **Play Integrity API** tab → **Link Cloud project**. Pick `gen-lang-client-0629636941` (project number `657698311127`). **Done (user-confirmed 2026-05-28).**
 
 Machine-paced (gcloud — I can do these autonomously once the Play Console steps above are done; some can be done in parallel):
 - [x] Enable the Play Integrity API on the GCP project: `gcloud services enable playintegrity.googleapis.com --project=gen-lang-client-0629636941`.
-- [ ] Grant `roles/playintegrity.user` to `watchmycalories-backend@gen-lang-client-0629636941.iam.gserviceaccount.com` (used by both dev and prod Cloud Run services).
+- [x] ~~Grant `roles/playintegrity.user` to the runtime SA~~ — **N/A. Verified 2026-05-28**: this role does not exist in GCP IAM (`gcloud iam roles list --filter="name~playintegrity"` returns empty; explicit `roles/playintegrity.user` describe returns "not found"; `add-iam-policy-binding` with it errors `INVALID_ARGUMENT: Role roles/playintegrity.user is not supported for this resource`). Per [Google's Standard API docs](https://developer.android.com/google/play/integrity/standard), Play Integrity access is granted implicitly by the Play-Console ⇄ Cloud-project link + the `playintegrity.googleapis.com` enablement. The runtime SA just needs the `https://www.googleapis.com/auth/playintegrity` OAuth scope, which `Backend/src/play-integrity.ts:131-132` already requests via ADC.
 - [x] Update `Backend/deploy.sh` to pass `PLAY_INTEGRITY_PROJECT_NUMBER=657698311127` and `PLAY_INTEGRITY_PACKAGE_NAME=com.pning80.watchmycalories` as env vars to Cloud Run. **Done.** The values are set with shell-defaults at the top of `deploy.sh` so a deploy works even before `.env.*` are updated.
 
 Known values to bake in (already true today):
@@ -43,16 +43,20 @@ Known values to bake in (already true today):
 
 ### 0.3 — Baseline capture (do before any backend code lands)
 
-- [ ] Capture pre-port iOS request samples from a Test iPhone 14 against the current `watchmycalories-backend-dev`:
-  - `/attest/challenge` response → save as `Backend/test/contract/ios/attest-challenge.response.json`.
-  - `/attest/verify` request + response → `attest-verify.request.json`, `attest-verify.response.json` (redact keyID and challenge to template placeholders).
-  - `/v1beta/models/default:generateContent` request + response → `gemini-generate-content.request.json`, `gemini-generate-content.response.json` (redact image bytes to a small placeholder).
-  - Force a 429 (hammer the route from a script) and capture the response → `rate-limit-429.response.json` (preserve `Retry-After`).
-- [ ] Capture verbatim binary requests (for T1.10.b structural replay):
-  - `Backend/test/contract/ios/captured-attest-verify-request.bin`
-  - `Backend/test/contract/ios/captured-gemini-request.bin`
-  - Method: run a Test iPhone 14 build against dev with mitmproxy in trusted-CA mode; save requests; redact keyID bytes to a template marker the replay test substitutes back.
-- [ ] Capture iOS-path p50 latency baselines (T1.10.h) for `/attest/verify` and `/v1beta/models/default:generateContent`. Run 100 requests from a Test iPhone 14 against `watchmycalories-backend-dev` (current revision); record p50 + p95 in `Backend/test/contract/ios/baseline-latency.md`. Pin the Cloud Run revision SHA in that file.
+**Status (2026-05-28): complete.** All fixtures captured against pre-port revision
+`watchmycalories-backend-dev-00016-xmw` via a brief rollback (currently serving
+`00017-xvk`). Pre-port↔post-Stage-1 head-to-head diff recorded in
+`Backend/test/contract/ios/STAGE_1_DIFF.md` — iOS-facing wire contract is byte-identical.
+Helper scripts under `Backend/scripts/` (`capture-429.sh`, `capture-latency.sh`,
+`redact-fixture.sh`, `mitm-capture.py`).
+
+- [x] Capture pre-port iOS request samples from a Test iPhone 14 against `watchmycalories-backend-dev-00016-xmw`:
+  - `Backend/test/contract/ios/attest-challenge.response.json` ✓
+  - `Backend/test/contract/ios/attest-verify.{request,response}.json` ✓ (keyID/challenge/attestation redacted to `__PLACEHOLDERS__`)
+  - `Backend/test/contract/ios/gemini-generate-content.{request,response}.json` ✓ (image bytes + `thoughtSignature` + `responseId` redacted)
+  - `Backend/test/contract/ios/rate-limit-429.response.json` ✓ (`Retry-After: 563` preserved in `_meta`)
+- [x] Capture verbatim binary requests for T1.10.b structural replay → **captured and used at-evidence-time, intentionally not committed.** The 5.8 MB `captured-gemini-request.bin` embeds a real JPEG and the 8 KB `captured-attest-verify-request.bin` embeds a real iPhone App Attest blob; both were used to validate the pre↔post-Stage-1 byte-shape diff (see `Backend/test/contract/ios/STAGE_1_DIFF.md`). The structural-replay test (T1.10.b proper) does not yet exist; when it lands, captures will be regenerated via `Backend/scripts/mitm-capture.py` and either downloaded from artifact storage at CI time or synthesized at test setup time (deterministic, no real device data). Method for the in-session capture: Test iPhone 14 + mitmproxy with passthrough for `*.apple.com:443` and `*.icloud.com:443` (DCAppAttestService uses OS-level cert pinning that breaks under MITM without passthrough).
+- [x] Capture iOS-path p50 latency baseline → `Backend/test/contract/ios/baseline-latency.md` (revision `watchmycalories-backend-dev-00016-xmw` pinned). N=30 (gemini rate-limit cap is 100/window; pre-port + post-deploy capture both fit in budget). Results: `/attest/challenge` p50=107ms p95=130ms, `/v1beta/models/default:generateContent` p50=1229ms p95=1612ms. **Post-deploy re-capture deferred** until the Mac's rate-limit window resets (~15 min after last call); see `STAGE_1_DIFF.md`.
 - [x] **Record the pre-port Cloud Run revision tags for rollback (T1.10.g).** Captured 2026-05-16:
   - **prod** `watchmycalories-backend-00010-pxt` (deployed 2026-05-16T22:30:12Z, 100% traffic; image digest `sha256:d0def109667ee290d0dfeb187846f333939052139b88fd9f61884c4d186b2035`).
     - Deeper-rollback safety: previous revision was `watchmycalories-backend-00009-59r` (2026-03-26T20:01:11Z, digest `sha256:5f23820e16e81d46e539b695d8c1dc136c1d923d9d4dd7ab1222667f5ce0538f`). Use this if 00010-pxt turns out to be a porting-touched build.
@@ -210,14 +214,14 @@ Use this section to track what's blocking. Update as items complete.
 
 | Item | Owner | Status |
 |---|---|---|
-| Google Play developer account ($25, identity verification 2–14 days) | you | open |
-| Play Console app entry for `com.pning80.watchmycalories` | you | open |
-| Play Console → app → App integrity → Link Cloud project to `gen-lang-client-0629636941` | you | open |
+| Google Play developer account ($25, identity verification 2–14 days) | you | **done** (2026-05-28) |
+| Play Console app entry for `com.pning80.watchmycalories` | you | **done** (2026-05-28) |
+| Play Console → app → App integrity → Link Cloud project to `gen-lang-client-0629636941` | you | **done** (2026-05-28) |
 | Play Integrity API enabled on GCP project | agent | **done** (2026-05-16) |
-| `roles/playintegrity.user` granted to `watchmycalories-backend@...` runtime SA | agent (gated on link step above) | open |
+| ~~`roles/playintegrity.user` granted to runtime SA~~ — N/A; not a real GCP role, access granted via Play-Console link + API enablement | — | **n/a** (verified 2026-05-28) |
 | `PLAY_INTEGRITY_PROJECT_NUMBER` / `PLAY_INTEGRITY_PACKAGE_NAME` wired into `deploy.sh` | agent | **done** (2026-05-16) |
 | Pre-port prod + dev Cloud Run revision tags recorded for T1.10.g rollback | agent | **done** — see Stage 0.3 |
-| Test iPhone 14 available for baseline capture (0.3) | you | open |
-| mitmproxy / Charles set up with trusted CA for iOS capture | you | open |
+| Test iPhone 14 available for baseline capture (0.3) | you | **done** (2026-05-28) |
+| mitmproxy / Charles set up with trusted CA for iOS capture | you | **done** (2026-05-28) — note: requires `--set ignore_hosts='(.*\.)?apple\.com:443\|(.*\.)?icloud\.com:443'` for DCAppAttestService to function |
 | Pixel 9a available for Android end-to-end | you | open |
 | `./deploy.sh dev` actually run with the porting-touched backend | you (or agent on your go-ahead) | open — Stage 1 code is in; iOS path is untouched, Android path returns 503 cleanly until IAM grant lands |

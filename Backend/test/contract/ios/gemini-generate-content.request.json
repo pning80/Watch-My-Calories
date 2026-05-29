@@ -1,0 +1,17 @@
+{
+  "contents": [
+    {
+      "parts": [
+        {
+          "text": "Analyze these food images. Identify the food items, estimate the portion size, and calculate the calories.\nPrefer US customary units for quantities. Use oz for weight, fl oz for liquid volume, and cups/tbsp/tsp for other volumes. Examples: 6 oz, 8 fl oz, 1 cup, 2 pieces.\nReturn ONLY a raw JSON object (no markdown, no code blocks) with this structure:\n{\n  \"items\": [\n    {\n      \"name\": \"Food Name\",\n      \"quantity\": \"Estimated Quantity (e.g. 1 cup, 6 oz, 2 pieces)\",\n      \"calories\": 150,\n      \"protein\": 10,\n      \"carbs\": 20,\n      \"fat\": 5,\n      \"confidence\": 0.95\n    }\n  ]\n}"
+        },
+        {
+          "inline_data": {
+            "data": "__IMAGE_B64__",
+            "mime_type": "image/jpeg"
+          }
+        }
+      ]
+    }
+  ]
+}
