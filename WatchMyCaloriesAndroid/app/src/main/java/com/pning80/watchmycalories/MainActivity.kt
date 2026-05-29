@@ -362,8 +362,33 @@ private fun MainAppContent(
             composable("camera") {
                 CameraScreen(onPhotosCaptured = { bitmaps ->
                     analysisImages = bitmaps
-                    navController.navigate("analysis")
+                    // Reset any prior meal type so the review screen defaults to now.
+                    chosenMealType = null
+                    navController.navigate("cameraReview")
                 })
+            }
+            composable("cameraReview") {
+                val images = analysisImages
+                if (images != null) {
+                    com.pning80.watchmycalories.ui.camera.CameraReviewScreen(
+                        bitmaps = images,
+                        settingsDataStore = settingsDataStore,
+                        onRetake = {
+                            // Drop captures + return to a fresh camera (popUpTo
+                            // inclusive forces CameraScreen state to reset).
+                            analysisImages = null
+                            navController.navigate("camera") {
+                                popUpTo("camera") { inclusive = true }
+                            }
+                        },
+                        onUse = { mealType ->
+                            chosenMealType = mealType
+                            navController.navigate("analysis") {
+                                popUpTo("dashboard")
+                            }
+                        },
+                    )
+                }
             }
             composable("photoLibraryReview") {
                 val bmp = photoLibraryReviewBitmap
