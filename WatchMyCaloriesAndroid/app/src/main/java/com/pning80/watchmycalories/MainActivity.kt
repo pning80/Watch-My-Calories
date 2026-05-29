@@ -191,7 +191,15 @@ private fun MainAppContent(
             if (currentRoute in listOf("dashboard", "history", "settings")) {
                 @OptIn(ExperimentalMaterial3Api::class)
                 TopAppBar(
-                    title = { Text("Watch My Calories") },
+                    title = {
+                        Text(
+                            when (currentRoute) {
+                                "history" -> "History"
+                                "settings" -> "Settings"
+                                else -> ""
+                            }
+                        )
+                    },
                     actions = {
                         IconButton(
                             onClick = { topMenuExpanded = true },
@@ -224,6 +232,13 @@ private fun MainAppContent(
         },
         bottomBar = {
             if (currentRoute in listOf("dashboard", "history", "settings")) {
+                val navItemColors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                )
                 NavigationBar {
                     NavigationBarItem(
                     icon = { Icon(Icons.Filled.Home, contentDescription = "Dashboard") },
@@ -234,6 +249,7 @@ private fun MainAppContent(
                             popUpTo("dashboard") { inclusive = true }
                         }
                     },
+                    colors = navItemColors,
                     modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.DASHBOARD),
                 )
                 NavigationBarItem(
@@ -241,6 +257,7 @@ private fun MainAppContent(
                     label = { Text("Log Food") },
                     selected = false,
                     onClick = { showLogFoodSheet = true },
+                    colors = navItemColors,
                     modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.CAMERA),
                 )
                 NavigationBarItem(
@@ -252,6 +269,7 @@ private fun MainAppContent(
                             popUpTo("dashboard")
                         }
                     },
+                    colors = navItemColors,
                     modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.HISTORY),
                 )
                 NavigationBarItem(
@@ -263,6 +281,7 @@ private fun MainAppContent(
                             popUpTo("dashboard")
                         }
                     },
+                    colors = navItemColors,
                     modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.SETTINGS),
                 )
                 }

@@ -114,18 +114,11 @@ fun SettingsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            AppIconView(modifier = Modifier.size(44.dp))
-            Text(
-                "Settings",
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.testTag("SettingsTitle")
-            )
-        }
-
-        // Top-of-form banner ad — mirrors iOS SettingsView.swift:51
-        // (BannerAdView in its own Section above "App Appearance").
+        // Title row removed — Scaffold TopAppBar in MainActivity provides "Settings" header.
+        // App icon now sits inline as the leading element of App Appearance section.
+        // BannerAdView is conditionally rendered inside BannerAdView() based on
+        // whether a real (non-Google-test) ad unit ID is wired; in debug builds with
+        // the placeholder test unit it returns Unit, avoiding the "Test Ad" banner.
         BannerAdView()
 
         // ── App Appearance ──
