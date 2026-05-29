@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Pure-Compose activity theme. We do NOT want a system ActionBar (it
+        renders android:label "Watch My Calories" above our own Compose
+        TopAppBar, producing duplicate titles). Compose owns the entire UI.
+    -->
+    <style name="Theme.WatchMyCalories" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+</resources>

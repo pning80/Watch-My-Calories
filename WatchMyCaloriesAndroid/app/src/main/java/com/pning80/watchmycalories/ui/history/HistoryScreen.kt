@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,14 +48,6 @@ fun HistoryScreen(
     }.toList().sortedByDescending { it.first }
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Text(
-            text = "History",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp).testTag("HistoryTitle")
-        )
-
         if (groupedEntries.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -62,7 +56,11 @@ fun HistoryScreen(
                     .testTag(AccessibilityTags.History.EMPTY_STATE),
                 contentAlignment = Alignment.Center,
             ) {
-                EmptyStateCard()
+                EmptyStateCard(
+                    title = "No history yet",
+                    subtitle = "Your tracked meals will appear here.",
+                    icon = Icons.AutoMirrored.Filled.MenuBook,
+                )
             }
         } else {
             LazyColumn(

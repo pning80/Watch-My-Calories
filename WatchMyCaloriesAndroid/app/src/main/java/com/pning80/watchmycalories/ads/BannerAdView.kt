@@ -11,8 +11,15 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
+// Google-provided test ad units — visible "Test Ad" placeholder creative. We
+// don't want this rendered in the user-facing UI even in debug builds because
+// it looks like a bug. Render nothing while the project is still on the
+// placeholder unit ID; flip on once real AdMob units are wired in AdManager.
+private val TEST_AD_UNIT_PREFIXES = listOf("ca-app-pub-3940256099942544/")
+
 @Composable
 fun BannerAdView() {
+    if (TEST_AD_UNIT_PREFIXES.any { AdManager.BANNER_UNIT_ID.startsWith(it) }) return
     AndroidView(
         modifier = Modifier
             .fillMaxWidth()

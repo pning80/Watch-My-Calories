@@ -7,6 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -312,7 +315,11 @@ fun MacroProportionalBar(
 // ─── Empty State Card ────────────────────────────────────────────
 
 @Composable
-fun EmptyStateCard() {
+fun EmptyStateCard(
+    title: String = "No meals tracked yet",
+    subtitle: String = "Tap to scan your first meal.",
+    icon: ImageVector = Icons.Filled.PhotoCamera,
+) {
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -329,18 +336,23 @@ fun EmptyStateCard() {
             modifier = Modifier.size(64.dp)
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Text("📷", fontSize = 28.sp)
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(32.dp)
+                )
             }
         }
 
         Text(
-            "No meals tracked yet",
+            title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            "Tap to scan your first meal.",
+            subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
