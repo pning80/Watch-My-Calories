@@ -161,8 +161,36 @@ If the user wants a dip-test of the framework before committing to the full ~23�
 
 ---
 
-## Open questions for the user
+## User decisions (resolved 2026-05-30)
 
-1. **Architectural refactor (Phase 7)** — do you want Menu Analysis / Menu Camera / Photo Library tested via refactor (Option B, ~12 hr), or accepted as documented deviations (Option A, 0 hr)?
-2. **Phasing** — land Phase 1 alone as a PR for review before Phase 3 starts, or batch Phases 1+3 into one bigger PR?
-3. **Coverage bar relaxation** — the strict "instrumented-only" bar costs ~30 hr of test conversion vs ~6 hr if Robolectric were accepted as evidence for non-system-dependent screens (Dashboard, History, Settings, Onboarding, Manual Entry). Do you want to relax for these specifically?
+1. **Phase 7 — architectural refactor (Option B):** introduce protocol-based service injection for menu analysis, photo library, and camera state. Adds ~12 hr but closes the ~30 Class-C `BLOCK-IOS` rows.
+2. **Phasing — Phase 1 alone as a PR:** landed as `https://github.com/pning80/Watch-My-Calories/pull/1`. Subsequent phases land as separate PRs.
+3. **Coverage bar relaxed for non-system surfaces:** Robolectric counts as adequate evidence for Dashboard, History, Settings, Onboarding, Manual Entry. Camera, Health Connect, App Attest, animations still require instrumented coverage. Saves ~24 hr in Phase 4 conversion work.
+
+## Revised effort summary
+
+| Phase | Status | Effort (revised) |
+|---|---|---:|
+| 1. iOS XCUITest extension | **landed as PR #1** (2026-05-30) | done |
+| 2. iOS bug fixes (IOS-BUG-1 + IOS-BUG-2) | not started | ~1.5 hr |
+| 3. Android test infrastructure | not started (prereq for 4+5) | ~6–10 hr |
+| 4. Robolectric → instrumented uplift (**relaxed bar**) | not started | **~1 hr** (down from 4 hr — only system-coupled surfaces need uplift) |
+| 5. New iOS tests mirrored to Android | not started | ~6 hr |
+| 6. Run + iterate | not started | ~3 hr |
+| 7. Architectural refactor (MenuAnalysis / MenuCamera / PhotoLibrary) (**Option B**) | not started | ~12 hr |
+| 8. Final log + sign-off | not started | ~1 hr |
+| **Total remaining to full closure** | | **~30 hr** |
+
+## Recommended next-session order
+
+With the three decisions resolved, the optimal sequence is:
+
+1. **Phase 2** (iOS bug fixes from audit, ~1.5 hr) — small, low-risk, each its own PR. Fixes the IOS-BUG-1 + IOS-BUG-2 findings.
+2. **Phase 7** (architectural refactor, ~12 hr) — protocol-extract MenuAnalysisService + photo library mock + camera state injection. Unlocks ~30 previously-blocked test rows. Its own PR.
+3. **Phase 3** (Android test infrastructure, ~6–10 hr) — intent-driven seed, mock GeminiRepository, TestHooks. Its own PR.
+4. **Phase 4** (Robolectric → instrumented uplift for system-coupled surfaces only, ~1 hr) — folded into Phase 3's PR if surface count is small enough.
+5. **Phase 5** (Android mirrors of iOS tests, ~6 hr) — its own PR.
+6. **Phase 6** (run + iterate, ~3 hr) — closes out FAIL rows; produces final clean test report.
+7. **Phase 8** (sign-off + matrix update, ~1 hr) — landed as last PR.
+
+Phase 2 can run in parallel with Phase 7; Phases 5/6 must wait for 3 (and 4 if uplifting).
