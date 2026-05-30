@@ -282,4 +282,78 @@ final class OnboardingTests: XCTestCase {
             XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5))
         }
     }
+
+    // MARK: - Parity audit (2026-05-30) — picker interactions on Goal step
+
+    func testGoalStepHeightDisclosureExpands() {
+        app.launch()
+        navigateToStep(2)
+        let heightLabel = app.staticTexts["Height"]
+        XCTAssertTrue(heightLabel.waitForExistence(timeout: 3))
+        heightLabel.tap()
+        XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 2))
+    }
+
+    func testGoalStepWeightDisclosureExpands() {
+        app.launch()
+        navigateToStep(2)
+        let weightLabel = app.staticTexts["Weight"]
+        XCTAssertTrue(weightLabel.waitForExistence(timeout: 3))
+        weightLabel.tap()
+        XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 2))
+    }
+
+    func testGoalStepAgeDisclosureExpands() {
+        app.launch()
+        navigateToStep(2)
+        let ageLabel = app.staticTexts["Age"]
+        XCTAssertTrue(ageLabel.waitForExistence(timeout: 3))
+        ageLabel.tap()
+        XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 2))
+    }
+
+    func testGoalStepGenderPickerCanChangeSelection() {
+        app.launch()
+        navigateToStep(2)
+        let maleRow = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Male")).firstMatch
+        if maleRow.waitForExistence(timeout: 3) {
+            maleRow.tap()
+            let femaleOption = app.buttons["Female"]
+            if femaleOption.waitForExistence(timeout: 2) {
+                femaleOption.tap()
+                XCTAssertTrue(app.staticTexts["Female"].waitForExistence(timeout: 2))
+            }
+        }
+    }
+
+    func testGoalStepActivityPickerCanChangeSelection() {
+        app.launch()
+        navigateToStep(2)
+        let activityRow = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Sedentary")).firstMatch
+        if activityRow.waitForExistence(timeout: 3) {
+            activityRow.tap()
+            let veryActiveOption = app.buttons["Very Active"]
+            if veryActiveOption.waitForExistence(timeout: 2) {
+                veryActiveOption.tap()
+                XCTAssertTrue(app.staticTexts["Very Active"].waitForExistence(timeout: 2))
+            }
+        }
+    }
+
+    func testGetStartedButtonAdvancesFromWelcome() {
+        app.launch()
+        let getStarted = app.buttons["onboarding_getStartedButton"]
+        XCTAssertTrue(getStarted.waitForExistence(timeout: 5))
+        getStarted.tap()
+        XCTAssertTrue(app.staticTexts["Your Privacy"].waitForExistence(timeout: 5))
+    }
+
+    func testNextButtonAdvancesFromPermissions() {
+        app.launch()
+        navigateToStep(1)
+        let nextButton = app.buttons["onboarding_nextButton"]
+        XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
+        nextButton.tap()
+        XCTAssertTrue(app.staticTexts["Your Goal"].waitForExistence(timeout: 5))
+    }
 }

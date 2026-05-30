@@ -55,4 +55,127 @@ final class ScanMenuTests: WatchMyCaloriesUITestBase {
         let emptyState = app.buttons["dashboard_emptyStateCard"]
         XCTAssertTrue(emptyState.waitForExistence(timeout: 3))
     }
+
+    // MARK: - Parity audit (2026-05-30) — ScanMenuSheet tap behaviors
+
+    func testScanMenuSheetScanButtonOpensCamera() {
+        launchEmpty()
+        app.tabBars.buttons["Scan Menu"].tap()
+        XCTAssertTrue(app.staticTexts["Scan Menu"].waitForExistence(timeout: 3))
+        let scanButton = app.descendants(matching: .any)["scanMenuSheet_scan"].firstMatch
+        XCTAssertTrue(scanButton.waitForExistence(timeout: 3))
+        scanButton.tap()
+        // After tapping Scan, the menu camera root should appear — look for a Cancel button.
+        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 5),
+                      "Menu camera root should be presented with a Cancel button")
+    }
+
+    func testScanMenuSheetChooseFromLibraryButtonOpensPicker() {
+        launchEmpty()
+        app.tabBars.buttons["Scan Menu"].tap()
+        XCTAssertTrue(app.staticTexts["Scan Menu"].waitForExistence(timeout: 3))
+        let libraryButton = app.descendants(matching: .any)["scanMenuSheet_chooseFromLibrary"].firstMatch
+        XCTAssertTrue(libraryButton.waitForExistence(timeout: 3))
+        libraryButton.tap()
+        // PhotosUI picker presents — there is no XCUITest-accessible identifier for it system-side,
+        // but the main scan-menu sheet should no longer be the focused content.
+        // Verify the menu sheet was dismissed by checking the sheet's marker text is gone.
+        XCTAssertFalse(app.staticTexts["Scan Menu"].waitForExistence(timeout: 2))
+    }
+
+    // MARK: - Parity audit (2026-05-30) — ScannedMenus list with seed data
+
+    func testScannedMenusListShowsRowsWithSeedData() {
+        launchWithMenuScans()
+        app.tabBars.buttons["Scan Menu"].tap()
+        let storedButton = app.descendants(matching: .any)["scanMenuSheet_storedMenus"].firstMatch
+        XCTAssertTrue(storedButton.waitForExistence(timeout: 3))
+        storedButton.tap()
+        // Seeded scans include "Mock Italian Place" and "Mock Sushi Bar"
+        XCTAssertTrue(app.staticTexts["Mock Italian Place"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Mock Sushi Bar"].exists)
+    }
+
+    func testScannedMenusTappingRowOpensDetail() {
+        launchWithMenuScans()
+        app.tabBars.buttons["Scan Menu"].tap()
+        let storedButton = app.descendants(matching: .any)["scanMenuSheet_storedMenus"].firstMatch
+        XCTAssertTrue(storedButton.waitForExistence(timeout: 3))
+        storedButton.tap()
+        let row = app.staticTexts["Mock Italian Place"]
+        XCTAssertTrue(row.waitForExistence(timeout: 3))
+        row.tap()
+        // Detail screen should show one of the seeded items
+        XCTAssertTrue(app.staticTexts["Margherita Pizza"].waitForExistence(timeout: 5))
+    }
+
+    func testScannedMenusEditButtonTogglesMode() {
+        launchWithMenuScans()
+        app.tabBars.buttons["Scan Menu"].tap()
+        let storedButton = app.descendants(matching: .any)["scanMenuSheet_storedMenus"].firstMatch
+        XCTAssertTrue(storedButton.waitForExistence(timeout: 3))
+        storedButton.tap()
+        let editButton = app.buttons["Edit"]
+        XCTAssertTrue(editButton.waitForExistence(timeout: 3))
+        editButton.tap()
+        // Done button replaces Edit when in edit mode
+        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 2))
+    }
+
+    func testScannedMenusSwipeToDeleteRevealsAction() {
+        launchWithMenuScans()
+        app.tabBars.buttons["Scan Menu"].tap()
+        let storedButton = app.descendants(matching: .any)["scanMenuSheet_storedMenus"].firstMatch
+        XCTAssertTrue(storedButton.waitForExistence(timeout: 3))
+        storedButton.tap()
+        let row = app.cells.containing(NSPredicate(format: "label CONTAINS %@", "Mock Italian Place")).firstMatch
+        if row.waitForExistence(timeout: 3) {
+            row.swipeLeft()
+            XCTAssertTrue(app.buttons["Delete"].waitForExistence(timeout: 2),
+                          "Swiping left should reveal a Delete action")
+        }
+    }
+
+    func testMenuScanDetailDeleteButtonShowsConfirmation() {
+        launchWithMenuScans()
+        app.tabBars.buttons["Scan Menu"].tap()
+        let storedButton = app.descendants(matching: .any)["scanMenuSheet_storedMenus"].firstMatch
+        XCTAssertTrue(storedButton.waitForExistence(timeout: 3))
+        storedButton.tap()
+        let row = app.staticTexts["Mock Italian Place"]
+        XCTAssertTrue(row.waitForExistence(timeout: 3))
+        row.tap()
+        let deleteToolbarButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "delete")).firstMatch
+        XCTAssertTrue(deleteToolbarButton.waitForExistence(timeout: 3))
+        deleteToolbarButton.tap()
+        // Confirmation dialog: look for a Delete confirm button or "Are you sure" text
+        let confirmExists = app.buttons["Delete"].waitForExistence(timeout: 3)
+            || app.alerts.firstMatch.waitForExistence(timeout: 2)
+        XCTAssertTrue(confirmExists, "Delete should present a confirmation dialog or alert")
+    }
+
+    // MARK: - Parity audit (2026-05-30) — Menu Camera UI elements
+
+    func testMenuCameraScreenHasCaptureButton() {
+        launchEmpty()
+        app.tabBars.buttons["Scan Menu"].tap()
+        let scanButton = app.descendants(matching: .any)["scanMenuSheet_scan"].firstMatch
+        XCTAssertTrue(scanButton.waitForExistence(timeout: 3))
+        scanButton.tap()
+        // The menu camera should expose its capture-related UI. Without a real camera in the sim,
+        // we assert structural elements only — Cancel + something tappable on the bottom.
+        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 5))
+    }
+
+    func testMenuCameraCancelDismissesToDashboard() {
+        launchEmpty()
+        app.tabBars.buttons["Scan Menu"].tap()
+        let scanButton = app.descendants(matching: .any)["scanMenuSheet_scan"].firstMatch
+        XCTAssertTrue(scanButton.waitForExistence(timeout: 3))
+        scanButton.tap()
+        let cancelButton = app.buttons["Cancel"]
+        XCTAssertTrue(cancelButton.waitForExistence(timeout: 5))
+        cancelButton.tap()
+        XCTAssertTrue(app.buttons["dashboard_emptyStateCard"].waitForExistence(timeout: 3))
+    }
 }

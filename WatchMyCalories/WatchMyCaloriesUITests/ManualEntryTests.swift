@@ -219,4 +219,72 @@ final class ManualEntryTests: WatchMyCaloriesUITestBase {
 
         XCTAssertTrue(app.navigationBars["Log Food"].waitForExistence(timeout: 3))
     }
+
+    // MARK: - Parity audit (2026-05-30) — nutrition field coverage
+
+    /// The nutrition `NutrientField` uses `TextField("—", text: ...)` so the underlying
+    /// XCUIElement label is "—", not "Protein". We index by position: after expanding the
+    /// disclosure, the 4th/5th/6th text fields (0-indexed 3/4/5) are Protein/Carbs/Fat.
+    /// The first three are Food Name / Calories / Quantity.
+    private func expandNutritionAndGetField(at index: Int) -> XCUIElement {
+        let disclosure = app.staticTexts["Nutrition Details (optional)"]
+        XCTAssertTrue(disclosure.waitForExistence(timeout: 3))
+        disclosure.tap()
+        // Wait for the new fields to appear (count should grow from 3 to 6)
+        let predicate = NSPredicate(format: "count >= 6")
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: app.textFields)
+        _ = XCTWaiter().wait(for: [expectation], timeout: 3)
+        return app.textFields.element(boundBy: index)
+    }
+
+    func testProteinFieldAcceptsInput() {
+        openManualEntry()
+        let proteinField = expandNutritionAndGetField(at: 3)
+        XCTAssertTrue(proteinField.waitForExistence(timeout: 3))
+        proteinField.tap()
+        proteinField.typeText("12")
+        XCTAssertEqual(proteinField.value as? String, "12")
+    }
+
+    func testCarbsFieldAcceptsInput() {
+        openManualEntry()
+        let carbsField = expandNutritionAndGetField(at: 4)
+        XCTAssertTrue(carbsField.waitForExistence(timeout: 3))
+        carbsField.tap()
+        carbsField.typeText("30")
+        XCTAssertEqual(carbsField.value as? String, "30")
+    }
+
+    func testFatFieldAcceptsInput() {
+        openManualEntry()
+        let fatField = expandNutritionAndGetField(at: 5)
+        XCTAssertTrue(fatField.waitForExistence(timeout: 3))
+        fatField.tap()
+        fatField.typeText("8")
+        XCTAssertEqual(fatField.value as? String, "8")
+    }
+
+    func testManualEntryWithFullNutritionSaves() {
+        openManualEntry()
+        let nameField = app.textFields["manualEntry_foodName"]
+        nameField.tap()
+        nameField.typeText("Mock Salad")
+
+        let caloriesField = app.textFields["manualEntry_calories"]
+        caloriesField.tap()
+        caloriesField.typeText("400")
+
+        let quantityField = app.textFields["manualEntry_quantity"]
+        quantityField.tap()
+        quantityField.typeText("1 bowl")
+
+        let proteinField = expandNutritionAndGetField(at: 3)
+        proteinField.tap()
+        proteinField.typeText("25")
+
+        let saveButton = app.buttons["manualEntry_saveButton"]
+        XCTAssertTrue(saveButton.isEnabled)
+        saveButton.tap()
+        XCTAssertTrue(app.staticTexts["Mock Salad"].waitForExistence(timeout: 5))
+    }
 }
