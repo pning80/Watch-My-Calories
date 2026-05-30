@@ -346,3 +346,21 @@ The Explore agent's full report (179 lines, file:line citations) is captured in 
 - Dark-mode color tokens defined in `Color.kt` (e.g. `CwPrimaryDark = Color(0xFF66CC99)`) need perceptual verification against iOS dark mode.
 
 These don't change the phasing — they roll into Phase E (spacing) and Phase F (polish).
+
+---
+
+## Phase status snapshot (added 2026-05-29 — document otherwise frozen)
+
+This audit is **frozen at its 2026-05-28 timestamp**. Phase-by-phase status update for readers who arrive here later, so they don't act on stale gaps:
+
+| Phase | Status | Notes |
+|---|---|---|
+| A | ✅ landed (`409a517 Android Phase A: kill visible UI embarrassments`) | Visible screenshot-level fixes from §8.A. |
+| B | ✅ landed (`6109b2c Android: visible-parity audit corrections (Phases B–F)`) | Dashboard StatRow icons + macro bars + Burned row. |
+| C | ✅ landed (`fcee0f4 Android: camera flow gets MealTypePicker before analysis`) | C1 closes the last P0 functional gap: `CameraReviewScreen.kt` inserts the picker between capture and analysis. C2 adds `imePadding()` on capture button. C3 left as `LONG_PRESS` (heavier match for iOS `.heavy` than the audit's suggested `VIRTUAL_KEY`). |
+| D | ✅ mostly landed (`6109b2c`, then `D-004` recorded in `PORTING_DEVIATIONS.md`) | Calculate-Recommended-Goal button wired; swipe-to-delete wired in `HistoryScreen`; bottom nav restructured to iOS layout (Dashboard / Log Food / Scan Menu / History; Settings via gear). D2 slider deviation now documented as `D-004`. |
+| E | ✅ landed (`4d9661a Android: spacing-system rollout (PORT_AUDIT Phase E2/E3/E4)`) | `cwCard()` refactored to padding-inside-only and theme-aware; `HeroSummaryCard` / `EmptyStateCard` / `HistoryDayCard` outer paddings stripped; `Spacing.*` tokens swept across 13 screens (~88 replacements). |
+| F | ✅ partial (`6109b2c` + `348b9e6 Android: opt in to predictive back gesture`) | Edge-to-edge migrated (`WindowCompat.getInsetsController` + `enableEdgeToEdge()`); predictive back gesture opted in via `android:enableOnBackInvokedCallback="true"`. Material You dynamic-color toggle, foldable layout, camera shutter sound still open. |
+| G | ⏳ open (device-blocked) | Pixel 9a `PIXEL_VERIFICATION_RUNBOOK.md` Steps 1–3 (+ paired iOS↔Android screenshot diff per `VISUAL_PARITY_AUDIT.md`) close this. |
+
+The "Tier 1: ~85% / Tier 2: ~60%" honest baseline at §10 is now superseded by Phase A–F closures above; the new honest baseline is in `PORTING_MATRIX.md`'s "Honest baseline (2026-05-29)" note.
