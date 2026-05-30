@@ -28,6 +28,7 @@ cd WatchMyCaloriesAndroid
 ./gradlew test                   # Unit tests
 ./gradlew connectedAndroidTest   # Instrumentation tests (requires device)
 ./gradlew lint                   # Lint
+./scripts/build-release.sh       # Signed release AAB (prompts for password; falls back to macOS Keychain via scripts/keychain-setup.sh)
 ```
 - Requires physical device (API 26+) for camera; Health Connect needs Android 14+
 - Test device: Pixel 9a
@@ -72,7 +73,8 @@ npm run dev                      # Start with --watch for development
 - **AI layer**: `ai/GeminiRepository.kt` is an HTTP client over OkHttp that POSTs to the Cloud Run backend (same endpoint iOS uses, with `X-App-Platform: android` for dispatch). `ai/GeminiParser.kt` parses responses. The Google AI SDK is gone; `scripts/check-android-no-gemini-sdk.sh` enforces this.
 - **Data layer**: Room entities (`FoodEntry`, `UserProfile`, `MenuScan`) consolidated in `data/Entities.kt`. DAOs in `data/Daos.kt`. DB in `data/AppDatabase.kt` (current schema version 3). `data/CalorieCalculator.kt` does BMR/TDEE. `FoodEntry` uses camelCase fields `imageID` and `itemsData` (matching iOS field names; see `PORTING_DEVIATIONS.md` for any field divergences).
 - **State**: ViewModels expose `StateFlow<UiState>`. `AnalysisViewModel` uses sealed `AnalysisUiState` (Idle, Loading, Success, Error).
-- **Navigation**: Single `NavHost` in `MainActivity` with routes: `dashboard`, `camera`, `analysis/{imagePaths}` (URL-encoded), `photoLibraryReview`, `history`, `settings`, `scannedMenus`, `about`. Bottom nav for 4 tabs — Dashboard, Log Food (opens `LogFoodSheet`), Scan Menu (→ `scannedMenus`), History. Settings is reached via the `TopAppBar` gear icon.
+- **Navigation**: Single `NavHost` in `MainActivity` with routes: `dashboard`, `camera`, `cameraReview`, `analysis`, `photoLibraryReview`, `history`, `settings`, `scannedMenus`, `menuAnalysis`, `about`, plus per-entry edit routes. Bottom nav for 4 tabs — Dashboard, Log Food (opens `LogFoodSheet`), Scan Menu (→ `scannedMenus`), History. Settings is reached via the `TopAppBar` gear icon. The food-capture flow is `camera` → `cameraReview` (post-capture meal-type picker, mirrors iOS) → `analysis`.
+- **Design tokens**: `ui/theme/Spacing.kt` defines named padding/corner constants (`xs/s/m/l/xl/xxl` + semantic `pageHorizontal`, `cardCorner`, `cardContent`, `cardGap`). `ui/components/SharedComponents.kt`'s `Modifier.cwCard()` extension is the canonical card surface (shadow + clip + themed background + inner content padding); page-horizontal margin lives on the surrounding `LazyColumn`'s `contentPadding`, not on each card.
 - **Secure storage**: `EncryptedSharedPreferences` (AES256-GCM) stores the per-key Android assertion secret used by the T1.8 per-request HMAC protocol. There is **no** Gemini API key on-device; the backend holds it. `BuildConfig.APP_BACKEND_API_KEY` (sourced from `local.properties`) is the dev-only `x-backend-key` fallback for emulators without Play Services and is absent in release builds.
 - **Image storage**: `data/ImageStorage.kt` writes JPEGs (quality 80, matching iOS 0.8) to `filesDir/{imageID}.jpg`; `JpegConfig.QUALITY` keeps the constant single-sourced.
 - **Attestation**: `security/PlayIntegrityManager.kt` calls Play Integrity Standard API, persists `(keyID, secret, counter)` in EncryptedSharedPreferences, and provides `assertionHeaders(context, bodyBytes)` returning the `X-Android-{Key-Id,Counter,Assertion}` triple that `GeminiRepository` adds to each request. On 401 `android_assertion_invalid`, the repository re-attests and retries once.
@@ -120,12 +122,17 @@ Both parse JSON responses with food items containing `{ name, quantity, calories
 | `data/AppDatabase.kt` | Room database (version 3) |
 | `data/ImageStorage.kt` | JPEG persistence to `filesDir/{imageID}.jpg` (T1.4) |
 | `data/CalorieCalculator.kt` | BMR/TDEE computation |
+| `MainActivity.kt` | NavHost root + manual DI; bottom-nav tabs; TopAppBar gear → Settings |
 | `ui/dashboard/DashboardScreen.kt` | Main "Today" screen |
-| `ui/photolib/PhotoLibraryReviewScreen.kt` | Library-photo review with EXIF auto-meal-type |
+| `ui/camera/CameraScreen.kt` | CameraX preview + capture (food bundle); haptic on shutter; `imePadding()` on capture button |
+| `ui/camera/CameraReviewScreen.kt` | Post-capture meal-type picker + Retake/Use (Phase C; mirrors `PhotoLibraryReviewScreen`) |
+| `ui/photolib/PhotoLibraryReviewScreen.kt` + `MealTypePicker.kt` + `CalorieDisclaimerSheet.kt` | Library-photo review with EXIF auto-meal-type + shared picker capsule + one-time AI disclaimer |
 | `ui/analysis/AnalysisScreen.kt` | Post-capture analysis + save |
 | `ui/menuscanner/MenuAnalysisScreen.kt` + `ScannedMenusScreen.kt` + `MenuScanDetailScreen.kt` | Scan-menu flow |
 | `ui/logfood/LogFoodSheet.kt` | "Add food" entry-point sheet |
 | `ui/settings/SettingsScreen.kt` + `SettingsDataStore.kt` | Settings + DataStore |
+| `ui/components/SharedComponents.kt` | `HeroSummaryCard`, `EmptyStateCard`, `MacroBreakdownRow`, `Modifier.cwCard()` |
+| `ui/theme/Spacing.kt` | Design tokens (`xs`..`xxl` + `pageHorizontal`, `cardCorner`, `cardContent`, `cardGap`) |
 | `ui/theme/Color.kt` / `Theme.kt` / `Type.kt` | Color system + Material theme (mirrors iOS palette) |
 | `ads/NativeAdView.kt` / `BannerAdView.kt` / `AdManager.kt` | Ad components |
 | `security/BackendConfig.kt` | Backend URL + dev-only legacy key getter |
