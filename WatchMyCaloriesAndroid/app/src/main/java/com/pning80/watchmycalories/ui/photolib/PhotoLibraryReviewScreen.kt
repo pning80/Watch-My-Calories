@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.exifinterface.media.ExifInterface
 import com.pning80.watchmycalories.data.MealType
 import com.pning80.watchmycalories.ui.settings.SettingsDataStore
+import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -108,7 +109,7 @@ fun PhotoLibraryReviewScreen(
             MealTypePicker(
                 selection = selectedMealType,
                 onSelect = { selectedMealType = it },
-                modifier = Modifier.padding(bottom = 16.dp),
+                modifier = Modifier.padding(bottom = Spacing.l),
             )
 
             Row(
@@ -146,10 +147,11 @@ private fun ReselectButton(onClick: () -> Unit) {
             containerColor = Color.White.copy(alpha = 0.25f),
             contentColor = Color.White,
         ),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
+        // 14.dp vertical is off-token; intentional to give pill buttons a tighter touch target than 16.dp
+        contentPadding = PaddingValues(horizontal = Spacing.xxl, vertical = 14.dp),
     ) {
         Icon(Icons.Filled.Refresh, contentDescription = null)
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(Spacing.s))
         Text("Reselect", fontWeight = FontWeight.SemiBold)
     }
 }
@@ -164,10 +166,11 @@ private fun UseButton(onClick: () -> Unit) {
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = Color.White,
         ),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
+        // 14.dp vertical is off-token; intentional to give pill buttons a tighter touch target than 16.dp
+        contentPadding = PaddingValues(horizontal = Spacing.xxl, vertical = 14.dp),
     ) {
         Icon(Icons.Filled.CheckCircle, contentDescription = null)
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(Spacing.s))
         Text("Use", fontWeight = FontWeight.SemiBold)
     }
 }

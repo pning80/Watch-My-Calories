@@ -19,6 +19,7 @@ import com.pning80.watchmycalories.data.UserProfile
 import com.pning80.watchmycalories.ads.AdManager
 import com.pning80.watchmycalories.ads.BannerAdView
 import com.pning80.watchmycalories.ui.components.AppIconView
+import com.pning80.watchmycalories.ui.theme.Spacing
 import androidx.activity.compose.BackHandler
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -111,8 +112,8 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(Spacing.pageHorizontal),
+        verticalArrangement = Arrangement.spacedBy(Spacing.l)
     ) {
         // Title row removed — Scaffold TopAppBar in MainActivity provides "Settings" header.
         // App icon now sits inline as the leading element of App Appearance section.
@@ -126,7 +127,7 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                 Text("App Appearance", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
                 // Theme picker — labels match iOS AppTheme rawValues exactly
@@ -177,7 +178,7 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                 Text("Profile", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
                 if (isMetric) {
@@ -212,7 +213,7 @@ fun SettingsScreen(
                                 suffix = "ft",
                                 onValueChange = { heightFeet = it }
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(Spacing.s))
                             ProfileDropdown(
                                 value = heightInches,
                                 options = (0..11).toList(),
@@ -295,7 +296,7 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                 Text("Daily Goals", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
                 OutlinedTextField(
@@ -326,7 +327,7 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
                 Text("Privacy", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
                 Row(
@@ -352,7 +353,7 @@ fun SettingsScreen(
                 )
 
                 if (isPrivacyOptionsRequired) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Spacing.s))
                     Button(
                         onClick = { AdManager.presentPrivacyOptionsForm(context as android.app.Activity) },
                         modifier = Modifier.fillMaxWidth(),

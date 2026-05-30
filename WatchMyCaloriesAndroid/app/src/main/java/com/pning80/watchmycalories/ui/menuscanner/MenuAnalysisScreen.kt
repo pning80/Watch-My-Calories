@@ -27,6 +27,7 @@ import com.pning80.watchmycalories.ai.GeminiRepository
 import com.pning80.watchmycalories.location.LocationData
 import com.pning80.watchmycalories.location.LocationManager
 import com.pning80.watchmycalories.ai.MenuAnalysisResult
+import com.pning80.watchmycalories.ui.theme.Spacing
 import androidx.compose.ui.platform.LocalContext
 import com.pning80.watchmycalories.data.MenuScan
 import java.util.UUID
@@ -100,10 +101,10 @@ fun MenuAnalysisScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(12.dp)
+                        .padding(Spacing.l),
+                    shape = RoundedCornerShape(Spacing.m)
                 ) {
-                    Text("Save to Stored Menus", modifier = Modifier.padding(vertical = 4.dp))
+                    Text("Save to Stored Menus", modifier = Modifier.padding(vertical = Spacing.xs))
                 }
             }
         }
@@ -118,10 +119,10 @@ fun MenuAnalysisScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp)
+                        .padding(Spacing.l)
                         .testTag(AccessibilityTags.EstimationReview.LOADING_VIEW),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                    verticalArrangement = Arrangement.spacedBy(Spacing.xxl)
                 ) {
                     Spacer(modifier = Modifier.weight(1f))
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -138,7 +139,7 @@ fun MenuAnalysisScreen(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.l),
                         modifier = Modifier.padding(32.dp)
                     ) {
                         Icon(
@@ -165,7 +166,7 @@ fun MenuAnalysisScreen(
                             .testTag(AccessibilityTags.EstimationReview.NO_FOOD_VIEW),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.l)) {
                             Icon(Icons.Filled.Warning, contentDescription = "None", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(64.dp))
                             Text("No Dishes Found", style = MaterialTheme.typography.titleLarge)
                             Text("We couldn't identify any menu items.", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -177,8 +178,8 @@ fun MenuAnalysisScreen(
                     }
                 } else {
                     LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(Spacing.pageHorizontal),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.cardGap),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         item {
@@ -188,7 +189,7 @@ fun MenuAnalysisScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(200.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
+                                    .clip(RoundedCornerShape(Spacing.m)),
                                 contentScale = ContentScale.Crop
                             )
                         }
@@ -198,7 +199,7 @@ fun MenuAnalysisScreen(
                                 result?.restaurantName ?: "Unknown Restaurant",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                                modifier = Modifier.padding(top = Spacing.l, bottom = Spacing.s)
                             )
                         }
 
@@ -206,9 +207,9 @@ fun MenuAnalysisScreen(
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                shape = RoundedCornerShape(16.dp)
+                                shape = RoundedCornerShape(Spacing.l)
                             ) {
-                                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
                                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                                         Text(item.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                                         Text("~${item.calories.toInt()} cal", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
@@ -218,7 +219,7 @@ fun MenuAnalysisScreen(
                                         Text(item.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
 
-                                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 4.dp)) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.l), modifier = Modifier.padding(top = Spacing.xs)) {
                                         item.protein?.let { Text("${it.toInt()}g P", style = MaterialTheme.typography.labelMedium) }
                                         item.carbs?.let { Text("${it.toInt()}g C", style = MaterialTheme.typography.labelMedium) }
                                         item.fat?.let { Text("${it.toInt()}g F", style = MaterialTheme.typography.labelMedium) }

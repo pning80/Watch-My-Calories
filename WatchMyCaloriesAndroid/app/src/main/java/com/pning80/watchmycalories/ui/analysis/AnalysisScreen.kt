@@ -28,6 +28,7 @@ import com.pning80.watchmycalories.ai.EstimationResult
 import com.pning80.watchmycalories.ai.GeminiRepository
 import com.pning80.watchmycalories.data.MealType
 import com.pning80.watchmycalories.ui.photolib.MealTypePicker
+import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
 @Composable
@@ -89,11 +90,11 @@ fun AnalysisScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .imePadding()
-                        .padding(16.dp)
+                        .padding(Spacing.l)
                         .testTag(AccessibilityTags.EstimationReview.DONE_BUTTON),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(Spacing.m)
                 ) {
-                    Text("Save to Log", modifier = Modifier.padding(vertical = 4.dp))
+                    Text("Save to Log", modifier = Modifier.padding(vertical = Spacing.xs))
                 }
             }
         }
@@ -108,10 +109,10 @@ fun AnalysisScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp)
+                        .padding(Spacing.l)
                         .testTag(AccessibilityTags.EstimationReview.LOADING_VIEW),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                    verticalArrangement = Arrangement.spacedBy(Spacing.xxl)
                 ) {
                     Spacer(modifier = Modifier.weight(1f))
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -128,7 +129,7 @@ fun AnalysisScreen(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.l),
                         modifier = Modifier.padding(32.dp)
                     ) {
                         Icon(
@@ -163,7 +164,7 @@ fun AnalysisScreen(
                             .testTag(AccessibilityTags.EstimationReview.NO_FOOD_VIEW),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.l)) {
                             Icon(
                                 Icons.Filled.Warning,
                                 contentDescription = "No Food",
@@ -185,8 +186,8 @@ fun AnalysisScreen(
                     }
                 } else {
                     LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(Spacing.pageHorizontal),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.l),
                         modifier = Modifier
                             .fillMaxSize()
                             .testTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW),
@@ -195,7 +196,7 @@ fun AnalysisScreen(
                             // Thumbnail header
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.s)
                             ) {
                                 images.take(3).forEach { bitmap ->
                                     Image(
@@ -203,7 +204,7 @@ fun AnalysisScreen(
                                         contentDescription = "Captured Image",
                                         modifier = Modifier
                                             .size(80.dp)
-                                            .clip(RoundedCornerShape(8.dp)),
+                                            .clip(RoundedCornerShape(Spacing.s)),
                                         contentScale = ContentScale.Crop
                                     )
                                 }
@@ -211,7 +212,7 @@ fun AnalysisScreen(
                         }
 
                         item {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
                                 Icon(
                                     Icons.Filled.CheckCircle,
                                     contentDescription = "Success",
@@ -229,7 +230,7 @@ fun AnalysisScreen(
                                 "Make sure the estimated quantities and macros are correct.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 4.dp)
+                                modifier = Modifier.padding(top = Spacing.xs)
                             )
                         }
 
@@ -243,7 +244,7 @@ fun AnalysisScreen(
                         }
 
                         item {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
                                 Text(
                                     "Meal Type",
                                     style = MaterialTheme.typography.labelLarge,
@@ -253,11 +254,12 @@ fun AnalysisScreen(
                                 Surface(
                                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
                                     shape = RoundedCornerShape(50),
-                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    modifier = Modifier.padding(vertical = Spacing.xs),
                                 ) {
                                     MealTypePicker(
                                         selection = selectedMealType,
                                         onSelect = { selectedMealType = it },
+                                        // 6.dp is off-token and intentional — tighter MealTypePicker inner padding
                                         modifier = Modifier.padding(vertical = 6.dp),
                                     )
                                 }
@@ -267,17 +269,17 @@ fun AnalysisScreen(
                         itemsIndexed(editableItems) { _, itemState ->
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp),
+                                shape = RoundedCornerShape(Spacing.l),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                             ) {
-                                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                                     OutlinedTextField(
                                         value = itemState.name,
                                         onValueChange = { itemState.name = it },
                                         label = { Text("Food Name") },
                                         modifier = Modifier.fillMaxWidth()
                                     )
-                                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                                         OutlinedTextField(
                                             value = itemState.quantity,
                                             onValueChange = { itemState.quantity = it },
@@ -292,7 +294,7 @@ fun AnalysisScreen(
                                             modifier = Modifier.weight(1f)
                                         )
                                     }
-                                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                                         OutlinedTextField(
                                             value = itemState.protein,
                                             onValueChange = { itemState.protein = it },

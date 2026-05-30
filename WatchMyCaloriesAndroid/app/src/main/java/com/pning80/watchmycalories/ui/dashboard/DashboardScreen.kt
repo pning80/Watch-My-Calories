@@ -23,6 +23,7 @@ import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.data.MealType
 import com.pning80.watchmycalories.ui.components.EmptyStateCard
 import com.pning80.watchmycalories.ui.components.HeroSummaryCard
+import com.pning80.watchmycalories.ui.theme.Spacing
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -73,7 +74,7 @@ fun DashboardScreen(
 
         // ── Content ──
         LazyColumn(
-            contentPadding = PaddingValues(bottom = 100.dp),
+            contentPadding = PaddingValues(start = Spacing.pageHorizontal, end = Spacing.pageHorizontal, bottom = 100.dp),
             modifier = Modifier.fillMaxWidth().testTag("DashboardLazyColumn")
         ) {
             item {
@@ -131,8 +132,7 @@ fun DashboardScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Dashboard.MEAL_SECTION)
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 20.dp, bottom = 8.dp),
+                                    .padding(top = Spacing.xl, bottom = Spacing.s),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -201,12 +201,12 @@ private fun groupEntriesByImage(entries: List<FoodEntry>): List<List<FoodEntry>>
 private fun MealGroupItem(entries: List<FoodEntry>) {
     Card(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(vertical = Spacing.xs)
             .shadow(elevation = 3.dp, shape = RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp)),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text(
                     "Meal Scan (${entries.size} items)",
@@ -236,11 +236,11 @@ private fun MealGroupItem(entries: List<FoodEntry>) {
 private fun FoodEntryCard(entry: FoodEntry) {
     Row(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 3.dp)
+            .padding(vertical = 3.dp) // tight inter-entry gap; not on token grid
             .shadow(elevation = 3.dp, shape = RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .padding(12.dp)
+            .padding(Spacing.m)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)

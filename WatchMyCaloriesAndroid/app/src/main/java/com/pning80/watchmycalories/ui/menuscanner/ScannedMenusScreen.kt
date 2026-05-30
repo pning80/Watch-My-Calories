@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pning80.watchmycalories.ads.BannerAdView
 import com.pning80.watchmycalories.data.MenuScan
+import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -52,8 +53,8 @@ fun ScannedMenusScreen(
             }
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(Spacing.pageHorizontal),
+                verticalArrangement = Arrangement.spacedBy(Spacing.cardGap),
                 modifier = Modifier.fillMaxSize().padding(padding)
             ) {
                 item {
@@ -65,7 +66,7 @@ fun ScannedMenusScreen(
                         modifier = Modifier.fillMaxWidth().clickable { onNavigateToDetail(scan.id) },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
-                        Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(modifier = Modifier.padding(Spacing.l), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column {
                                 Text(
                                     text = scan.restaurantName ?: "Unknown Restaurant",

@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.pning80.watchmycalories.security.PlayIntegrityManager
+import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,9 +46,9 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp),
+                .padding(Spacing.xxl),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(Spacing.l)
         ) {
             Icon(
                 Icons.Filled.Info,
@@ -69,7 +70,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 modifier = Modifier.testTag(AccessibilityTags.About.VERSION_LABEL)
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.l))
 
             // Rating
             ListItem(
@@ -95,7 +96,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 "Support & Legal",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                modifier = Modifier.fillMaxWidth().padding(top = Spacing.s)
             )
 
             ListItem(
@@ -125,7 +126,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 "Device Attestation",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                modifier = Modifier.fillMaxWidth().padding(top = Spacing.s)
             )
 
             ListItem(

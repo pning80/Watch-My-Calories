@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.data.MealType
+import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import java.util.UUID
 
@@ -93,15 +94,15 @@ fun ManualEntryScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(Spacing.pageHorizontal),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xl)
         ) {
             // Food Details Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                     Text("Food Details", style = MaterialTheme.typography.titleSmall)
 
                     OutlinedTextField(
@@ -136,7 +137,7 @@ fun ManualEntryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                     Text("Meal", style = MaterialTheme.typography.titleSmall)
 
                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().testTag(AccessibilityTags.ManualEntry.MEAL_PICKER)) {
@@ -162,7 +163,7 @@ fun ManualEntryScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                     TextButton(onClick = { showNutrition = !showNutrition }) {
                         Text(
                             if (showNutrition) "Hide Nutrition Details" else "Add Nutrition Details (optional)",
@@ -173,7 +174,7 @@ fun ManualEntryScreen(
                     AnimatedVisibility(visible = showNutrition) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.s)
                         ) {
                             OutlinedTextField(
                                 value = proteinText,
