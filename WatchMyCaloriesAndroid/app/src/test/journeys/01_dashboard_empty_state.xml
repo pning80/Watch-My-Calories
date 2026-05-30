@@ -1,0 +1,19 @@
+<journey name="Dashboard Empty State">
+  <description>
+    Verify the dashboard shows correct elements when no meals are tracked.
+    iOS parity: DashboardTests.testEmptyStateShowsCorrectText, testHeroCardAccessibilityElements
+  </description>
+  <actions>
+    <action>Verify the screen title "Watch My Calories" is displayed at the top</action>
+    <action>Verify the current date is displayed below the title</action>
+    <action>Verify a settings gear icon is visible in the top-right corner</action>
+    <action>Verify the hero card shows "0" kcal consumed</action>
+    <action>Verify the hero card shows "Goal" with value "1940"</action>
+    <action>Verify the hero card shows "Remaining" with value "1940"</action>
+    <action>Verify the text "No meals tracked yet" is displayed</action>
+    <action>Verify the text "Tap to scan your first meal." is displayed</action>
+    <action>Verify the text "or log manually" link is displayed</action>
+    <action>Verify the bottom tab bar shows 4 tabs: Dashboard, Log Food, Scan Menu, History</action>
+    <action>Verify the Dashboard tab is currently selected</action>
+  </actions>
+</journey>

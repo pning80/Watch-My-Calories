@@ -44,11 +44,11 @@ fun DashboardScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
     ) {
         // ── App Header ──
         Row(
             modifier = Modifier
-                .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 16.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically

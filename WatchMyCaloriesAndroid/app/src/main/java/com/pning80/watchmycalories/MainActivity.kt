@@ -62,7 +62,13 @@ class MainActivity : ComponentActivity() {
         }
         
         setContent {
-            WatchMyCaloriesTheme {
+            val appTheme by settingsDataStore.appThemeFlow.collectAsState(initial = "System")
+            val darkTheme = when (appTheme) {
+                "Light" -> false
+                "Dark" -> true
+                else -> androidx.compose.foundation.isSystemInDarkTheme()
+            }
+            WatchMyCaloriesTheme(darkTheme = darkTheme) {
                 // Check onboarding state
                 val hasCompletedOnboarding by settingsDataStore.hasCompletedOnboardingFlow.collectAsState(initial = true)
 
@@ -188,6 +194,7 @@ private fun MainAppContent(
     val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             if (currentRoute in listOf("history", "scannedMenus")) {
                 @OptIn(ExperimentalMaterial3Api::class)

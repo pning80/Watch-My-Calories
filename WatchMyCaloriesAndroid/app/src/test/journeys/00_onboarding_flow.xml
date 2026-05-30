@@ -1,0 +1,25 @@
+<journey name="Onboarding Full Flow">
+  <description>
+    Test the complete onboarding flow: Welcome → Privacy → Goal → Dashboard.
+    iOS parity: OnboardingTests (17 tests)
+  </description>
+  <actions>
+    <action>Verify the onboarding Welcome screen shows the "Watch My Calories" title</action>
+    <action>Verify the subtitle "Track your meals with AI-powered calorie estimation" is displayed</action>
+    <action>Verify a "Skip" button is in the top-right corner</action>
+    <action>Verify the privacy note "Your data is never stored outside this device" is displayed at the bottom</action>
+    <action>Verify a "Get Started" button is displayed at the bottom</action>
+    <action>Tap "Get Started"</action>
+    <action>Verify the Privacy step is displayed with an AI consent toggle</action>
+    <action>Verify a "Next" button is visible</action>
+    <action>Verify a "Skip" button is still visible</action>
+    <action>Tap "Next"</action>
+    <action>Verify the Goal step is displayed with Height, Weight, Age, Gender, and Activity Level fields</action>
+    <action>Verify a "Calculate Recommended Goal" button is visible</action>
+    <action>Verify a "Finish" button is visible</action>
+    <action>Tap "Calculate Recommended Goal"</action>
+    <action>Verify the Target Calories field now contains a numeric value</action>
+    <action>Tap "Finish"</action>
+    <action>Verify the Dashboard screen is displayed with "Watch My Calories" title and bottom navigation</action>
+  </actions>
+</journey>
