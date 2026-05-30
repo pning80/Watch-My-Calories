@@ -128,19 +128,22 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("androidx.compose.ui:ui-test-junit4")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.06.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    testImplementation("androidx.compose.ui:ui-test-manifest")
 
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     kapt("androidx.room:room-compiler:$roomVersion")
     
-    val cameraxVersion = "1.3.1"
+    // 1.4.x is the first CameraX line shipping 16KB-aligned native libs
+    // (Android 15+ requirement). VISUAL_PARITY_AUDIT V-6.
+    val cameraxVersion = "1.4.2"
     implementation("androidx.camera:camera-core:$cameraxVersion")
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
@@ -175,4 +178,18 @@ dependencies {
     // Location Context
     implementation("com.google.android.gms:play-services-location:21.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+}
+
+tasks.withType<Test> {
+    testLogging {
+        showStandardStreams = true
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force("androidx.test.espresso:espresso-core:3.7.0")
+        force("androidx.test.espresso:espresso-idling-resource:3.7.0")
+        force("androidx.test.ext:junit:1.2.1")
+    }
 }

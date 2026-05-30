@@ -18,12 +18,14 @@ import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.data.MealType
 import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
+import com.pning80.watchmycalories.ads.BannerAdView
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ManualEntryScreen(
     initialEntry: FoodEntry? = null,
+    isMetric: Boolean,
     onSave: (FoodEntry) -> Unit,
     onCancel: () -> Unit
 ) {
@@ -97,6 +99,8 @@ fun ManualEntryScreen(
                 .padding(Spacing.pageHorizontal),
             verticalArrangement = Arrangement.spacedBy(Spacing.xl)
         ) {
+            BannerAdView()
+
             // Food Details Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -125,7 +129,12 @@ fun ManualEntryScreen(
                     OutlinedTextField(
                         value = quantity,
                         onValueChange = { quantity = it },
-                        label = { Text("Quantity (e.g. 1 cup, 200 g)") },
+                        label = {
+                            Text(
+                                if (isMetric) "Quantity (e.g. 200 g, 250 ml)"
+                                else "Quantity (e.g. 1 cup, 6 oz)"
+                            )
+                        },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().testTag(AccessibilityTags.ManualEntry.QUANTITY)
                     )

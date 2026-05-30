@@ -18,7 +18,8 @@ class DashboardScreenTest : BaseComposeTest() {
                 entries = emptyList(),
                 targetCalories = 2200.0,
                 burnedCalories = 0.0,
-                onLogFood = {}
+                onLogFood = {},
+                onNavigateToSettings = {}
             )
         }
 
@@ -33,7 +34,8 @@ class DashboardScreenTest : BaseComposeTest() {
                 entries = getSampleEntries(), // 300 + 450 = 750
                 targetCalories = 2200.0,
                 burnedCalories = 456.0,
-                onLogFood = {}
+                onLogFood = {},
+                onNavigateToSettings = {}
             )
         }
 
@@ -54,7 +56,8 @@ class DashboardScreenTest : BaseComposeTest() {
                 entries = getSampleEntries(),
                 targetCalories = 2200.0,
                 burnedCalories = 0.0,
-                onLogFood = {}
+                onLogFood = {},
+                onNavigateToSettings = {}
             )
         }
 

@@ -1,0 +1,31 @@
+package com.pning80.watchmycalories.security
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.net.URL
+
+class BackendConfigTest {
+
+    @Test
+    fun testBaseURLIsValidHTTPS() {
+        val url = BackendConfig.baseURL
+        assertTrue("Backend URL should use HTTPS", url.startsWith("https://"))
+        assertFalse("Backend URL should not have a trailing slash", url.endsWith("/"))
+        
+        try {
+            URL(url)
+        } catch (e: Exception) {
+            org.junit.Assert.fail("Backend URL should be a valid URL: ${e.message}")
+        }
+    }
+
+    @Test
+    fun testDevLegacyKeyLengthMatchesObfuscatedArrayLength() {
+        val devKey = BackendConfig.devLegacyKey
+        if (devKey != null) {
+            assertEquals(64, devKey.length)
+        }
+    }
+}

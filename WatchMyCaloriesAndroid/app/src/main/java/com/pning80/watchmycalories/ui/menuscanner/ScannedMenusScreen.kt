@@ -6,8 +6,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
+import com.pning80.watchmycalories.ui.components.EmptyStateCard
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,10 +48,15 @@ fun ScannedMenusScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .padding(Spacing.pageHorizontal)
                     .testTag(AccessibilityTags.ScannedMenus.EMPTY_STATE),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No scanned menus yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                EmptyStateCard(
+                    title = "No scanned menus yet",
+                    subtitle = "Tap below to scan a menu and see options.",
+                    icon = Icons.AutoMirrored.Filled.MenuBook
+                )
             }
         } else {
             LazyColumn(

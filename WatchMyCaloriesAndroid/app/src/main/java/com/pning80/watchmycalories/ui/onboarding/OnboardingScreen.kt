@@ -98,7 +98,11 @@ fun OnboardingScreen(
                 )
                 onComplete(defaultProfile)
             },
-            modifier = Modifier.align(Alignment.TopEnd).padding(Spacing.l).testTag(AccessibilityTags.Onboarding.SKIP_BUTTON)
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(Spacing.l)
+                .testTag(AccessibilityTags.Onboarding.SKIP_BUTTON)
         ) {
             Text("Skip", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
         }

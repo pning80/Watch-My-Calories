@@ -1,10 +1,13 @@
 package com.pning80.watchmycalories.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,7 +32,9 @@ import kotlin.math.roundToInt
 fun SettingsScreen(
     settingsDataStore: SettingsDataStore,
     currentProfile: UserProfile? = null,
-    onSaveProfile: ((UserProfile) -> Unit)? = null
+    onSaveProfile: ((UserProfile) -> Unit)? = null,
+    onNavigateToAbout: () -> Unit,
+    onCancel: () -> Unit
 ) {
     val isMetric by settingsDataStore.isMetricFlow.collectAsState(initial = true)
     val appTheme by settingsDataStore.appThemeFlow.collectAsState(initial = "System")
@@ -97,8 +102,7 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(onClick = { 
                     showDiscardDialog = false
-                    // In a real app, we might need a way to pass a "dismiss" higher up
-                    // But for now, we just let them go back.
+                    onCancel()
                 }) { Text("Discard") }
             },
             dismissButton = {
@@ -107,288 +111,330 @@ fun SettingsScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .padding(Spacing.pageHorizontal),
-        verticalArrangement = Arrangement.spacedBy(Spacing.l)
-    ) {
-        // Title row removed — Scaffold TopAppBar in MainActivity provides "Settings" header.
-        // App icon now sits inline as the leading element of App Appearance section.
-        // BannerAdView is conditionally rendered inside BannerAdView() based on
-        // whether a real (non-Google-test) ad unit ID is wired; in debug builds with
-        // the placeholder test unit it returns Unit, avoiding the "Test Ad" banner.
-        BannerAdView()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings", modifier = Modifier.testTag("SettingsTitle")) },
+                navigationIcon = {
+                    TextButton(
+                        onClick = {
+                            if (hasUnsavedChanges) {
+                                showDiscardDialog = true
+                            } else {
+                                onCancel()
+                            }
+                        },
+                        modifier = Modifier.testTag("settings_cancel_button")
+                    ) {
+                        Text("Cancel")
+                    }
+                },
+                actions = {
+                    TextButton(
+                        onClick = {
+                            val hCm = if (isMetric) heightCm.toDouble() else (heightFeet * 12 + heightInches) * 2.54
+                            val wKg = if (isMetric) weightKg.toDouble() else weightLbs / 2.20462
+                            val target = targetCaloriesText.toDoubleOrNull() ?: 2000.0
 
-        // ── App Appearance ──
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                Text("App Appearance", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-
-                // Theme picker — labels match iOS AppTheme rawValues exactly
-                Text("Theme", style = MaterialTheme.typography.bodyMedium)
-                SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.THEME_PICKER)
-                ) {
-                    listOf("System", "Light", "Dark").forEachIndexed { index, theme ->
-                        SegmentedButton(
-                            selected = appTheme == theme,
-                            onClick = { coroutineScope.launch { settingsDataStore.setAppTheme(theme) } },
-                            shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
-                        ) { Text(theme) }
+                            val profile = UserProfile(
+                                id = 1,
+                                height = hCm,
+                                weight = wKg,
+                                age = age,
+                                genderRaw = gender.displayName,
+                                activityLevelRaw = activityLevel.displayName,
+                                targetCalories = target
+                            )
+                            onSaveProfile?.invoke(profile)
+                        },
+                        enabled = hasUnsavedChanges,
+                        modifier = Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.SAVE_BUTTON)
+                    ) {
+                        Text("Save")
                     }
                 }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState())
+                .padding(Spacing.pageHorizontal),
+            verticalArrangement = Arrangement.spacedBy(Spacing.l)
+        ) {
+            // App icon now sits inline as the leading element of App Appearance section.
+            // BannerAdView is conditionally rendered inside BannerAdView() based on
+            // whether a real (non-Google-test) ad unit ID is wired; in debug builds with
+            // the placeholder test unit it returns Unit, avoiding the "Test Ad" banner.
+            BannerAdView()
 
-                // Unit System picker — labels and options match iOS UnitSystem rawValues exactly
-                Text("Unit System", style = MaterialTheme.typography.bodyMedium)
-                SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.UNIT_PICKER)
-                ) {
-                    listOf("US Customary" to false, "Metric" to true).forEachIndexed { index, (label, metric) ->
-                        SegmentedButton(
-                            selected = isMetric == metric,
-                            onClick = {
-                                if (isMetric == metric) return@SegmentedButton
-                                coroutineScope.launch { settingsDataStore.setMetric(metric) }
-                                if (metric) {
-                                    val totalInches = heightFeet * 12 + heightInches
-                                    heightCm = (totalInches * 2.54).roundToInt()
-                                    weightKg = (weightLbs / 2.20462).roundToInt()
-                                } else {
-                                    val totalInches = (heightCm / 2.54).toInt()
-                                    heightFeet = totalInches / 12
-                                    heightInches = totalInches % 12
-                                    weightLbs = (weightKg * 2.20462).roundToInt()
-                                }
-                            },
-                            shape = SegmentedButtonDefaults.itemShape(index = index, count = 2)
-                        ) { Text(label) }
+            // ── App Appearance ──
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
+                    Text("App Appearance", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+
+                    // Theme picker — labels match iOS AppTheme rawValues exactly
+                    Text("Theme", style = MaterialTheme.typography.bodyMedium)
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.THEME_PICKER)
+                    ) {
+                        listOf("System", "Light", "Dark").forEachIndexed { index, theme ->
+                            SegmentedButton(
+                                selected = appTheme == theme,
+                                onClick = { coroutineScope.launch { settingsDataStore.setAppTheme(theme) } },
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
+                            ) { Text(theme) }
+                        }
+                    }
+
+                    // Unit System picker — labels and options match iOS UnitSystem rawValues exactly
+                    Text("Unit System", style = MaterialTheme.typography.bodyMedium)
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.UNIT_PICKER)
+                    ) {
+                        listOf("US Customary" to false, "Metric" to true).forEachIndexed { index, (label, metric) ->
+                            SegmentedButton(
+                                selected = isMetric == metric,
+                                onClick = {
+                                    if (isMetric == metric) return@SegmentedButton
+                                    coroutineScope.launch { settingsDataStore.setMetric(metric) }
+                                    if (metric) {
+                                        val totalInches = heightFeet * 12 + heightInches
+                                        heightCm = (totalInches * 2.54).roundToInt()
+                                        weightKg = (weightLbs / 2.20462).roundToInt()
+                                    } else {
+                                        val totalInches = (heightCm / 2.54).toInt()
+                                        heightFeet = totalInches / 12
+                                        heightInches = totalInches % 12
+                                        weightLbs = (weightKg * 2.20462).roundToInt()
+                                    }
+                                },
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = 2)
+                            ) { Text(label) }
+                        }
                     }
                 }
             }
-        }
 
-        // ── Profile ──
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                Text("Profile", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            // ── Profile ──
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
+                    Text("Profile", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
-                if (isMetric) {
-                    // Height (cm)
+                    if (isMetric) {
+                        // Height (cm)
+                        ProfileSliderRow(
+                            label = "Height",
+                            value = heightCm,
+                            range = 100..250,
+                            unit = "cm",
+                            onValueChange = { heightCm = it }
+                        )
+                        // Weight (kg)
+                        ProfileSliderRow(
+                            label = "Weight",
+                            value = weightKg,
+                            range = 20..200,
+                            unit = "kg",
+                            onValueChange = { weightKg = it }
+                        )
+                    } else {
+                        // Height (ft/in)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Height", style = MaterialTheme.typography.bodyMedium)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                ProfileDropdown(
+                                    value = heightFeet,
+                                    options = (4..7).toList(),
+                                    suffix = "ft",
+                                    onValueChange = { heightFeet = it }
+                                )
+                                Spacer(modifier = Modifier.width(Spacing.s))
+                                ProfileDropdown(
+                                    value = heightInches,
+                                    options = (0..11).toList(),
+                                    suffix = "in",
+                                    onValueChange = { heightInches = it }
+                                )
+                            }
+                        }
+                        // Weight (lbs)
+                        ProfileSliderRow(
+                            label = "Weight",
+                            value = weightLbs,
+                            range = 50..400,
+                            unit = "lbs",
+                            onValueChange = { weightLbs = it }
+                        )
+                    }
+
+                    // Age
                     ProfileSliderRow(
-                        label = "Height",
-                        value = heightCm,
-                        range = 100..250,
-                        unit = "cm",
-                        onValueChange = { heightCm = it }
+                        label = "Age",
+                        value = age,
+                        range = 1..100,
+                        unit = "",
+                        onValueChange = { age = it }
                     )
-                    // Weight (kg)
-                    ProfileSliderRow(
-                        label = "Weight",
-                        value = weightKg,
-                        range = 20..200,
-                        unit = "kg",
-                        onValueChange = { weightKg = it }
+
+                    // Gender
+                    Text("Gender", style = MaterialTheme.typography.bodyMedium)
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.GENDER_PICKER)
+                    ) {
+                        Gender.entries.forEachIndexed { index, g ->
+                            SegmentedButton(
+                                selected = gender == g,
+                                onClick = { gender = g },
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = Gender.entries.size),
+                                modifier = Modifier.testTag("settings_gender_${g.displayName}")
+                            ) { Text(g.displayName) }
+                        }
+                    }
+
+                    // Activity Level
+                    Text("Activity Level", style = MaterialTheme.typography.bodyMedium)
+                    var activityExpanded by remember { mutableStateOf(false) }
+                    ExposedDropdownMenuBox(
+                        expanded = activityExpanded,
+                        onExpandedChange = { activityExpanded = it }
+                    ) {
+                        OutlinedTextField(
+                            value = activityLevel.displayName,
+                            onValueChange = {},
+                            readOnly = true,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = activityExpanded) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                                .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.ACTIVITY_PICKER)
+                        )
+                        ExposedDropdownMenu(
+                            expanded = activityExpanded,
+                            onDismissRequest = { activityExpanded = false }
+                        ) {
+                            ActivityLevel.entries.forEach { level ->
+                                DropdownMenuItem(
+                                    text = { Text(level.displayName) },
+                                    onClick = {
+                                        activityLevel = level
+                                        activityExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Daily Goals ──
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
+                    Text("Daily Goals", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+
+                    OutlinedTextField(
+                        value = targetCaloriesText,
+                        onValueChange = { targetCaloriesText = it },
+                        label = { Text("Target Calories") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.TARGET_CALORIES)
                     )
-                } else {
-                    // Height (ft/in)
+
+                    Button(
+                        onClick = {
+                            val hCm = if (isMetric) heightCm.toDouble() else (heightFeet * 12 + heightInches) * 2.54
+                            val wKg = if (isMetric) weightKg.toDouble() else weightLbs / 2.20462
+                            val recommended = CalorieCalculator.recommended(hCm, wKg, age, gender, activityLevel)
+                            targetCaloriesText = recommended.toInt().toString()
+                        },
+                        modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.CALCULATE_GOAL)
+                    ) {
+                        Text("Calculate Recommended Goal")
+                    }
+                }
+            }
+
+            // ── Privacy ──
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
+                    Text("Privacy", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Height", style = MaterialTheme.typography.bodyMedium)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            ProfileDropdown(
-                                value = heightFeet,
-                                options = (4..7).toList(),
-                                suffix = "ft",
-                                onValueChange = { heightFeet = it }
-                            )
-                            Spacer(modifier = Modifier.width(Spacing.s))
-                            ProfileDropdown(
-                                value = heightInches,
-                                options = (0..11).toList(),
-                                suffix = "in",
-                                onValueChange = { heightInches = it }
-                            )
-                        }
-                    }
-                    // Weight (lbs)
-                    ProfileSliderRow(
-                        label = "Weight",
-                        value = weightLbs,
-                        range = 50..400,
-                        unit = "lbs",
-                        onValueChange = { weightLbs = it }
-                    )
-                }
-
-                // Age
-                ProfileSliderRow(
-                    label = "Age",
-                    value = age,
-                    range = 1..100,
-                    unit = "",
-                    onValueChange = { age = it }
-                )
-
-                // Gender
-                Text("Gender", style = MaterialTheme.typography.bodyMedium)
-                SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.GENDER_PICKER)
-                ) {
-                    Gender.entries.forEachIndexed { index, g ->
-                        SegmentedButton(
-                            selected = gender == g,
-                            onClick = { gender = g },
-                            shape = SegmentedButtonDefaults.itemShape(index = index, count = Gender.entries.size),
-                            modifier = Modifier.testTag("settings_gender_${g.displayName}")
-                        ) { Text(g.displayName) }
-                    }
-                }
-
-                // Activity Level
-                Text("Activity Level", style = MaterialTheme.typography.bodyMedium)
-                var activityExpanded by remember { mutableStateOf(false) }
-                ExposedDropdownMenuBox(
-                    expanded = activityExpanded,
-                    onExpandedChange = { activityExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = activityLevel.displayName,
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = activityExpanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                            .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.ACTIVITY_PICKER)
-                    )
-                    ExposedDropdownMenu(
-                        expanded = activityExpanded,
-                        onDismissRequest = { activityExpanded = false }
-                    ) {
-                        ActivityLevel.entries.forEach { level ->
-                            DropdownMenuItem(
-                                text = { Text(level.displayName) },
-                                onClick = {
-                                    activityLevel = level
-                                    activityExpanded = false
+                        Text("AI Photo Analysis", style = MaterialTheme.typography.bodyMedium)
+                        Switch(
+                            checked = aiConsent == "accepted",
+                            onCheckedChange = { enabled ->
+                                coroutineScope.launch {
+                                    settingsDataStore.setAiConsent(if (enabled) "accepted" else "declined")
                                 }
-                            )
+                            },
+                            modifier = Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.AI_CONSENT_TOGGLE)
+                        )
+                    }
+                    Text(
+                        "When enabled, food photos are sent to Google Gemini for calorie estimation. All other data stays on-device.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    if (isPrivacyOptionsRequired) {
+                        Spacer(modifier = Modifier.height(Spacing.s))
+                        Button(
+                            onClick = { AdManager.presentPrivacyOptionsForm(context as android.app.Activity) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                        ) {
+                            Text("Manage Privacy Choices")
                         }
                     }
                 }
             }
-        }
 
-        // ── Daily Goals ──
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                Text("Daily Goals", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-
-                OutlinedTextField(
-                    value = targetCaloriesText,
-                    onValueChange = { targetCaloriesText = it },
-                    label = { Text("Target Calories") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.TARGET_CALORIES)
-                )
-
-                Button(
-                    onClick = {
-                        val hCm = if (isMetric) heightCm.toDouble() else (heightFeet * 12 + heightInches) * 2.54
-                        val wKg = if (isMetric) weightKg.toDouble() else weightLbs / 2.20462
-                        val recommended = CalorieCalculator.recommended(hCm, wKg, age, gender, activityLevel)
-                        targetCaloriesText = recommended.toInt().toString()
-                    },
-                    modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.CALCULATE_GOAL)
-                ) {
-                    Text("Calculate Recommended Goal")
-                }
-            }
-        }
-
-        // ── Privacy ──
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
-                Text("Privacy", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("AI Photo Analysis", style = MaterialTheme.typography.bodyMedium)
-                    Switch(
-                        checked = aiConsent == "accepted",
-                        onCheckedChange = { enabled ->
-                            coroutineScope.launch {
-                                settingsDataStore.setAiConsent(if (enabled) "accepted" else "declined")
-                            }
-                        },
-                        modifier = Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.AI_CONSENT_TOGGLE)
+            // ── About & Support ──
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
+                    Text("About & Support", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    
+                    ListItem(
+                        headlineContent = { Text("About this app") },
+                        supportingContent = { Text("Version and Attestation details") },
+                        leadingContent = { Icon(Icons.Filled.Info, contentDescription = "About") },
+                        modifier = Modifier
+                            .clickable { onNavigateToAbout() }
+                            .testTag("settings_about_row")
                     )
                 }
-                Text(
-                    "When enabled, food photos are sent to Google Gemini for calorie estimation. All other data stays on-device.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                if (isPrivacyOptionsRequired) {
-                    Spacer(modifier = Modifier.height(Spacing.s))
-                    Button(
-                        onClick = { AdManager.presentPrivacyOptionsForm(context as android.app.Activity) },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
-                    ) {
-                        Text("Manage Privacy Choices")
-                    }
-                }
             }
+
+            Spacer(modifier = Modifier.height(Spacing.l))
         }
-
-        // ── Save Button ──
-        Button(
-            onClick = {
-                val hCm = if (isMetric) heightCm.toDouble() else (heightFeet * 12 + heightInches) * 2.54
-                val wKg = if (isMetric) weightKg.toDouble() else weightLbs / 2.20462
-                val target = targetCaloriesText.toDoubleOrNull() ?: 2000.0
-
-                val profile = UserProfile(
-                    id = 1,
-                    height = hCm,
-                    weight = wKg,
-                    age = age,
-                    genderRaw = gender.displayName,
-                    activityLevelRaw = activityLevel.displayName,
-                    targetCalories = target
-                )
-                onSaveProfile?.invoke(profile)
-            },
-            modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.SAVE_BUTTON)
-        ) {
-            Text("Save Settings")
-        }
-
-        Spacer(modifier = Modifier.height(80.dp))
     }
 }
 

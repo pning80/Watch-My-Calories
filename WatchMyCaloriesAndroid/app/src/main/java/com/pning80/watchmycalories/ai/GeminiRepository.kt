@@ -36,6 +36,19 @@ data class EstimationResult(
     val items: List<EstimationItem>
 )
 
+val EstimationResult.totalCalories: Double
+    get() = items.sumOf { it.calories }
+
+val EstimationResult.totalProtein: Double
+    get() = items.sumOf { it.protein ?: 0.0 }
+
+val EstimationResult.totalCarbs: Double
+    get() = items.sumOf { it.carbs ?: 0.0 }
+
+val EstimationResult.totalFat: Double
+    get() = items.sumOf { it.fat ?: 0.0 }
+
+
 data class MenuAnalysisResult(
     val error: String? = null,
     val restaurantName: String? = null,

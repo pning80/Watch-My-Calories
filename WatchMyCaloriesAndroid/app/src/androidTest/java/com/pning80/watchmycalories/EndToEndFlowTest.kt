@@ -2,9 +2,9 @@ package com.pning80.watchmycalories
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import com.pning80.watchmycalories.utils.AccessibilityTags
 import org.junit.Rule
 import org.junit.Test
-import java.lang.Exception
 
 class EndToEndFlowTest {
 
@@ -15,26 +15,50 @@ class EndToEndFlowTest {
 
     @Test
     fun verifyBottomNavigationTabs() {
-        // App starts on Dashboard by default
-        composeTestRule.onAllNodesWithText("Watch My Calories")[0].assertIsDisplayed()
+        // Wait for the initial compose tree to stabilize
+        composeTestRule.waitForIdle()
+
+        // Wait for either the Onboarding skip button OR the History tab to appear (handles fresh install vs cached settings)
+        composeTestRule.waitUntil(timeoutMillis = 8000) {
+            composeTestRule.onAllNodesWithTag(AccessibilityTags.Onboarding.SKIP_BUTTON).fetchSemanticsNodes().isNotEmpty() ||
+            composeTestRule.onAllNodesWithText("History").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // The app may start with onboarding (DataStore defaults to false for new installs).
+        // Skip it if visible, then wait for navigation to re-compose.
+        val skipNodes = composeTestRule.onAllNodesWithTag(AccessibilityTags.Onboarding.SKIP_BUTTON).fetchSemanticsNodes()
+        if (skipNodes.isNotEmpty()) {
+            composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.SKIP_BUTTON).performClick()
+            composeTestRule.waitForIdle()
+            // After skip, the onboarding writes to DataStore and calls onComplete. Give recomposition time to settle.
+            composeTestRule.waitUntil(timeoutMillis = 5000) {
+                composeTestRule.onAllNodesWithText("Dashboard").fetchSemanticsNodes().isNotEmpty()
+            }
+        }
+
+        // App should be on Dashboard now
+        composeTestRule.waitForIdle()
 
         // Click "History" in Bottom navigation
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText("History").fetchSemanticsNodes().isNotEmpty()
+        }
         composeTestRule.onAllNodesWithText("History")[0].performClick()
+        composeTestRule.waitForIdle()
         
-        // Ensure History screen is displayed
-        composeTestRule.onAllNodesWithText("History")[0].assertIsDisplayed() // Header
-        
-        // Click "Settings" in Bottom navigation
-        composeTestRule.onAllNodesWithText("Settings")[0].performClick()
-        
+        // Ensure History screen is displayed (title now lives on MainActivity's TopAppBar)
+        composeTestRule.onNodeWithTag("HistoryTitle").assertIsDisplayed()
+
+        // Settings is no longer in the bottom nav; reach it via the gear icon in the
+        // TopAppBar (AppMenu.MENU_BUTTON), mirroring the iOS toolbar gear affordance.
+        composeTestRule.onNodeWithTag(AccessibilityTags.AppMenu.MENU_BUTTON).performClick()
+        composeTestRule.waitForIdle()
+
         // Ensure Settings screen is displayed
-        composeTestRule.onAllNodesWithText("Preferences")[0].assertIsDisplayed()
+        composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
         
         // Return to Dashboard
-        try {
-            composeTestRule.onAllNodesWithText("Dashboard")[0].performClick()
-        } catch (e: Exception) {
-            // Navigation hidden tab
-        }
+        composeTestRule.onAllNodesWithText("Dashboard")[0].performClick()
+        composeTestRule.waitForIdle()
     }
 }
