@@ -82,7 +82,18 @@ All 0.1, 0.3 boxes checked; 0.2 fully complete; the executor of Stage 1 can read
 
 Scope: implement everything in `PORTING_CRITERIA.md` T1.9 (T1.9.a through T1.9.h), gated by T1.10 non-regression checks. No client-side changes in this stage; iOS-facing wire contract preserved byte-for-byte.
 
-**Status (2026-05-16): code-complete; deploy + burn-in pending.** Steps 1–8 below are all merged. The `Backend/` test suite is at 201/201 green with the platform dispatcher, Play Integrity verifier (with injectable decoder), Android per-request HMAC verifier, Firestore schema additions, and boot-without-Play-Integrity-env safety test all wired. What's still open: actually running `./deploy.sh dev`, the one-engineer-day iOS burn-in, and the device-backed end-to-end check from a Test iPhone 14. Deploy can land before `roles/playintegrity.user` is granted — the Android path returns 503 `play_integrity_not_configured` (already covered by tests) without affecting iOS.
+**Status (2026-05-28): deployed to dev; smoke tests green; iOS burn-in pending.** Steps 1–8 below are all merged. The `Backend/` test suite is at 201/201 green with the platform dispatcher, Play Integrity verifier (with injectable decoder), Android per-request HMAC verifier, Firestore schema additions, and boot-without-Play-Integrity-env safety test all wired.
+
+Deploy executed 2026-05-28 — revision `watchmycalories-backend-dev-00017-xvk` (image digest `sha256:a40a24224e55cfa20fc759b60d756c9666598be5f084ca4ee988e6b19d6e59e6`). Smoke-test runbook (`Backend/DEV_DEPLOY_SMOKE_TEST.md`) executed steps 1–5 clean:
+- New image digest distinct from pre-port baseline (`-pxt`, `-xmw`).
+- `GET /` returns 200.
+- iOS default path (no `X-App-Platform`) returns 401 with iOS-shaped `{"error":"Unauthorized access"}` body.
+- iOS legacy `x-backend-key` returns 200 with real Gemini response in ~1.1s — no measurable latency regression vs `Backend/test/contract/ios/baseline-latency.md`.
+- Android path with bogus Play Integrity token returns 401 `{"error":"attestation_invalid"}` with no stack trace leakage — the verifier is now reachable from the runtime SA (Play Console link recognized).
+
+Verified separately: Play Integrity API returns `INVALID_ARGUMENT "Integrity token cannot be decoded due to invalid arguments."` (was `"App is not found."` before the internal-testing release was rolled out), confirming the API recognizes `com.pning80.watchmycalories` end-to-end.
+
+**Still open:** the one-engineer-day iOS dev-build burn-in observation and a confirmed device-backed run from a Test iPhone 14 against the new revision. Rollback pinned to `watchmycalories-backend-dev-00016-xmw` (see Stage 0.3).
 
 ### Prerequisites
 
@@ -225,4 +236,6 @@ Use this section to track what's blocking. Update as items complete.
 | Test iPhone 14 available for baseline capture (0.3) | you | **done** (2026-05-28) |
 | mitmproxy / Charles set up with trusted CA for iOS capture | you | **done** (2026-05-28) — note: requires `--set ignore_hosts='(.*\.)?apple\.com:443\|(.*\.)?icloud\.com:443'` for DCAppAttestService to function |
 | Pixel 9a available for Android end-to-end | you | open |
-| `./deploy.sh dev` actually run with the porting-touched backend | you (or agent on your go-ahead) | open — Stage 1 code is in; iOS path is untouched, Android path returns 503 cleanly until IAM grant lands |
+| `./deploy.sh dev` actually run with the porting-touched backend | agent | **done** (2026-05-28) — revision `watchmycalories-backend-dev-00017-xvk`; smoke checks 1–5 green per `Backend/DEV_DEPLOY_SMOKE_TEST.md` |
+| iOS dev-build burn-in window against new dev backend (T1.10.f) | you | open — passive, ~1 engineer-day of normal Test iPhone 14 use |
+| Play Integrity API end-to-end recognition of the Android app | agent | **done** (2026-05-28) — `decodeIntegrityToken` returns `"Integrity token cannot be decoded"` not `"App is not found"`, confirming the Cloud-project link + signing-identity registration are both alive |
