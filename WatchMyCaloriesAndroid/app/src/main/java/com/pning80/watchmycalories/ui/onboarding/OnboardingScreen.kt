@@ -25,6 +25,7 @@ import com.pning80.watchmycalories.data.CalorieCalculator.Gender
 import com.pning80.watchmycalories.data.CalorieCalculator.ActivityLevel
 import com.pning80.watchmycalories.data.UserProfile
 import com.pning80.watchmycalories.ui.settings.SettingsDataStore
+import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -97,7 +98,7 @@ fun OnboardingScreen(
                 )
                 onComplete(defaultProfile)
             },
-            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp).testTag(AccessibilityTags.Onboarding.SKIP_BUTTON)
+            modifier = Modifier.align(Alignment.TopEnd).padding(Spacing.l).testTag(AccessibilityTags.Onboarding.SKIP_BUTTON)
         ) {
             Text("Skip", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
         }
@@ -124,7 +125,7 @@ private fun WelcomeStep(onNext: () -> Unit) {
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(Spacing.xxl))
 
         Text(
             "Watch My Calories",
@@ -135,7 +136,7 @@ private fun WelcomeStep(onNext: () -> Unit) {
             modifier = Modifier.testTag("onboarding_title")
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(Spacing.m))
 
         Text(
             "Track your meals with AI-powered calorie estimation",
@@ -152,7 +153,7 @@ private fun WelcomeStep(onNext: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Spacing.l))
 
         Button(
             onClick = onNext,
@@ -175,7 +176,7 @@ private fun PrivacyStep(
 
     Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(Spacing.xl)
     ) {
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -187,7 +188,7 @@ private fun PrivacyStep(
         )
 
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -255,7 +256,7 @@ private fun GoalStep(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(Spacing.l)
     ) {
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -268,7 +269,7 @@ private fun GoalStep(
 
         // About You
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                 Text("About You", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
                 // Height slider
@@ -315,7 +316,7 @@ private fun GoalStep(
 
         // Daily Goal
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                 Text("Daily Goal", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
                 OutlinedTextField(
@@ -379,7 +380,7 @@ private fun SliderRow(label: String, value: Int, range: IntRange, unit: String, 
 private fun ProgressDots(current: Int, total: Int, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(Spacing.s)
     ) {
         repeat(total) { step ->
             Surface(

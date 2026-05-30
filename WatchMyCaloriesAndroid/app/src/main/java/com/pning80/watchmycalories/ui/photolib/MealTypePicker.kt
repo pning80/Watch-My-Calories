@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.gestures.detectTapGestures
 import com.pning80.watchmycalories.data.MealType
+import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
 /**
@@ -34,8 +35,8 @@ fun MealTypePicker(
     Row(
         modifier = modifier
             .testTag(AccessibilityTags.MealTypePicker.PICKER)
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = Spacing.s),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.s),
     ) {
         for (type in MealType.displayOrder) {
             val isSelected = type == selection
@@ -53,7 +54,7 @@ fun MealTypePicker(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = Spacing.m, vertical = Spacing.s),
                 )
             }
         }

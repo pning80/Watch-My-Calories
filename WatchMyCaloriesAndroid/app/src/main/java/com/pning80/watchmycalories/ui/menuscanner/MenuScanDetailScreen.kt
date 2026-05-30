@@ -17,6 +17,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.pning80.watchmycalories.data.MenuItemResult
 import com.pning80.watchmycalories.data.MenuScan
+import com.pning80.watchmycalories.ui.theme.Spacing
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -53,12 +54,12 @@ fun MenuScanDetailScreen(
         }
     ) { padding ->
         LazyColumn(
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(Spacing.pageHorizontal),
+            verticalArrangement = Arrangement.spacedBy(Spacing.cardGap),
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
             item {
-                Column(modifier = Modifier.padding(bottom = 16.dp)) {
+                Column(modifier = Modifier.padding(bottom = Spacing.l)) {
                     Text(
                         scan.restaurantName ?: "Unknown Restaurant",
                         style = MaterialTheme.typography.titleLarge,
@@ -76,9 +77,9 @@ fun MenuScanDetailScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(Spacing.l)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
                         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                             Text(item.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                             Text("~${item.calories.toInt()} cal", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
@@ -88,7 +89,7 @@ fun MenuScanDetailScreen(
                             Text(item.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 4.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.l), modifier = Modifier.padding(top = Spacing.xs)) {
                             item.protein?.let { MacroStat("Protein", it) }
                             item.carbs?.let { MacroStat("Carbs", it) }
                             item.fat?.let { MacroStat("Fat", it) }

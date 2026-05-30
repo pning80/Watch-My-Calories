@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
 /**
@@ -52,9 +53,9 @@ fun CalorieDisclaimerSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = Spacing.xxl, vertical = Spacing.l),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(Spacing.l),
         ) {
             Icon(
                 imageVector = Icons.Filled.Star,
@@ -86,7 +87,7 @@ fun CalorieDisclaimerSheet(
                 textAlign = TextAlign.Center,
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.s))
 
             Box(modifier = Modifier.fillMaxWidth()) {
                 Text(
@@ -112,7 +113,7 @@ fun CalorieDisclaimerSheet(
                 Text(
                     text = "Continue",
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(vertical = 4.dp),
+                    modifier = Modifier.padding(vertical = Spacing.xs),
                 )
             }
         }

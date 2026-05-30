@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -34,12 +35,21 @@ import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.ui.theme.*
 import kotlin.math.min
 
-fun Modifier.cwCard() = this
-    .padding(horizontal = Spacing.pageHorizontal, vertical = 6.dp)
-    .shadow(elevation = 8.dp, shape = RoundedCornerShape(Spacing.cardCorner))
-    .clip(RoundedCornerShape(Spacing.cardCorner))
-    .background(Color.White)
-    .padding(Spacing.l)
+/**
+ * Card surface treatment — shadow, rounded clip, themed background, and
+ * inner content padding. Callers are responsible for outer page padding
+ * (typically via the surrounding LazyColumn's `contentPadding`) and for the
+ * inter-card vertical gap (via `verticalArrangement.spacedBy`). PORT_AUDIT
+ * Phase E (E2): padding-inside-only so vertical gaps don't double up.
+ */
+fun Modifier.cwCard(): Modifier = composed {
+    val surface = MaterialTheme.colorScheme.surface
+    this
+        .shadow(elevation = 8.dp, shape = RoundedCornerShape(Spacing.cardCorner))
+        .clip(RoundedCornerShape(Spacing.cardCorner))
+        .background(surface)
+        .padding(Spacing.cardContent)
+}
 
 // ─── Hero Summary Card ───────────────────────────────────────────
 
@@ -74,12 +84,8 @@ fun HeroSummaryCard(targetCalories: Double, burnedCalories: Double, entries: Lis
 
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .shadow(elevation = 8.dp, shape = RoundedCornerShape(24.dp))
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(20.dp)
             .fillMaxWidth()
+            .cwCard()
             .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Dashboard.HERO_CARD)
     ) {
         Row(
@@ -347,13 +353,12 @@ fun EmptyStateCard(
 ) {
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(Spacing.cardCorner))
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 24.dp, vertical = 24.dp),
+            .padding(horizontal = Spacing.xxl, vertical = Spacing.xxl),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp) // intra-card; not on the token grid
     ) {
         Surface(
             shape = CircleShape,

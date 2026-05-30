@@ -15,6 +15,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.ui.analysis.EditableEstimationItem
+import com.pning80.watchmycalories.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,8 +65,8 @@ fun EditMealGroupScreen(
                     }
                     onSave(updatedEntries)
                 },
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier.fillMaxWidth().padding(Spacing.l),
+                shape = RoundedCornerShape(Spacing.m)
             ) {
                 Text("Update All Items")
             }
@@ -76,8 +77,8 @@ fun EditMealGroupScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(Spacing.pageHorizontal),
+            verticalArrangement = Arrangement.spacedBy(Spacing.l)
         ) {
             item {
                 OutlinedTextField(
@@ -91,17 +92,17 @@ fun EditMealGroupScreen(
             itemsIndexed(editableItems) { _, itemState ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(Spacing.l),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                         OutlinedTextField(
                             value = itemState.name,
                             onValueChange = { itemState.name = it },
                             label = { Text("Food Name") },
                             modifier = Modifier.fillMaxWidth()
                         )
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                             OutlinedTextField(
                                 value = itemState.quantity,
                                 onValueChange = { itemState.quantity = it },
@@ -116,7 +117,7 @@ fun EditMealGroupScreen(
                                 modifier = Modifier.weight(1f)
                             )
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                             OutlinedTextField(
                                 value = itemState.protein,
                                 onValueChange = { itemState.protein = it },

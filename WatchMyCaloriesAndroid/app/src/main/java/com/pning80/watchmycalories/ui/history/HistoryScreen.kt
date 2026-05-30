@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.data.MealType
 import com.pning80.watchmycalories.ui.components.EmptyStateCard
+import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -50,7 +51,7 @@ fun HistoryScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 40.dp)
+                    .padding(horizontal = Spacing.pageHorizontal, vertical = 40.dp)
                     .testTag(AccessibilityTags.History.EMPTY_STATE),
                 contentAlignment = Alignment.Center,
             ) {
@@ -62,7 +63,8 @@ fun HistoryScreen(
             }
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(bottom = 100.dp),
+                contentPadding = PaddingValues(start = Spacing.pageHorizontal, end = Spacing.pageHorizontal, bottom = 100.dp),
+                verticalArrangement = Arrangement.spacedBy(Spacing.cardGap),
                 modifier = Modifier.testTag("HistoryLazyColumn")
             ) {
                 items(groupedEntries) { (dateMillis, dayEntries) ->
@@ -101,7 +103,7 @@ fun HistoryDayCard(
 
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .fillMaxWidth()
             .shadow(elevation = 4.dp, shape = RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
