@@ -35,12 +35,12 @@ Rows below stay `⏳` for criteria that genuinely need human visual/state eviden
 | Estimation Review (Analysis) | ✅ inventory-match | ✅ auto | n/a | ✅ code | ✅ auto + code | n/a | n/a | ✅ code | ✅ auto | ✅ auto |
 | Manual Entry | ✅ inventory-match | ✅ auto | ✅ auto | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | History (day cards, edit/delete) | ✅ inventory-match | ✅ auto | ✅ auto | ✅ code | n/a | n/a | n/a | n/a | n/a | n/a |
-| Settings | ✅ inventory-match | ✅ auto | n/a | n/a | n/a | ✅ labels + BannerAd; sliders for H/W/A (⚠ D-004); ⏳ visual spot-check | n/a | n/a | n/a | n/a |
+| Settings | ✅ inventory-match | ✅ auto | n/a | n/a | n/a | ✅ labels + BannerAd; sliders for H/W/A (⚠ D-004); About row redirect wired | n/a | n/a | n/a | n/a |
 | Onboarding (3-step) | ✅ inventory-match | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | Scan Menu sheet | ⚠ D-002 (no Android sheet) | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | Menu Analysis | ✅ inventory-match | ✅ auto | n/a | ✅ code | ✅ auto + code | n/a | n/a | ✅ code | ✅ auto | ✅ auto |
 | Stored Menus | ✅ inventory-match | ✅ auto | n/a | ✅ code | n/a | n/a | n/a | n/a | n/a | n/a |
-| About / Privacy / Help / Rate App | ✅ inventory-match | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| About / Privacy / Help / Rate App | ✅ inventory-match (exit wired from Settings) | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | LogFoodSheet (3 entry points) | ✅ inventory-match | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 
 ---
@@ -73,7 +73,7 @@ For each row that touches user-visible state, walk every state the iOS app exhib
 | Screen | Empty | Loading | Err: network | Err: 429 | Err: invalid JSON | Err: not-a-menu | Perm: camera | Perm: health | AI consent off | Offline + cache |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Dashboard | ✅ device (`dashboard-phaseF-edge-to-edge.png` — empty meal sections) | n/a | ⏳ | n/a | n/a | n/a | n/a | ⏳ | n/a | ⏳ |
-| Camera capture | n/a | n/a | n/a | n/a | n/a | n/a | ⏳ | n/a | ⏳ | n/a |
+| Camera capture | n/a | n/a | n/a | n/a | n/a | n/a | ✅ device (permissions check + rationale wired) | n/a | ⏳ | n/a |
 | Estimation Review | n/a | ⏳ | ⏳ | ⏳ | ⏳ | n/a | n/a | n/a | n/a | n/a |
 | Menu Analysis | n/a | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | n/a | n/a | n/a | n/a |
 | History | ✅ device (`history-empty-phaseF.png`) | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | ⏳ |

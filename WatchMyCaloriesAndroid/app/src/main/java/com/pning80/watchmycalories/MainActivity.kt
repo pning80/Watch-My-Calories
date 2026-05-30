@@ -189,19 +189,17 @@ private fun MainAppContent(
 
     Scaffold(
         topBar = {
-            if (currentRoute in listOf("dashboard", "history", "settings", "scannedMenus")) {
+            if (currentRoute in listOf("history", "scannedMenus")) {
                 @OptIn(ExperimentalMaterial3Api::class)
                 TopAppBar(
                     title = {
                         val titleText = when (currentRoute) {
                             "history" -> "History"
-                            "settings" -> "Settings"
                             "scannedMenus" -> "Scanned Menus"
                             else -> ""
                         }
                         val titleTag = when (currentRoute) {
                             "history" -> "HistoryTitle"
-                            "settings" -> "SettingsTitle"
                             "scannedMenus" -> "ScannedMenusTitle"
                             else -> null
                         }
@@ -295,7 +293,8 @@ private fun MainAppContent(
                     entries = todayEntries,
                     targetCalories = targetCalories,
                     burnedCalories = burnedCalories,
-                    onLogFood = { showLogFoodSheet = true }
+                    onLogFood = { showLogFoodSheet = true },
+                    onNavigateToSettings = { navController.navigate("settings") }
                 )
             }
             composable("history") {
@@ -481,6 +480,7 @@ private fun MainAppContent(
 
                 ManualEntryScreen(
                     initialEntry = initialEntry,
+                    isMetric = isMetric,
                     onSave = { entry ->
                         if (initialEntry != null) {
                             viewModel.updateEntry(entry)
@@ -520,7 +520,12 @@ private fun MainAppContent(
                 SettingsScreen(
                     settingsDataStore = settingsDataStore,
                     currentProfile = userProfile,
-                    onSaveProfile = { profile -> viewModel.saveProfile(profile) }
+                    onSaveProfile = { profile -> 
+                        viewModel.saveProfile(profile)
+                        navController.popBackStack()
+                    },
+                    onNavigateToAbout = { navController.navigate("about") },
+                    onCancel = { navController.popBackStack() }
                 )
             }
         }

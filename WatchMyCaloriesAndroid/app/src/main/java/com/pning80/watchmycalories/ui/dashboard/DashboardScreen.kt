@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,7 +34,8 @@ fun DashboardScreen(
     entries: List<FoodEntry>,
     targetCalories: Double,
     burnedCalories: Double,
-    onLogFood: () -> Unit
+    onLogFood: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val todayEntries = entries.filter { com.pning80.watchmycalories.utils.TimeUtils.isToday(it.timestamp) }
     val groupedMeals = todayEntries.groupBy { MealType.fromRaw(it.mealTypeRaw) }
@@ -46,6 +48,7 @@ fun DashboardScreen(
         // ── App Header ──
         Row(
             modifier = Modifier
+                .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 16.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -53,7 +56,9 @@ fun DashboardScreen(
             Surface(
                 shape = RoundedCornerShape(10.dp),
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(38.dp)
+                modifier = Modifier
+                    .size(38.dp)
+                    .shadow(elevation = 2.dp, shape = RoundedCornerShape(10.dp))
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Icon(
@@ -64,12 +69,30 @@ fun DashboardScreen(
                 }
             }
             Spacer(modifier = Modifier.width(14.dp))
-            Text(
-                text = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date()),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Watch My Calories",
+                    style = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Serif),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date()).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
+            IconButton(
+                onClick = onNavigateToSettings,
+                modifier = Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.AppMenu.MENU_BUTTON)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
         }
 
         // ── Content ──

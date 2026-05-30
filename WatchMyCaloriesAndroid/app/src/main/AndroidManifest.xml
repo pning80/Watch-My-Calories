@@ -26,5 +26,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <!-- Exposed for Robolectric unit tests to run createComposeRule() in both debug and release configurations -->
+        <activity
+            android:name="androidx.activity.ComponentActivity"
+            android:theme="@style/Theme.WatchMyCalories"
+            android:exported="true" />
     </application>
 </manifest>

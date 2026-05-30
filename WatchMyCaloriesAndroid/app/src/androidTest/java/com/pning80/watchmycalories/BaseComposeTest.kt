@@ -15,7 +15,7 @@ abstract class BaseComposeTest {
             carbs = 50.0,
             fat = 6.0,
             timestamp = System.currentTimeMillis(),
-            imageId = null,
+            imageID = null,
             mealName = null,
             mealTypeRaw = "Breakfast"
         ),
@@ -28,7 +28,7 @@ abstract class BaseComposeTest {
             carbs = 20.0,
             fat = 18.0,
             timestamp = System.currentTimeMillis(),
-            imageId = null,
+            imageID = null,
             mealName = null,
             mealTypeRaw = "Lunch"
         )
