@@ -84,4 +84,122 @@ class DashboardScreenTest : BaseComposeTest() {
         // but since we mocked timestamp to CURRENT, they might fall under whatever time it is now.
         // We just assert the items are there to mirror the SwiftUI `testSeedDataShowsFoodEntryNames`.
     }
+
+    @Test
+    fun testEmptyStateManualEntryLinkExists() {
+        composeTestRule.setContent {
+            DashboardScreen(
+                entries = emptyList(),
+                targetCalories = 2200.0,
+                burnedCalories = 0.0,
+                onLogFood = {},
+                onNavigateToSettings = {}
+            )
+        }
+
+        composeTestRule.onNodeWithTag(
+            com.pning80.watchmycalories.utils.AccessibilityTags.Dashboard.MANUAL_ENTRY_LINK
+        ).assertExists()
+        composeTestRule.onNodeWithText("or log manually").assertIsDisplayed()
+    }
+
+    @Test
+    fun testEmptyStateShowsCorrectText() {
+        composeTestRule.setContent {
+            DashboardScreen(
+                entries = emptyList(),
+                targetCalories = 2200.0,
+                burnedCalories = 0.0,
+                onLogFood = {},
+                onNavigateToSettings = {}
+            )
+        }
+
+        composeTestRule.onNodeWithText("No meals tracked yet").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Tap to scan your first meal.").assertIsDisplayed()
+    }
+
+    @Test
+    fun testHeroCardAccessibilityElements() {
+        composeTestRule.setContent {
+            DashboardScreen(
+                entries = getSampleEntries(),
+                targetCalories = 2200.0,
+                burnedCalories = 456.0,
+                onLogFood = {},
+                onNavigateToSettings = {}
+            )
+        }
+
+        // Hero card element
+        composeTestRule.onNodeWithTag(
+            com.pning80.watchmycalories.utils.AccessibilityTags.Dashboard.HERO_CARD
+        ).assertExists()
+
+        // Goal value element
+        composeTestRule.onNodeWithTag("dashboard_goalValue").assertExists()
+
+        // Remaining value element
+        composeTestRule.onNodeWithTag("dashboard_remainingValue").assertExists()
+
+        // Consumed calories element
+        composeTestRule.onNodeWithTag("dashboard_consumedCalories").assertExists()
+    }
+
+    @Test
+    fun testOnlyRelevantMealSectionsAppear() {
+        composeTestRule.setContent {
+            DashboardScreen(
+                entries = getSampleEntries(), // Breakfast + Lunch only
+                targetCalories = 2200.0,
+                burnedCalories = 0.0,
+                onLogFood = {},
+                onNavigateToSettings = {}
+            )
+        }
+
+        // Empty state should NOT appear
+        composeTestRule.onNodeWithText("No meals tracked yet").assertDoesNotExist()
+
+        // "DINNER" and "SNACK" sections should NOT appear
+        composeTestRule.onNodeWithText("DINNER").assertDoesNotExist()
+        composeTestRule.onNodeWithText("SNACK").assertDoesNotExist()
+    }
+
+    @Test
+    fun testEmptyStateCardTriggerOnLogFood() {
+        var logFoodTriggered = false
+        composeTestRule.setContent {
+            DashboardScreen(
+                entries = emptyList(),
+                targetCalories = 2200.0,
+                burnedCalories = 0.0,
+                onLogFood = { logFoodTriggered = true },
+                onNavigateToSettings = {}
+            )
+        }
+
+        composeTestRule.onNodeWithTag(
+            com.pning80.watchmycalories.utils.AccessibilityTags.Dashboard.EMPTY_STATE_CARD
+        ).performClick()
+
+        org.junit.Assert.assertTrue("onLogFood should be triggered", logFoodTriggered)
+    }
+
+    @Test
+    fun testSettingsGearButtonExists() {
+        composeTestRule.setContent {
+            DashboardScreen(
+                entries = emptyList(),
+                targetCalories = 2200.0,
+                burnedCalories = 0.0,
+                onLogFood = {},
+                onNavigateToSettings = {}
+            )
+        }
+
+        composeTestRule.onNodeWithTag(
+            com.pning80.watchmycalories.utils.AccessibilityTags.AppMenu.MENU_BUTTON
+        ).assertExists()
+    }
 }

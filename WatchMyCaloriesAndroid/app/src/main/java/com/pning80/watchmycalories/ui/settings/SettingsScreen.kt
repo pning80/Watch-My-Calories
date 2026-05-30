@@ -26,6 +26,7 @@ import com.pning80.watchmycalories.ui.theme.Spacing
 import androidx.activity.compose.BackHandler
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,10 +37,35 @@ fun SettingsScreen(
     onNavigateToAbout: () -> Unit,
     onCancel: () -> Unit
 ) {
-    val isMetric by settingsDataStore.isMetricFlow.collectAsState(initial = true)
-    val appTheme by settingsDataStore.appThemeFlow.collectAsState(initial = "System")
-    val aiConsent by settingsDataStore.aiConsentFlow.collectAsState(initial = "notAsked")
+    val isMetricNullable by settingsDataStore.isMetricFlow.collectAsState(initial = null)
+    val appThemeNullable by settingsDataStore.appThemeFlow.collectAsState(initial = null)
+    val aiConsentNullable by settingsDataStore.aiConsentFlow.collectAsState(initial = null)
+
+    if (isMetricNullable == null || appThemeNullable == null || aiConsentNullable == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val isMetric = isMetricNullable!!
+    val appTheme = appThemeNullable!!
+    val aiConsent = aiConsentNullable!!
+
+    val initialMetric = rememberSaveable { isMetric }
+    val initialTheme = rememberSaveable { appTheme }
+    val initialConsent = rememberSaveable { aiConsent }
+
+    // Instant local states for theme, metric, and consent to avoid Datastore write delay/flicker and reset bugs
+    var localIsMetric by rememberSaveable { mutableStateOf(initialMetric) }
+    var localAppTheme by rememberSaveable { mutableStateOf(initialTheme) }
+    var localAiConsent by rememberSaveable { mutableStateOf(initialConsent) }
+
     val coroutineScope = rememberCoroutineScope()
+
 
     // Profile state — initialized from currentProfile or defaults
     var heightCm by remember(currentProfile) { mutableIntStateOf(currentProfile?.height?.roundToInt() ?: 173) }
@@ -75,19 +101,51 @@ fun SettingsScreen(
     
     var showDiscardDialog by remember { mutableStateOf(false) }
 
+    val originalHeightCm = remember(currentProfile) { currentProfile?.height?.roundToInt() ?: 173 }
+    val originalWeightKg = remember(currentProfile) { currentProfile?.weight?.roundToInt() ?: 68 }
+    val originalHeightFeet = remember(currentProfile) {
+        val totalInches = (currentProfile?.height ?: 173.0) / 2.54
+        totalInches.toInt() / 12
+    }
+    val originalHeightInches = remember(currentProfile) {
+        val totalInches = (currentProfile?.height ?: 173.0) / 2.54
+        totalInches.toInt() % 12
+    }
+    val originalWeightLbs = remember(currentProfile) {
+        ((currentProfile?.weight ?: 68.0) * 2.20462).roundToInt()
+    }
+
     // Detected changes
     val hasUnsavedChanges = remember(
-        heightCm, weightKg, heightFeet, heightInches, weightLbs, age, gender, activityLevel, targetCaloriesText, isMetric, appTheme
+        heightCm, weightKg, heightFeet, heightInches, weightLbs, age, gender, activityLevel, targetCaloriesText, localIsMetric, localAppTheme, localAiConsent,
+        initialMetric, initialTheme, initialConsent
     ) {
         val originalTarget = if (currentProfile != null && currentProfile.targetCalories > 0)
             currentProfile.targetCalories.toInt().toString() else ""
-            
-        heightCm != (currentProfile?.height?.roundToInt() ?: 173) ||
-        weightKg != (currentProfile?.weight?.roundToInt() ?: 68) ||
+
+        val heightChanged = if (localIsMetric) {
+            heightCm != originalHeightCm
+        } else {
+            heightFeet != originalHeightFeet || heightInches != originalHeightInches
+        }
+
+        val weightChanged = if (localIsMetric) {
+            weightKg != originalWeightKg
+        } else {
+            weightLbs != originalWeightLbs
+        }
+
+        val consentChanged = localAiConsent != initialConsent
+
+        heightChanged ||
+        weightChanged ||
         age != (currentProfile?.age ?: 30) ||
         gender != Gender.fromRaw(currentProfile?.genderRaw) ||
         activityLevel != ActivityLevel.fromRaw(currentProfile?.activityLevelRaw) ||
-        targetCaloriesText != originalTarget
+        targetCaloriesText != originalTarget ||
+        localIsMetric != initialMetric ||
+        localAppTheme != initialTheme ||
+        consentChanged
     }
 
     BackHandler(enabled = hasUnsavedChanges) {
@@ -102,6 +160,11 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(onClick = { 
                     showDiscardDialog = false
+                    coroutineScope.launch {
+                        settingsDataStore.setMetric(initialMetric)
+                        settingsDataStore.setAppTheme(initialTheme)
+                        settingsDataStore.setAiConsent(initialConsent)
+                    }
                     onCancel()
                 }) { Text("Discard") }
             },
@@ -115,6 +178,7 @@ fun SettingsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Settings", modifier = Modifier.testTag("SettingsTitle")) },
+                windowInsets = TopAppBarDefaults.windowInsets,
                 navigationIcon = {
                     TextButton(
                         onClick = {
@@ -132,8 +196,8 @@ fun SettingsScreen(
                 actions = {
                     TextButton(
                         onClick = {
-                            val hCm = if (isMetric) heightCm.toDouble() else (heightFeet * 12 + heightInches) * 2.54
-                            val wKg = if (isMetric) weightKg.toDouble() else weightLbs / 2.20462
+                            val hCm = if (localIsMetric) heightCm.toDouble() else (heightFeet * 12 + heightInches) * 2.54
+                            val wKg = if (localIsMetric) weightKg.toDouble() else weightLbs / 2.20462
                             val target = targetCaloriesText.toDoubleOrNull() ?: 2000.0
 
                             val profile = UserProfile(
@@ -186,8 +250,11 @@ fun SettingsScreen(
                     ) {
                         listOf("System", "Light", "Dark").forEachIndexed { index, theme ->
                             SegmentedButton(
-                                selected = appTheme == theme,
-                                onClick = { coroutineScope.launch { settingsDataStore.setAppTheme(theme) } },
+                                selected = localAppTheme == theme,
+                                onClick = {
+                                    localAppTheme = theme
+                                    coroutineScope.launch { settingsDataStore.setAppTheme(theme) }
+                                },
                                 shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
                             ) { Text(theme) }
                         }
@@ -200,9 +267,10 @@ fun SettingsScreen(
                     ) {
                         listOf("US Customary" to false, "Metric" to true).forEachIndexed { index, (label, metric) ->
                             SegmentedButton(
-                                selected = isMetric == metric,
+                                selected = localIsMetric == metric,
                                 onClick = {
-                                    if (isMetric == metric) return@SegmentedButton
+                                    if (localIsMetric == metric) return@SegmentedButton
+                                    localIsMetric = metric
                                     coroutineScope.launch { settingsDataStore.setMetric(metric) }
                                     if (metric) {
                                         val totalInches = heightFeet * 12 + heightInches
@@ -230,7 +298,7 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                     Text("Profile", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
-                    if (isMetric) {
+                    if (localIsMetric) {
                         // Height (cm)
                         ProfileSliderRow(
                             label = "Height",
@@ -359,8 +427,8 @@ fun SettingsScreen(
 
                     Button(
                         onClick = {
-                            val hCm = if (isMetric) heightCm.toDouble() else (heightFeet * 12 + heightInches) * 2.54
-                            val wKg = if (isMetric) weightKg.toDouble() else weightLbs / 2.20462
+                            val hCm = if (localIsMetric) heightCm.toDouble() else (heightFeet * 12 + heightInches) * 2.54
+                            val wKg = if (localIsMetric) weightKg.toDouble() else weightLbs / 2.20462
                             val recommended = CalorieCalculator.recommended(hCm, wKg, age, gender, activityLevel)
                             targetCaloriesText = recommended.toInt().toString()
                         },
@@ -386,10 +454,12 @@ fun SettingsScreen(
                     ) {
                         Text("AI Photo Analysis", style = MaterialTheme.typography.bodyMedium)
                         Switch(
-                            checked = aiConsent == "accepted",
+                            checked = localAiConsent == "accepted",
                             onCheckedChange = { enabled ->
+                                val newConsent = if (enabled) "accepted" else "declined"
+                                localAiConsent = newConsent
                                 coroutineScope.launch {
-                                    settingsDataStore.setAiConsent(if (enabled) "accepted" else "declined")
+                                    settingsDataStore.setAiConsent(newConsent)
                                 }
                             },
                             modifier = Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.AI_CONSENT_TOGGLE)

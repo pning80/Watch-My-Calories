@@ -1,0 +1,27 @@
+<journey name="Settings Screen Full Interaction">
+  <description>
+    Verify all Settings screen elements and interactions including theme change, unit system change,
+    save button enablement, discard dialog, and profile fields.
+    iOS parity: SettingsTests (all 15+ tests)
+  </description>
+  <actions>
+    <action>Tap the settings gear icon in the top-right corner of the dashboard</action>
+    <action>Verify the Settings screen appears with "Cancel" and "Save" buttons in the top bar</action>
+    <action>Verify the "Save" button is initially disabled (grayed out)</action>
+    <action>Verify the "App Appearance" section is visible with "Theme" and "Unit System" controls</action>
+    <action>Verify the Theme picker shows three options: System, Light, Dark</action>
+    <action>Verify the Unit System picker shows two options: US Customary, Metric</action>
+    <action>Verify the Profile section is visible with Height, Weight, Age, Gender, Activity Level fields</action>
+    <action>Tap the "Dark" theme option</action>
+    <action>Verify the screen's background color changes immediately to a dark color</action>
+    <action>Verify the "Save" button is now enabled (no longer grayed out)</action>
+    <action>Tap "Cancel"</action>
+    <action>Verify a "Discard changes?" dialog appears</action>
+    <action>Tap "Keep Editing" in the dialog</action>
+    <action>Verify the Settings screen is still displayed with "Dark" theme selected</action>
+    <action>Tap "Cancel" again</action>
+    <action>Verify the "Discard changes?" dialog appears again</action>
+    <action>Tap "Discard" in the dialog</action>
+    <action>Verify the dashboard is displayed and the theme has reverted back (not dark)</action>
+  </actions>
+</journey>

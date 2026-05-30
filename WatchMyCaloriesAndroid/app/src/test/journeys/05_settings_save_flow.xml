@@ -1,0 +1,19 @@
+<journey name="Settings Save Flow">
+  <description>
+    Verify that changing settings and saving persists values correctly.
+    This tests the save button enablement, profile editing, and persistence.
+    iOS parity: SettingsTests save flow, unit system switch, theme persistence
+  </description>
+  <actions>
+    <action>Tap the settings gear icon in the top-right corner of the dashboard</action>
+    <action>Verify the Settings screen appears</action>
+    <action>Verify the "Save" button is initially disabled</action>
+    <action>Scroll down to find the "Target Calories" field</action>
+    <action>Tap the "Calculate Recommended Goal" button</action>
+    <action>Verify the Target Calories field now contains a numeric value</action>
+    <action>Verify the "Save" button is now enabled</action>
+    <action>Tap "Save"</action>
+    <action>Verify the dashboard is displayed</action>
+    <action>Verify the hero card "Goal" value has updated to match the calculated target</action>
+  </actions>
+</journey>

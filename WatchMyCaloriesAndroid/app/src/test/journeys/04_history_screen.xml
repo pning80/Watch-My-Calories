@@ -1,0 +1,19 @@
+<journey name="History Screen Verification">
+  <description>
+    Verify the History screen shows entries and interactions work correctly.
+    iOS parity: HistoryTests (empty state, day card expand, meal sections, calorie totals)
+  </description>
+  <actions>
+    <action>Tap the "History" tab in the bottom navigation bar</action>
+    <action>Verify the History screen is displayed with a list of day cards</action>
+    <action>Verify a day card shows today's date and a calorie total of 450</action>
+    <action>Tap on the day card for today</action>
+    <action>Verify the card expands to show meal sections</action>
+    <action>Verify "Chicken Salad" appears in the expanded card under the meal section</action>
+    <action>Verify "450" calories is shown for the entry</action>
+    <action>Tap on the day card again to collapse it</action>
+    <action>Verify the entry details are no longer visible</action>
+    <action>Tap the "Dashboard" tab to return to the dashboard</action>
+    <action>Verify the dashboard is displayed</action>
+  </actions>
+</journey>

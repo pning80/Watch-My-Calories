@@ -1,0 +1,26 @@
+<journey name="Manual Entry Full Flow">
+  <description>
+    Test the complete manual food entry flow: open form, fill fields, verify save enables,
+    save entry, and verify it appears on the dashboard.
+    iOS parity: ManualEntryTests + DashboardTests.testSeedDataShowsFoodEntryNames
+  </description>
+  <actions>
+    <action>Tap "or log manually" on the dashboard</action>
+    <action>Verify the "Log Food" bottom sheet appears with options: Scan Food, Choose from Library, Log Manually</action>
+    <action>Tap "Log Manually"</action>
+    <action>Verify the manual entry form appears with "Log Food" title, Cancel (X) and Save buttons</action>
+    <action>Verify the "Save" button is disabled</action>
+    <action>Verify the Meal picker shows Breakfast, Lunch, Dinner, Snack segments</action>
+    <action>Verify "Add Nutrition Details (optional)" link is visible</action>
+    <action>Tap the "Food name" field and type "Chicken Salad"</action>
+    <action>Tap the "Calories" field and type "450"</action>
+    <action>Tap the "Quantity" field and type "1 plate"</action>
+    <action>Verify the "Save" button is now enabled</action>
+    <action>Tap the "Lunch" meal type segment</action>
+    <action>Tap the "Save" button</action>
+    <action>Verify the dashboard is displayed</action>
+    <action>Verify "Chicken Salad" appears in the meal list on the dashboard</action>
+    <action>Verify the hero card shows "450" kcal consumed</action>
+    <action>Verify the hero card "Remaining" value has decreased from 1940 to 1490</action>
+  </actions>
+</journey>

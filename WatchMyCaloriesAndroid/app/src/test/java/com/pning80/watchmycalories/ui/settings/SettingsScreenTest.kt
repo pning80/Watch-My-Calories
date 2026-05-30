@@ -6,6 +6,7 @@ import com.pning80.watchmycalories.BaseComposeTest
 import com.pning80.watchmycalories.data.UserProfile
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import androidx.compose.ui.semantics.getOrNull
+import androidx.datastore.preferences.core.edit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -28,6 +29,10 @@ class SettingsScreenTest : BaseComposeTest() {
     @Before
     fun setup() {
         settingsDataStore = SettingsDataStore(RuntimeEnvironment.getApplication())
+        // Clear any DataStore values from previous test classes to prevent pollution
+        kotlinx.coroutines.runBlocking {
+            RuntimeEnvironment.getApplication().dataStore.edit { it.clear() }
+        }
     }
 
     @Test
@@ -177,4 +182,296 @@ class SettingsScreenTest : BaseComposeTest() {
         assertTrue(savedProfile != null)
         assertEquals(1979.0, savedProfile!!.targetCalories, 0.0) // 175cm 70kg male 30y sedentary BMR = 1648.75 * 1.2 = 1978.5 => rounded 1979.
     }
+
+    @Test
+    fun testSaveButtonBehaviorInUSCustomaryMode() = kotlinx.coroutines.runBlocking {
+        settingsDataStore.setMetric(false)
+
+        var savedProfile: UserProfile? = null
+        composeTestRule.setContent {
+            SettingsScreen(
+                settingsDataStore = settingsDataStore,
+                currentProfile = UserProfile(
+                    id = 1,
+                    height = 172.72, // 5 ft 8 in (68 in)
+                    weight = 68.0388, // 150 lbs
+                    age = 30,
+                    genderRaw = "Male",
+                    activityLevelRaw = "Sedentary",
+                    targetCalories = 2200.0
+                ),
+                onSaveProfile = { savedProfile = it },
+                onNavigateToAbout = {},
+                onCancel = {}
+            )
+        }
+
+        // Initially Save is disabled because no changes exist
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsNotEnabled()
+
+        // Click Calculate Goal to trigger a change in target calories
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.CALCULATE_GOAL).performScrollTo().performClick()
+
+        // Verify Save is now enabled
+        val saveButton = composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON)
+        saveButton.assertIsEnabled()
+        saveButton.performClick()
+
+        assertTrue(savedProfile != null)
+        assertEquals(172.72, savedProfile!!.height, 0.01)
+    }
+
+    @Test
+    fun testCancelNoDialogWhenUnchanged() {
+        var cancelTriggered = false
+        composeTestRule.setContent {
+            SettingsScreen(
+                settingsDataStore = settingsDataStore,
+                currentProfile = UserProfile(
+                    id = 1,
+                    height = 175.0,
+                    weight = 70.0,
+                    age = 30,
+                    genderRaw = "Male",
+                    activityLevelRaw = "Sedentary",
+                    targetCalories = 2200.0
+                ),
+                onSaveProfile = {},
+                onNavigateToAbout = {},
+                onCancel = { cancelTriggered = true }
+            )
+        }
+
+        // No dialog initially
+        composeTestRule.onNodeWithText("Discard changes?").assertDoesNotExist()
+
+        // Tap Cancel without making any changes
+        composeTestRule.onNodeWithTag("settings_cancel_button").performClick()
+
+        // No dialog should appear, cancel should fire directly
+        composeTestRule.onNodeWithText("Discard changes?").assertDoesNotExist()
+        assertTrue("onCancel should fire directly when no changes exist", cancelTriggered)
+    }
+
+    @Test
+    fun testKeepEditingFromCancelDialog() {
+        composeTestRule.setContent {
+            SettingsScreen(
+                settingsDataStore = settingsDataStore,
+                currentProfile = UserProfile(
+                    id = 1,
+                    height = 175.0,
+                    weight = 70.0,
+                    age = 30,
+                    genderRaw = "Male",
+                    activityLevelRaw = "Sedentary",
+                    targetCalories = 2200.0
+                ),
+                onSaveProfile = {},
+                onNavigateToAbout = {},
+                onCancel = {}
+            )
+        }
+
+        // Wait for DataStore to load
+        composeTestRule.waitForIdle()
+
+        // Make a change by editing the target calories field
+        val targetField = composeTestRule.onNodeWithTag(AccessibilityTags.Settings.TARGET_CALORIES)
+        targetField.performScrollTo()
+        targetField.performTextInput("999")
+
+        // Tap Cancel
+        composeTestRule.onNodeWithTag("settings_cancel_button").performClick()
+
+        // Dialog should show
+        composeTestRule.onNodeWithText("Discard changes?").assertIsDisplayed()
+
+        // Tap Keep Editing
+        composeTestRule.onNodeWithText("Keep Editing").performClick()
+
+        // Dialog should dismiss but we should still be on Settings
+        composeTestRule.onNodeWithText("Discard changes?").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
+    }
+
+    @Test
+    fun testProfileSectionFieldsVisible() {
+        composeTestRule.setContent {
+            SettingsScreen(
+                settingsDataStore = settingsDataStore,
+                currentProfile = null,
+                onSaveProfile = {},
+                onNavigateToAbout = {},
+                onCancel = {}
+            )
+        }
+
+        composeTestRule.onNodeWithText("Height").assertExists()
+        composeTestRule.onNodeWithText("Weight").assertExists()
+        composeTestRule.onNodeWithText("Age").assertExists()
+        composeTestRule.onNodeWithText("Gender").assertExists()
+        composeTestRule.onNodeWithText("Activity Level").assertExists()
+    }
+
+    @Test
+    fun testTargetCaloriesFieldEditable() {
+        composeTestRule.setContent {
+            SettingsScreen(
+                settingsDataStore = settingsDataStore,
+                currentProfile = null,
+                onSaveProfile = {},
+                onNavigateToAbout = {},
+                onCancel = {}
+            )
+        }
+
+        val targetField = composeTestRule.onNodeWithTag(AccessibilityTags.Settings.TARGET_CALORIES)
+        targetField.performScrollTo()
+        targetField.performTextInput("1800")
+        targetField.assertTextContains("1800")
+    }
+
+    @Test
+    fun testPrivacySectionInfoText() {
+        composeTestRule.setContent {
+            SettingsScreen(
+                settingsDataStore = settingsDataStore,
+                currentProfile = null,
+                onSaveProfile = {},
+                onNavigateToAbout = {},
+                onCancel = {}
+            )
+        }
+
+        composeTestRule.onNodeWithText("food photos are sent to Google Gemini", substring = true)
+            .assertExists()
+    }
+
+    @Test
+    fun testAIConsentToggleExists() {
+        composeTestRule.setContent {
+            SettingsScreen(
+                settingsDataStore = settingsDataStore,
+                currentProfile = null,
+                onSaveProfile = {},
+                onNavigateToAbout = {},
+                onCancel = {}
+            )
+        }
+
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.AI_CONSENT_TOGGLE)
+            .assertExists()
+    }
+
+    @Test
+    fun testAboutAndSupportSectionExists() {
+        composeTestRule.setContent {
+            SettingsScreen(
+                settingsDataStore = settingsDataStore,
+                currentProfile = null,
+                onSaveProfile = {},
+                onNavigateToAbout = {},
+                onCancel = {}
+            )
+        }
+
+        composeTestRule.onNodeWithText("About & Support").assertExists()
+    }
+
+    @Test
+    fun testChangingThemeEnablesSaveButton() {
+        composeTestRule.setContent {
+            SettingsScreen(
+                settingsDataStore = settingsDataStore,
+                currentProfile = UserProfile(
+                    id = 1,
+                    height = 175.0,
+                    weight = 70.0,
+                    age = 30,
+                    genderRaw = "Male",
+                    activityLevelRaw = "Sedentary",
+                    targetCalories = 2200.0
+                ),
+                onSaveProfile = {},
+                onNavigateToAbout = {},
+                onCancel = {}
+            )
+        }
+
+        // Initially Save is disabled
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsNotEnabled()
+
+        // Tap Light theme button
+        composeTestRule.onNodeWithText("Light").performClick()
+        composeTestRule.waitForIdle()
+
+        // Save should now be enabled
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+    }
+
+    @Test
+    fun testChangingUnitSystemEnablesSaveButton() {
+        composeTestRule.setContent {
+            SettingsScreen(
+                settingsDataStore = settingsDataStore,
+                currentProfile = UserProfile(
+                    id = 1,
+                    height = 175.0,
+                    weight = 70.0,
+                    age = 30,
+                    genderRaw = "Male",
+                    activityLevelRaw = "Sedentary",
+                    targetCalories = 2200.0
+                ),
+                onSaveProfile = {},
+                onNavigateToAbout = {},
+                onCancel = {}
+            )
+        }
+
+        // Initially Save is disabled
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsNotEnabled()
+
+        // Tap US Customary unit button
+        composeTestRule.onNodeWithText("US Customary").performClick()
+        composeTestRule.waitForIdle()
+
+        // Save should now be enabled
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+    }
+
+    @Test
+    fun testChangingAiConsentEnablesSaveButton() {
+        composeTestRule.setContent {
+            SettingsScreen(
+                settingsDataStore = settingsDataStore,
+                currentProfile = UserProfile(
+                    id = 1,
+                    height = 175.0,
+                    weight = 70.0,
+                    age = 30,
+                    genderRaw = "Male",
+                    activityLevelRaw = "Sedentary",
+                    targetCalories = 2200.0
+                ),
+                onSaveProfile = {},
+                onNavigateToAbout = {},
+                onCancel = {}
+            )
+        }
+
+        // Initially Save is disabled
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsNotEnabled()
+
+        // Tap AI consent toggle
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.AI_CONSENT_TOGGLE)
+            .performScrollTo()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        // Save should now be enabled
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+    }
 }
+

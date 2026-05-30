@@ -1,0 +1,20 @@
+<journey name="Navigation Tab Bar">
+  <description>
+    Verify the 4-tab navigation bar works correctly, navigating between Dashboard, Log Food sheet,
+    Scan Menu, and History screens.
+    iOS parity: Navigation tests
+  </description>
+  <actions>
+    <action>Verify the Dashboard tab is currently selected at the bottom</action>
+    <action>Tap the "History" tab</action>
+    <action>Verify the History screen is displayed</action>
+    <action>Tap the "Dashboard" tab</action>
+    <action>Verify the Dashboard screen is displayed with "Watch My Calories" title</action>
+    <action>Tap the "Log Food" tab</action>
+    <action>Verify the "Log Food" bottom sheet appears with options: Scan Food, Choose from Library, Log Manually</action>
+    <action>Tap outside the sheet or swipe down to dismiss it</action>
+    <action>Verify the Dashboard is displayed again</action>
+    <action>Tap the "Scan Menu" tab</action>
+    <action>Verify the Scan Menu screen or camera prompt appears</action>
+  </actions>
+</journey>

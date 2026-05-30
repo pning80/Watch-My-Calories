@@ -57,7 +57,7 @@ Rows below stay `⏳` for criteria that genuinely need human visual/state eviden
 | Estimation Review (Analysis) | ⏳ device | ✅ code — MealTypePicker state hoisted into `AnalysisScreen.kt`, propagated via `onSaveLog(EstimationResult, MealType)`; Save row gets `Modifier.imePadding()` | ⏳ device | ✅ auto | ✅ code (native in Loading) |
 | Manual Entry | ⏳ device | ⏳ device | ⏳ device | ✅ auto | ⏳ device (banner) |
 | History | ⚠ partial — empty state matches iOS book icon (`PortingEvidence/screenshots/android/history-empty-phaseF.png`); paired iOS diff pending | ✅ code — swipe-to-delete via `SwipeToDismissBox` on `FoodEntryItem` (`ui/history/HistoryScreen.kt:349-386`) | ⏳ device (empty-state verified on device — see screenshot) | ✅ auto | ✅ code (banner) |
-| Settings | ⚠ partial — segmented controls + sliders render cleanly (`PortingEvidence/screenshots/android/settings-phaseF.png`); paired iOS diff pending | ⏳ device | ⏳ device | ✅ auto | ✅ code (banner — see iOS `SettingsView.swift:51`) |
+| Settings | ⚠ partial — segmented controls + sliders render cleanly (`PortingEvidence/screenshots/android/settings-phaseF.png`); paired iOS diff pending | ✅ device | ✅ device | ✅ auto | ✅ code (banner — see iOS `SettingsView.swift:51`) |
 | Onboarding | ⏳ device | ⏳ device | ⏳ device | ✅ auto | n/a |
 | Scan Menu sheet | n/a (D-002) | n/a (D-002) | n/a (D-002) | ✅ auto (IDs reserved) | n/a |
 | Menu Analysis | ⏳ device | ⏳ device | ⏳ device | ✅ auto | ✅ code (native in Loading) |
