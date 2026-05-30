@@ -30,12 +30,12 @@ Rows below stay `⏳` for criteria that genuinely need human visual/state eviden
 | Screen / Surface | T1.1 Inventory | T1.2 Data fields | T1.3 Numeric logic | T1.4 Image persist | T1.5 Gemini path | T1.6 Settings parity | T1.7 Health | T1.8 Attestation client | T1.9 Backend | T1.10 iOS non-regress |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Dashboard (HeroSummaryCard + meal sections) | ✅ inventory-match | ✅ auto | ✅ auto | n/a | n/a | n/a | ⏳ device | n/a | n/a | n/a |
-| Camera capture | ✅ inventory-match (food-only — see D-003) | n/a | n/a | ✅ code | ✅ auto + code | n/a | n/a | ✅ code | ✅ auto | ✅ auto |
+| Camera capture | ✅ inventory-match (food-only — see D-003; post-capture MealTypePicker via `ui/camera/CameraReviewScreen.kt`, PORT_AUDIT C1) | n/a | n/a | ✅ code | ✅ auto + code | n/a | n/a | ✅ code | ✅ auto | ✅ auto |
 | Photo Library Review | ✅ inventory-match (D-001/D-002 unrelated) | n/a | n/a | ✅ code | ✅ auto + code | n/a | n/a | ✅ code | ✅ auto | ✅ auto |
 | Estimation Review (Analysis) | ✅ inventory-match | ✅ auto | n/a | ✅ code | ✅ auto + code | n/a | n/a | ✅ code | ✅ auto | ✅ auto |
 | Manual Entry | ✅ inventory-match | ✅ auto | ✅ auto | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | History (day cards, edit/delete) | ✅ inventory-match | ✅ auto | ✅ auto | ✅ code | n/a | n/a | n/a | n/a | n/a | n/a |
-| Settings | ✅ inventory-match | ✅ auto | n/a | n/a | n/a | ✅ labels + BannerAd; ⏳ visual spot-check | n/a | n/a | n/a | n/a |
+| Settings | ✅ inventory-match | ✅ auto | n/a | n/a | n/a | ✅ labels + BannerAd; sliders for H/W/A (⚠ D-004); ⏳ visual spot-check | n/a | n/a | n/a | n/a |
 | Onboarding (3-step) | ✅ inventory-match | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | Scan Menu sheet | ⚠ D-002 (no Android sheet) | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | Menu Analysis | ✅ inventory-match | ✅ auto | n/a | ✅ code | ✅ auto + code | n/a | n/a | ✅ code | ✅ auto | ✅ auto |
@@ -47,12 +47,12 @@ Rows below stay `⏳` for criteria that genuinely need human visual/state eviden
 
 ## Tier 2 (visual/behavioral parity — ≥95% to ship)
 
-> **Honest baseline (2026-05-29):** The earlier "≥ 95%" claim was refuted by `PORT_AUDIT.md` and Phases B–F of the audit-correction plan landed the bulk of the visible-parity gap (Dashboard StatRow icons, AnalysisScreen MealTypePicker, swipe-to-delete on History, 4-tab bottom nav + gear-icon Settings, edge-to-edge). All remaining `⏳ device` cells still need a paired iOS↔Android screenshot diff before flipping to `✅ device`; the cells below carry `✅ device (Android-only render verified)` only where we have a Pixel 9a screenshot proving the Android side renders cleanly post-fix — the iOS-comparison half is still pending.
+> **Honest baseline (2026-05-29):** The earlier "≥ 95%" claim was refuted by `PORT_AUDIT.md` and Phases B–F of the audit-correction plan landed the bulk of the visible-parity gap (Dashboard StatRow icons, AnalysisScreen MealTypePicker, swipe-to-delete on History, 4-tab bottom nav + gear-icon Settings, edge-to-edge). Phase C added the camera-flow MealTypePicker (`CameraReviewScreen`); Phase E refactored `cwCard()` / `HeroSummaryCard` / `EmptyStateCard` / `HistoryDayCard` to padding-inside-only and rolled out `Spacing.*` tokens across 13 screens — DashboardScreen and HistoryScreen LazyColumns now own the page-horizontal margin. All remaining `⏳ device` cells still need a paired iOS↔Android screenshot diff before flipping to `✅ device`; the cells below carry `✅ device (Android-only render verified)` only where we have a Pixel 9a screenshot proving the Android side renders cleanly post-fix — the iOS-comparison half is still pending.
 
 | Screen / Surface | T2.1 Visual diff | T2.2 Interaction | T2.3 State matrix | T2.4 Accessibility | T2.5 Ad parity |
 |---|---|---|---|---|---|
 | Dashboard | ⚠ partial — StatRow icons match iOS (`PortingEvidence/screenshots/android/dashboard-phaseB-statrow-icons.png`, edge-to-edge in `dashboard-phaseF-edge-to-edge.png`); paired iOS diff pending | ⏳ device (4-tab bottom nav lands via `MainActivity.kt:230-273` — gear icon → Settings) | ⏳ device | ✅ auto | ✅ code (banner) |
-| Camera capture | ⏳ device | ✅ code — haptic feedback on capture button (`ui/camera/CameraScreen.kt`, `view.performHapticFeedback(LONG_PRESS)`) | ⏳ device | ✅ auto | n/a |
+| Camera capture | ⏳ device | ✅ code — haptic feedback on capture button (`ui/camera/CameraScreen.kt`, `view.performHapticFeedback(LONG_PRESS)`); `imePadding()` on capture button; MealTypePicker now appears between capture and analysis via `CameraReviewScreen.kt` (PORT_AUDIT C1/C2/C3) | ⏳ device | ✅ auto | n/a |
 | Photo Library Review | ⏳ device | ⏳ device | ⏳ device | ✅ auto | n/a |
 | Estimation Review (Analysis) | ⏳ device | ✅ code — MealTypePicker state hoisted into `AnalysisScreen.kt`, propagated via `onSaveLog(EstimationResult, MealType)`; Save row gets `Modifier.imePadding()` | ⏳ device | ✅ auto | ✅ code (native in Loading) |
 | Manual Entry | ⏳ device | ⏳ device | ⏳ device | ✅ auto | ⏳ device (banner) |
