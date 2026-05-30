@@ -2,7 +2,7 @@
 
 Hands-on screen-by-screen comparison to identify remaining porting gaps and produce a fix plan. Sibling to `PORT_AUDIT.md` (which was a one-off code-level audit captured 2026-05-28). This document is the **procedural runbook**; the audit *output* (gap list, fix plan) lands at the bottom of this file or in a new section as the audit is performed.
 
-**Status:** **paused 2026-05-29 — awaiting user availability with both devices.**
+**Status:** **executed 2026-05-29 (later that evening).** 23 Android screenshots captured under `PortingEvidence/screenshots/android/audit-2026-05-29/`; iOS comparison done against `AppStore/V1.4.1/Screenshots/` + PORT_AUDIT.md's textual reference description. Findings + fix plan below.
 
 ---
 
@@ -138,17 +138,67 @@ Commit:
 
 ---
 
-## Findings (filled in during the audit)
+## Findings (2026-05-29 audit run)
 
-| # | Screen | Severity | Gap | Files involved | Notes |
+Captured via `adb exec-out screencap -p` on a clean install of the post-Phase-C/E debug build (commit `348b9e6` chain). 23 screenshots saved under `PortingEvidence/screenshots/android/audit-2026-05-29/`. iOS reference is `AppStore/V1.4.1/Screenshots/` + the textual iOS reference in `PORT_AUDIT.md` §1 (which itself was made against the iOS v1.4.1 build).
+
+### Defects (deviations not yet documented; fix on Android)
+
+| # | Severity | Surface | Gap | Evidence | Files involved |
 |---|---|---|---|---|---|
-| _to be filled_ | | | | | |
+| V-1 | **P0** | Camera capture | App **never requests `CAMERA` permission** in-product. CameraScreen attempts to bind cameras directly; if permission is missing, `Camera2CameraImpl` logs "cannot open camera 0 without camera permission" silently and falls into an infinite `PENDING_OPEN` retry loop. The user sees a black preview with a shutter button that does nothing. Camera permission was only resolved during this audit by `adb shell pm grant`. | logcat lines from `audit-2026-05-29/15-camera-live.png` retry attempt; visible black-preview-no-response on 11/12/14 captures | `ui/camera/CameraScreen.kt` (needs `ActivityResultContracts.RequestPermission` + rationale; the OnPermissionResult should also re-trigger `bindToLifecycle`) |
+| V-2 | **P0** | Settings | **No `About` row / no exit to `AboutScreen`.** `MainActivity.kt` defines an `about` nav route and `ui/about/AboutScreen.kt` exists, but no row in `SettingsScreen.kt` links there. iOS Settings has rows for About, Privacy Policy, Help, Rate App below the user-facing toggles. | `audit-2026-05-29/22-settings-fully-scrolled.png` shows last visible row is "Save Settings"; UI dump from this audit confirms no About row anywhere in the Settings page | `ui/settings/SettingsScreen.kt` needs an "About" / "More" section after the Privacy block; route to `about`. |
+| V-3 | **P1** | Onboarding step 1 | "Skip" button (top-right) **overlaps the system status bar battery icon**. Edge-to-edge enforcement on Pixel 9a (Android 15+) means the OnboardingScreen draws under the status bar; the Skip button lacks `Modifier.statusBarsPadding()` or equivalent inset. | `audit-2026-05-29/02-onboarding-step1.png` | `ui/onboarding/OnboardingScreen.kt` — wrap the "Skip" overlay (or its parent Box) with `Modifier.windowInsetsPadding(WindowInsets.statusBars)` |
+| V-4 | **P1** | Scan Menu empty | Empty state is **just centered text** ("No scanned menus yet."). Inconsistent with Dashboard empty (camera icon + card) and History empty (book icon + card). | `audit-2026-05-29/09-scanmenu-empty.png` | `ui/menuscanner/ScannedMenusScreen.kt` — wrap empty state in `EmptyStateCard(title=..., subtitle=..., icon=Icons.AutoMirrored.Filled.MenuBook)` (or a menu-specific icon like `RestaurantMenu`) |
+| V-5 | **P2** | Settings | **Banner ad not visible.** `PORTING_RUNBOOK` 3.3 and `PORTING_MATRIX` row claim `BannerAdView` ported at top of Settings on 2026-05-16, mirroring iOS `SettingsView.swift:51`. Captured Settings shows no banner. May be late-loading (test ad unit), may be hidden behind App Appearance card, or may have regressed. | `audit-2026-05-29/04-settings.png`, `05-settings-scroll1.png` | `ui/settings/SettingsScreen.kt` — verify `BannerAdView()` is still composed at the top; the test-ad placeholder behavior changed in Phase A "kill visible UI embarrassments" so this may be intentional — confirm against iOS reference |
+| V-6 | **P2** | Build / Pixel 9a launch | **Android 15 16KB-alignment warning dialog** appears on every launch in debug builds. `lib/arm64-v8a/libimage_processing_util_jni.so` (from CameraX `1.3.1`) is not 16KB-aligned. Already tracked as Task #15 ("Bump CameraX to 16KB-aligned"). Release builds would be hard-rejected by future Play policy. | `audit-2026-05-29/01-launch-state.png` (system dialog) | `WatchMyCaloriesAndroid/app/build.gradle.kts` (`androidx.camera:* 1.3.1` → 1.4.x+) |
+
+### Confirmed-clean (no parity gap relative to iOS)
+
+| Surface | Why | Evidence |
+|---|---|---|
+| Bottom nav (4 tabs) | Dashboard / Log Food / Scan Menu / History matches iOS order; active-tab pill is green, not purple. | every capture with the bottom nav visible |
+| Dashboard HeroSummaryCard | Hero ring + Goal + Remaining + (conditional) Burned + (conditional) Macro bar. Phase B icons present. | 03 |
+| Dashboard empty state | Camera icon + card + "or log manually" link. Triple-title bug gone. | 03 |
+| Settings labels | "System / Light / Dark" + "US Customary / Metric" — canonical. | 04 |
+| Settings Profile sliders | Documented as `D-004` deviation (Sliders vs iOS Picker(.wheel)). | 04, 05 |
+| Settings "Calculate Recommended Goal" button | Present in Daily Goals card. | 05/06 |
+| Settings AI Photo Analysis | Toggle + descriptive text. Defaults off. | 06 |
+| Log Food sheet | 3 rows (Scan Food / Choose from Library / Log Manually) with icons. Backdrop scrim correct. | 07 |
+| History empty | Book icon (`Icons.AutoMirrored.Filled.MenuBook`) + "No history yet" + sub-copy. | 08 |
+| Manual Entry | Food name / Calories / Quantity inputs, Meal segmented (Dinner auto-selected), Add Nutrition link. | 10 |
+| Camera capture UI | Minimal — preview + white circle shutter. | 14, 15 |
+| Camera post-capture | Captured-photo thumbnail + Analyze N button. | 16 |
+| CalorieDisclaimerSheet | First-AI-use disclaimer with don't-show-again toggle + Continue. | 17 |
+| **CameraReviewScreen (Phase C)** | Photo full-bleed + MealTypePicker (Dinner auto-selected) + Retake/Use. **The new screen works as designed.** | 18 |
+
+### Not covered by this audit (deferred)
+
+- **Dashboard with data**: no entry saved during this run (backend auth failed).
+- **History with data**: same.
+- **Estimation Review Success state**: backend call returned "Analysis Failed" (likely debug-build legacy-key isn't set up on this Pixel install — the dev fallback `BackendConfig.devLegacyKey` is gated by `BuildConfig.DEBUG` && `APP_BACKEND_API_KEY` in `local.properties` being populated). Re-run with the dev key configured to see the success path.
+- **Menu Analysis Loading/Success**: same backend-auth caveat.
+- **Onboarding step 2 (Profile) + step 3 (Connect Health)**: would need a fresh uninstall + reinstall; deferred — V-3 already flags the only structural issue from step 1.
+- **Pixel 9a force-stop persistence test** (PIXEL_VERIFICATION_RUNBOOK Step 3): blocked on having a saved entry, which requires the backend-auth fix.
 
 ---
 
-## Fix plan (filled in after Findings)
+## Fix plan
 
-_to be drafted once findings are in._
+Six items found, three already had tracking elsewhere:
+
+| Item | Phase | Status | Action |
+|---|---|---|---|
+| V-1 Camera permission rationale | new (V phase) | open — P0 | Add `RequestPermission` launcher in `CameraScreen.kt`; show rationale UI; re-bind on grant; handle deny gracefully. |
+| V-2 Settings → About entry point | new (V phase) | open — P0 | Add "About" row at the bottom of `SettingsScreen.kt` (after Privacy card); on tap, `navController.navigate("about")`. Possibly grow to a full "About this app" section with version + privacy policy link. |
+| V-3 Onboarding Skip overlap | new (V phase) | open — P1 | Inset the Skip button with `Modifier.windowInsetsPadding(WindowInsets.statusBars)`. |
+| V-4 Scan Menu empty state | new (V phase) | open — P1 | Replace plain text with `EmptyStateCard`. |
+| V-5 Settings banner ad | new (V phase) | open — P2 | Verify against iOS reference (SS-10). If the iOS Settings does still show a top banner, restore `BannerAdView` at top of `SettingsScreen.kt`. If iOS dropped it in v1.4.1, document the parity decision. |
+| V-6 CameraX 16KB-alignment | Phase F (already-tracked) | open — P2 | Bump `androidx.camera:camera-* 1.3.1` → 1.4.x+ in `app/build.gradle.kts`. Already filed as task #15. |
+
+Order to land: **V-1 + V-2** first (both P0 — silent camera failure is shipping-blocker, missing About is a content-policy risk for store listing). **V-3** is the next obvious-on-screenshot fix (Skip-overlap is the kind of thing reviewers screenshot). **V-4** is small. **V-5** needs an iOS reference cross-check before action. **V-6** is the dependency bump.
+
+All six are autonomous-doable (no new device session required). I can land V-1 / V-2 / V-3 / V-4 / V-6 in a single PR; V-5 needs the user to confirm whether iOS still shows the banner in v1.4.1 before I act.
 
 ---
 
