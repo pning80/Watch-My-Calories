@@ -105,9 +105,19 @@ private fun MainAppContent(
 ) {
     val navController = rememberNavController()
     var showLogFoodSheet by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val activityIntent = (context as? android.app.Activity)?.intent
 
     // Shared state for images to avoid Parcelable size limits in navigation
-    var analysisImages by remember { mutableStateOf<List<Bitmap>?>(null) }
+    var analysisImages by remember {
+        // Test-only fast path: when EXTRA_START_AT_ANALYSIS is set, seed a stub
+        // bitmap so the analysis route renders immediately (camera-bypass for
+        // EstimationReviewParityTest). Production launches return null here.
+        val initial: List<Bitmap>? = if (TestSeed.shouldStartAtAnalysis(activityIntent)) {
+            listOf(TestSeed.stubBitmap())
+        } else null
+        mutableStateOf(initial)
+    }
     // Raw bytes of the picked photo (kept around for EXIF extraction on the
     // review screen — Bitmap loses EXIF on decode).
     var photoLibraryReviewBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -115,12 +125,10 @@ private fun MainAppContent(
     // User-chosen meal type from the review screen, flowed into Save (otherwise
     // null → falls back to MealType.fromTimestamp at save time).
     var chosenMealType by remember { mutableStateOf<com.pning80.watchmycalories.data.MealType?>(null) }
-    val context = androidx.compose.ui.platform.LocalContext.current
     val geminiRepository = remember {
         // Returns a Mock repo if the launching intent has the test-mode mock
         // extras; otherwise a real GeminiRepository. Production launches never
         // pass EXTRA_UI_TESTING so the test branch is unreachable in release.
-        val activityIntent = (context as? android.app.Activity)?.intent
         TestSeed.geminiRepositoryFor(context, activityIntent)
     }
 
@@ -306,7 +314,11 @@ private fun MainAppContent(
     ) { innerPadding ->
         NavHost(
             navController,
-            startDestination = "dashboard",
+            startDestination = when {
+                TestSeed.shouldStartAtAnalysis(activityIntent) -> "analysis"
+                TestSeed.shouldStartAtMenuAnalysis(activityIntent) -> "menuAnalysis"
+                else -> "dashboard"
+            },
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("dashboard") {

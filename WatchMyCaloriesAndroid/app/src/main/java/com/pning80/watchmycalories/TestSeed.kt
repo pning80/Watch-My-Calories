@@ -38,9 +38,21 @@ object TestSeed {
     const val EXTRA_MOCK_ESTIMATION_MODE = "wmc.test.mockEstimationMode" // "success" / "error" / "noFood"
     const val EXTRA_MOCK_MENU_ANALYSIS_MODE = "wmc.test.mockMenuAnalysisMode"
     const val EXTRA_RESET_ONBOARDING = "wmc.test.resetOnboarding"        // mirror of iOS --reset-onboarding
+    const val EXTRA_START_AT_ANALYSIS = "wmc.test.startAtAnalysis"       // skip camera, jump to AnalysisScreen
+    const val EXTRA_START_AT_MENU_ANALYSIS = "wmc.test.startAtMenuAnalysis" // skip camera, jump to MenuAnalysisScreen
 
     fun isUiTesting(intent: Intent?): Boolean =
         intent?.getBooleanExtra(EXTRA_UI_TESTING, false) == true
+
+    fun shouldStartAtAnalysis(intent: Intent?): Boolean =
+        isUiTesting(intent) && intent?.getBooleanExtra(EXTRA_START_AT_ANALYSIS, false) == true
+
+    fun shouldStartAtMenuAnalysis(intent: Intent?): Boolean =
+        isUiTesting(intent) && intent?.getBooleanExtra(EXTRA_START_AT_MENU_ANALYSIS, false) == true
+
+    /** 1x1 placeholder bitmap used as the input image for direct-to-analysis test launches. */
+    fun stubBitmap(): android.graphics.Bitmap =
+        android.graphics.Bitmap.createBitmap(1, 1, android.graphics.Bitmap.Config.ARGB_8888)
 
     /**
      * Returns a `MockGeminiRepository` configured from the intent extras if the
