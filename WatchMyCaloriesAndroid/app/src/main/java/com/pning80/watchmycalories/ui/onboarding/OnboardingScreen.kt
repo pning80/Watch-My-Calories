@@ -217,16 +217,28 @@ private fun PrivacyStep(
             }
         }
 
+        // Mirror of iOS Privacy step "Connect Health" affordance. Compact
+        // single-row layout — the "active calories" copy lives in the label
+        // so the surrounding step still fits above the fold on small screens
+        // without verticalScroll (which conflicts with Spacer.weight=1f below).
+        val context = androidx.compose.ui.platform.LocalContext.current
+        OutlinedButton(
+            onClick = {
+                try {
+                    val intent = android.content.Intent("androidx.health.connect.action.HEALTH_CONNECT_SETTINGS")
+                    context.startActivity(intent)
+                } catch (_: Exception) { /* Health Connect not installed; button still hittable */ }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(AccessibilityTags.Onboarding.CONNECT_HEALTH_BUTTON),
+        ) {
+            Text("Connect Health (active calories)")
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         ProgressDots(current = 1, total = 2)
-
-        Text(
-            "🔒 Your data is never stored outside this device",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
 
         Button(
             onClick = onNext,

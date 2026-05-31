@@ -17,10 +17,7 @@ import org.junit.Test
  * `TestSeed.applyIfTesting` calls `setOnboardingCompleted(false)` — mirror of
  * the iOS `--reset-onboarding` launch arg added in PR #1.
  *
- * Skipped — parity divergences in PORTING_DEVIATIONS.md:
- *   - testPermissionsStepShowsHealthButton / testHealthButtonIsInteractive —
- *     Android's PrivacyStep has NO "Connect Health" button (Health Connect
- *     authorization is prompted from elsewhere). Documented gap.
+ * Skipped — host-platform constraints (not feature gaps):
  *   - testKeyboardDismissesWhenTappingOutsideTargetCalories /
  *     testKeyboardDismissesWhenTappingFinishButton — IME action semantics
  *     are platform-host-dependent.
@@ -93,6 +90,18 @@ class OnboardingParityTest : MainActivityComposeTest() {
         // Google Gemini mentioned in the explanatory copy
         assert(composeTestRule.onAllNodesWithText("Google Gemini", substring = true).fetchSemanticsNodes().isNotEmpty()) {
             "Privacy step should mention Google Gemini in the AI consent copy"
+        }
+    }
+
+    /** Mirror of iOS `testPermissionsStepShowsHealthButton`. */
+    @Test
+    fun testPrivacyStepShowsHealthButton() {
+        launchResetOnboarding()
+        advanceToPrivacyStep()
+        composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.CONNECT_HEALTH_BUTTON).assertIsDisplayed()
+        // "active calories" substring appears in the explanatory copy
+        assert(composeTestRule.onAllNodesWithText("active calories", substring = true).fetchSemanticsNodes().isNotEmpty()) {
+            "Privacy step Health card should mention 'active calories'"
         }
     }
 
