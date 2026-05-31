@@ -18,7 +18,7 @@ import org.junit.Test
  *
  * Skipped — parity GAPs (recorded in PORTING_DEVIATIONS.md / .INCONSISTENCIES.md):
  *   - testDeleteEntryFromHistory — Android history has no long-press context menu
- *   - testHistoryMultiItemMealGroup* — D-005 (Android groups by imageID, not mealName)
+ *   - testHistoryMultiItemMealGroupLongPress* — Android has no long-press context menu yet
  *   - testHistoryThumbnailTapOpensFullScreenImage — needs launchWithImage TestHook
  *
  * Known platform-rendering divergence (asserted on the Android side):
@@ -176,5 +176,33 @@ class HistoryParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithText("400").performScrollTo().performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Turkey Sandwich").assertIsDisplayed()
+    }
+
+    // MARK: - Multi-Item Meal Group (D-005 closed)
+
+    /** Mirror of iOS `testHistoryMultiItemMealGroupAppears`. */
+    @Test
+    fun testHistoryMultiItemMealGroupAppears() {
+        launchWithMultiItemMeal()
+        goToHistory()
+        // Expand the day card to reveal the meal section.
+        composeTestRule.onAllNodesWithText("690", substring = true).fetchSemanticsNodes().firstOrNull()
+            ?: error("Day card with multi-item meal total (~690 kcal) not found")
+        composeTestRule.onNodeWithText("690", substring = true).performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Mock Bento Box").assertIsDisplayed()
+    }
+
+    /** Mirror of iOS `testHistoryMultiItemMealGroupExpandsItems`. */
+    @Test
+    fun testHistoryMultiItemMealGroupExpandsItems() {
+        launchWithMultiItemMeal()
+        goToHistory()
+        composeTestRule.onNodeWithText("690", substring = true).performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Mock Bento Box").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Brown Rice", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Teriyaki Chicken", substring = true).assertIsDisplayed()
     }
 }
