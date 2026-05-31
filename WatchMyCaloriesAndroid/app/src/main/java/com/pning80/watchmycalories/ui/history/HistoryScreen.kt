@@ -108,7 +108,7 @@ fun HistoryDayCard(
             .fillMaxWidth()
             .shadow(elevation = 4.dp, shape = RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             // Per-card tag with the day's calorie total is the unique handle used by
             // HistoryScreenTest (Android extra). The cross-platform AccessibilityTags.History.DAY_CARD
             // is also exposed via a sibling Modifier on the inner Row below so iOS-shared

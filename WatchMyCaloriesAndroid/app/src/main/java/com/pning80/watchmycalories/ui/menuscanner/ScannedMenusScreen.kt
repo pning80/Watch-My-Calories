@@ -112,7 +112,7 @@ fun ScannedMenusScreen(
                     SwipeToDeleteScanRow(onDelete = { onDeleteScan(scan.id) }) {
                         Card(
                             modifier = Modifier.fillMaxWidth().clickable { onNavigateToDetail(scan.id) },
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                         ) {
                             Row(modifier = Modifier.padding(Spacing.l), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column {
