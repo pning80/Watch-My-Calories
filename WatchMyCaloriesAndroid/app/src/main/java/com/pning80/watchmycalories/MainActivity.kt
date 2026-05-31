@@ -389,13 +389,15 @@ private fun MainAppContent(
                         geminiRepository = geminiRepository,
                         isMetric = isMetric,
                         onNavigateBack = { navController.popBackStack() },
-                        onSaveScan = { scan ->
-                            viewModel.addMenuScan(scan)
+                        // Auto-save: persist only — no nav. MenuAnalysisScreen renders
+                        // the post-save confirmation; Done navigates via onDoneAfterSave.
+                        onSaveScan = { scan -> viewModel.addMenuScan(scan) },
+                        onDoneAfterSave = {
                             menuAnalysisImage = null
                             navController.navigate("scannedMenus") {
                                 popUpTo("dashboard")
                             }
-                        }
+                        },
                     )
                 }
             }
