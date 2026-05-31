@@ -60,4 +60,31 @@ object TestHooks {
     fun intentResetOnboarding(): Intent = intent {
         putExtra(TestSeed.EXTRA_RESET_ONBOARDING, true)
     }
+
+    // --- MockGeminiRepository selectors (iOS MockEstimationService.Mode + MockMenuAnalysisService.Mode) ---
+
+    /** Launch with estimation mock in `"success"` mode (3-item Mock Bento Box). */
+    fun intentWithMockEstimationSuccess(): Intent = intent {
+        putExtra(TestSeed.EXTRA_MOCK_ESTIMATION_MODE, "success")
+    }
+
+    /** Launch with estimation mock in `"error"` mode (Result.failure). */
+    fun intentWithMockEstimationError(): Intent = intent {
+        putExtra(TestSeed.EXTRA_MOCK_ESTIMATION_MODE, "error")
+    }
+
+    /** Launch with estimation mock in `"noFood"` mode (empty items list). */
+    fun intentWithMockEstimationNoFood(): Intent = intent {
+        putExtra(TestSeed.EXTRA_MOCK_ESTIMATION_MODE, "noFood")
+    }
+
+    /** Launch with menu analysis mock in `"success"` mode. */
+    fun intentWithMockMenuAnalysisSuccess(): Intent = intent {
+        putExtra(TestSeed.EXTRA_MOCK_MENU_ANALYSIS_MODE, "success")
+    }
+
+    /** Launch with menu analysis mock in `"notAMenu"` mode (Result.failure with "not_a_menu"). */
+    fun intentWithMockMenuAnalysisNotAMenu(): Intent = intent {
+        putExtra(TestSeed.EXTRA_MOCK_MENU_ANALYSIS_MODE, "notAMenu")
+    }
 }
