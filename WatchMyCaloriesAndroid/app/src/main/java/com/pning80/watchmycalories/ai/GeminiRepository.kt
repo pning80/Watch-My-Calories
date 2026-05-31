@@ -70,7 +70,7 @@ data class MenuAnalysisResult(
  *    `BackendConfig.devLegacyKey` (local.properties → BuildConfig), matching
  *    the iOS App Attest simulator fallback.
  */
-class GeminiRepository(private val context: Context) {
+open class GeminiRepository(private val context: Context) {
 
     private val client: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -96,7 +96,7 @@ class GeminiRepository(private val context: Context) {
         throw lastException ?: Exception("Unknown error during retry")
     }
 
-    suspend fun estimateCalories(
+    open suspend fun estimateCalories(
         images: List<Bitmap>,
         isMetric: Boolean = true
     ): Result<EstimationResult> = withContext(Dispatchers.IO) {
@@ -111,7 +111,7 @@ class GeminiRepository(private val context: Context) {
         }
     }
 
-    suspend fun analyzeMenu(
+    open suspend fun analyzeMenu(
         image: Bitmap,
         locality: String? = null,
         coordinates: String? = null,
