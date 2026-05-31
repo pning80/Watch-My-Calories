@@ -3,6 +3,7 @@ package com.pning80.watchmycalories.ui.dashboard
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,7 +39,10 @@ fun DashboardScreen(
     targetCalories: Double,
     burnedCalories: Double,
     onLogFood: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onEditEntry: (String) -> Unit = {},
+    onDeleteEntry: (String) -> Unit = {},
+    onEditGroup: (String) -> Unit = {},
 ) {
     val todayEntries = entries.filter { com.pning80.watchmycalories.utils.TimeUtils.isToday(it.timestamp) }
     val groupedMeals = todayEntries.groupBy { MealType.fromRaw(it.mealTypeRaw) }
@@ -183,9 +187,23 @@ fun DashboardScreen(
 
                         items(grouped) { group ->
                             if (group.size > 1) {
-                                MealGroupItem(entries = group)
+                                MealGroupItem(
+                                    entries = group,
+                                    onEdit = {
+                                        // Edit group by imageID when present, else by mealName via the first entry's id.
+                                        val groupKey = group.first().imageID
+                                        if (groupKey != null) onEditGroup(groupKey)
+                                        else onEditEntry(group.first().id)
+                                    },
+                                    onDelete = { group.forEach { e -> onDeleteEntry(e.id) } },
+                                )
                             } else {
-                                FoodEntryCard(entry = group.first())
+                                val entry = group.first()
+                                FoodEntryCard(
+                                    entry = entry,
+                                    onEdit = { onEditEntry(entry.id) },
+                                    onDelete = { onDeleteEntry(entry.id) },
+                                )
                             }
                         }
                     }
@@ -224,9 +242,15 @@ private fun groupEntriesByImage(entries: List<FoodEntry>): List<List<FoodEntry>>
     return results
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun MealGroupItem(entries: List<FoodEntry>) {
+private fun MealGroupItem(
+    entries: List<FoodEntry>,
+    onEdit: () -> Unit = {},
+    onDelete: () -> Unit = {},
+) {
     var expanded by remember { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
     val title = entries.firstOrNull()?.mealName?.takeIf { it.isNotBlank() }
         ?: "Meal Scan (${entries.size} items)"
     Card(
@@ -234,7 +258,10 @@ private fun MealGroupItem(entries: List<FoodEntry>) {
             .padding(vertical = Spacing.xs)
             .shadow(elevation = 3.dp, shape = RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
-            .clickable { expanded = !expanded }
+            .combinedClickable(
+                onClick = { expanded = !expanded },
+                onLongClick = { menuOpen = true },
+            )
             .animateContentSize(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
@@ -281,18 +308,42 @@ private fun MealGroupItem(entries: List<FoodEntry>) {
                     )
                 }
             }
+            DropdownMenu(
+                expanded = menuOpen,
+                onDismissRequest = { menuOpen = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Edit") },
+                    onClick = { menuOpen = false; onEdit() },
+                )
+                DropdownMenuItem(
+                    text = { Text("Delete") },
+                    onClick = { menuOpen = false; onDelete() },
+                )
+            }
         }
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun FoodEntryCard(entry: FoodEntry) {
+private fun FoodEntryCard(
+    entry: FoodEntry,
+    onEdit: () -> Unit = {},
+    onDelete: () -> Unit = {},
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Box {
     Row(
         modifier = Modifier
             .padding(vertical = 3.dp) // tight inter-entry gap; not on token grid
             .shadow(elevation = 3.dp, shape = RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
+            .combinedClickable(
+                onClick = { onEdit() },
+                onLongClick = { menuOpen = true },
+            )
             .padding(Spacing.m)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -344,5 +395,19 @@ private fun FoodEntryCard(entry: FoodEntry) {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
+    }
+    DropdownMenu(
+        expanded = menuOpen,
+        onDismissRequest = { menuOpen = false }
+    ) {
+        DropdownMenuItem(
+            text = { Text("Edit") },
+            onClick = { menuOpen = false; onEdit() },
+        )
+        DropdownMenuItem(
+            text = { Text("Delete") },
+            onClick = { menuOpen = false; onDelete() },
+        )
+    }
     }
 }
