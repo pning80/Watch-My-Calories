@@ -198,10 +198,10 @@ fun HistoryDayCard(
                                 .padding(horizontal = 16.dp, vertical = 6.dp)
                         )
 
-                        // Group entries by imageId
-                        val groupedByImage = groupEntriesByImage(mealEntries)
+                        // D-005: group by mealName (or imageID fallback).
+                        val grouped = com.pning80.watchmycalories.ui.components.groupEntriesByMealOrImage(mealEntries)
 
-                        groupedByImage.forEach { group ->
+                        grouped.forEach { group ->
                             if (group.size > 1) {
                                 // Grouped card logic
                                 MealGroupCard(
@@ -316,34 +316,63 @@ private fun FoodEntryItem(entry: FoodEntry, onEdit: () -> Unit) {
 }
 
 @Composable
-private fun MealGroupCard(entries: List<FoodEntry>, onEditGroup: (List<FoodEntry>) -> Unit) {
+private fun MealGroupCard(
+    entries: List<FoodEntry>,
+    // Retained on the API surface; long-press context menu (PR D) will wire this back.
+    @Suppress("UNUSED_PARAMETER") onEditGroup: (List<FoodEntry>) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val title = entries.firstOrNull()?.mealName?.takeIf { it.isNotBlank() }
+        ?: "Meal Scan (${entries.size} items)"
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onEditGroup(entries) }
+            .clickable { expanded = !expanded }
+            .animateContentSize()
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text(
-                "Meal Scan (${entries.size} items)",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            Text(
-                "${entries.sumOf { it.calories }.toInt()}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    "${entries.size} items",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "${entries.sumOf { it.calories }.toInt()}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Text(
+                    "›",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    modifier = Modifier.rotate(if (expanded) 90f else 0f)
+                )
+            }
         }
-        entries.forEach { entry ->
-            Text(
-                "• ${entry.name}: ${entry.calories.toInt()} kcal",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        if (expanded) {
+            entries.forEach { entry ->
+                Text(
+                    "• ${entry.name}: ${entry.calories.toInt()} kcal",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

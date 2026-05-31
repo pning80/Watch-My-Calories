@@ -154,26 +154,25 @@ class DashboardParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithText("Log Manually").assertIsDisplayed()
     }
 
-    // MARK: - Multi-Item Meal (documents parity gap)
+    // MARK: - Multi-Item Meal Group (D-005 closed — strict iOS mirrors)
 
-    /**
-     * iOS groups multi-item meals into a single card titled `mealName`.
-     * Android currently renders them as N independent cards under the meal section.
-     * This test documents the ANDROID behavior; the parity gap is recorded
-     * in PARITY_INCONSISTENCIES.md. When the Android group-card UI lands,
-     * convert this back into a mirror of `testMultiItemMealGroupCardShowsMealName`.
-     */
+    /** Mirror of iOS `testMultiItemMealGroupCardShowsMealName`. */
     @Test
-    fun testMultiItemMealEntriesRenderIndividuallyOnAndroid() {
+    fun testMultiItemMealGroupCardShowsMealName() {
         launchWithMultiItemMeal()
-        // All 3 seeded sub-items appear as separate dashboard entries.
-        composeTestRule.onNodeWithText("Brown Rice").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Teriyaki Chicken").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Edamame").assertIsDisplayed()
-        // The group's mealName ("Mock Bento Box") is NOT rendered as a card title
-        // anywhere on the dashboard — this asserts the current Android state.
-        assert(composeTestRule.onAllNodesWithText("Mock Bento Box").fetchSemanticsNodes().isEmpty()) {
-            "Android dashboard does not yet group multi-item meals under a mealName card"
-        }
+        composeTestRule.onNodeWithText("Mock Bento Box").assertIsDisplayed()
+    }
+
+    /** Mirror of iOS `testMultiItemMealGroupSummaryRowExpandsToShowItems`. */
+    @Test
+    fun testMultiItemMealGroupSummaryRowExpandsToShowItems() {
+        launchWithMultiItemMeal()
+        composeTestRule.onNodeWithText("Mock Bento Box").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Mock Bento Box").performClick()
+        composeTestRule.waitForIdle()
+        // Three seeded sub-items now visible inside the expanded group card.
+        composeTestRule.onNodeWithText("Brown Rice", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Teriyaki Chicken", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Edamame", substring = true).assertIsDisplayed()
     }
 }
