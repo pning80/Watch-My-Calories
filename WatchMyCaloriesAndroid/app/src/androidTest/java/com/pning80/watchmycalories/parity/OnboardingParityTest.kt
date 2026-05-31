@@ -236,6 +236,34 @@ class OnboardingParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithTag(AccessibilityTags.Tab.DASHBOARD).assertIsDisplayed()
     }
 
+    /** Mirror of iOS `testGoalStepGenderPickerCanChangeSelection`. */
+    @Test
+    fun testGoalStepGenderPickerCanChangeSelection() {
+        launchResetOnboarding()
+        advanceToGoalStep()
+        // Default gender is Other; tap Female (segmented button).
+        composeTestRule.onNodeWithText("Female").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        // Female segment still present after selection — and Finish button still works (no crash).
+        composeTestRule.onNodeWithText("Female").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.FINISH_BUTTON).performScrollTo().assertIsDisplayed()
+    }
+
+    /** Mirror of iOS `testGoalStepActivityPickerCanChangeSelection`. */
+    @Test
+    fun testGoalStepActivityPickerCanChangeSelection() {
+        launchResetOnboarding()
+        advanceToGoalStep()
+        // Open the Activity Level dropdown via its OutlinedTextField anchor (Sedentary by default).
+        composeTestRule.onNodeWithText("Sedentary").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        // Select Very Active from the dropdown items.
+        composeTestRule.onNodeWithText("Very Active").performClick()
+        composeTestRule.waitForIdle()
+        // Selection reflected — the anchor now shows "Very Active".
+        composeTestRule.onNodeWithText("Very Active").performScrollTo().assertIsDisplayed()
+    }
+
     /** Mirror of iOS `testSkipFromGoalStep`. */
     @Test
     fun testSkipFromGoalStep() {
