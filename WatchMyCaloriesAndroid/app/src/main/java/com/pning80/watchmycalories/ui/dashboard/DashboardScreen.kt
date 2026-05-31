@@ -1,6 +1,8 @@
 package com.pning80.watchmycalories.ui.dashboard
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -174,10 +177,11 @@ fun DashboardScreen(
                             }
                         }
 
-                        // Group by imageId within the meal
-                        val groupedByImage = groupEntriesByImage(mealEntries)
+                        // D-005: group by mealName (or imageID fallback) so multi-item
+                        // meals collapse under a single card titled with the meal name.
+                        val grouped = com.pning80.watchmycalories.ui.components.groupEntriesByMealOrImage(mealEntries)
 
-                        items(groupedByImage) { group ->
+                        items(grouped) { group ->
                             if (group.size > 1) {
                                 MealGroupItem(entries = group)
                             } else {
@@ -222,34 +226,60 @@ private fun groupEntriesByImage(entries: List<FoodEntry>): List<List<FoodEntry>>
 
 @Composable
 private fun MealGroupItem(entries: List<FoodEntry>) {
+    var expanded by remember { mutableStateOf(false) }
+    val title = entries.firstOrNull()?.mealName?.takeIf { it.isNotBlank() }
+        ?: "Meal Scan (${entries.size} items)"
     Card(
         modifier = Modifier
             .padding(vertical = Spacing.xs)
             .shadow(elevation = 3.dp, shape = RoundedCornerShape(16.dp))
-            .clip(RoundedCornerShape(16.dp)),
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { expanded = !expanded }
+            .animateContentSize(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    "Meal Scan (${entries.size} items)",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Text(
-                    "${entries.sumOf { it.calories }.toInt()} kcal",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        "${entries.size} items",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "${entries.sumOf { it.calories }.toInt()} kcal",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        "›",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                        modifier = Modifier.rotate(if (expanded) 90f else 0f)
+                    )
+                }
             }
-            entries.forEach { entry ->
-                Text(
-                    "• ${entry.name}: ${entry.calories.toInt()} kcal",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            if (expanded) {
+                entries.forEach { entry ->
+                    Text(
+                        "• ${entry.name}: ${entry.calories.toInt()} kcal",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
