@@ -361,7 +361,8 @@ private fun MainAppContent(
                                 ActivityResultContracts.PickVisualMedia.ImageOnly
                             )
                         )
-                    }
+                    },
+                    onDeleteScan = { id -> viewModel.deleteMenuScan(id) },
                 )
             }
             composable(
