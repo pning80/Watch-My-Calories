@@ -32,13 +32,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// onLogFood is wired by the caller but the empty-state log-food action that iOS
-// HistoryView.swift exposes is not yet surfaced in the Compose tree. Suppressed
-// only for that parameter, not the active onDelete/onEdit callbacks below.
 @Composable
 fun HistoryScreen(
     entries: List<FoodEntry>,
-    @Suppress("UNUSED_PARAMETER") onLogFood: () -> Unit,
+    onLogFood: () -> Unit,
     onDeleteEntry: ((String) -> Unit)? = null,
     onEditEntry: ((String) -> Unit)? = null,
     onEditGroup: ((String) -> Unit)? = null
@@ -54,12 +51,13 @@ fun HistoryScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.pageHorizontal, vertical = 40.dp)
-                    .testTag(AccessibilityTags.History.EMPTY_STATE),
+                    .testTag(AccessibilityTags.History.EMPTY_STATE)
+                    .clickable { onLogFood() },
                 contentAlignment = Alignment.Center,
             ) {
                 EmptyStateCard(
                     title = "No history yet",
-                    subtitle = "Your tracked meals will appear here.",
+                    subtitle = "Tap to log your first meal.",
                     icon = Icons.AutoMirrored.Filled.MenuBook,
                 )
             }

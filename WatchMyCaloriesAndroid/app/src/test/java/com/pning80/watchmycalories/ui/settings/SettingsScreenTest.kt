@@ -57,7 +57,7 @@ class SettingsScreenTest : BaseComposeTest() {
         composeTestRule.onNodeWithText("Profile").assertExists()
         composeTestRule.onNodeWithText("Daily Goals").assertExists()
         composeTestRule.onNodeWithText("Privacy").assertExists()
-        composeTestRule.onNodeWithText("About & Support").assertExists()
+        // "About & Support" section removed in PR C — About reached via Dashboard menu.
     }
 
     @Test
@@ -364,20 +364,8 @@ class SettingsScreenTest : BaseComposeTest() {
             .assertExists()
     }
 
-    @Test
-    fun testAboutAndSupportSectionExists() {
-        composeTestRule.setContent {
-            SettingsScreen(
-                settingsDataStore = settingsDataStore,
-                currentProfile = null,
-                onSaveProfile = {},
-                onNavigateToAbout = {},
-                onCancel = {}
-            )
-        }
-
-        composeTestRule.onNodeWithText("About & Support").assertExists()
-    }
+    // testAboutAndSupportSectionExists removed in PR C — About is now
+    // reached via the Dashboard overflow menu, not from inside Settings.
 
     @Test
     fun testChangingThemeEnablesSaveButton() {
@@ -402,7 +390,9 @@ class SettingsScreenTest : BaseComposeTest() {
         // Initially Save is disabled
         composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsNotEnabled()
 
-        // Tap Light theme button
+        // Open InlineMenuPickerRow (theme), then tap a non-default option.
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.THEME_PICKER).performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Light").performClick()
         composeTestRule.waitForIdle()
 
@@ -433,7 +423,9 @@ class SettingsScreenTest : BaseComposeTest() {
         // Initially Save is disabled
         composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsNotEnabled()
 
-        // Tap US Customary unit button
+        // Open InlineMenuPickerRow (unit system), then tap US Customary.
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.UNIT_PICKER).performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("US Customary").performClick()
         composeTestRule.waitForIdle()
 

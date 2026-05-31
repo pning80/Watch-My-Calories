@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import com.pning80.watchmycalories.ui.components.EmptyStateCard
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -110,12 +111,36 @@ fun ScannedMenusScreen(
 
                 items(scans, key = { it.id }) { scan ->
                     SwipeToDeleteScanRow(onDelete = { onDeleteScan(scan.id) }) {
+                        val context = androidx.compose.ui.platform.LocalContext.current
+                        val thumbnail = remember(scan.imageID) {
+                            scan.imageID?.let { com.pning80.watchmycalories.data.ImageStorage.getImageFile(context, it) }
+                        }
+                        val itemCount = remember(scan.itemsData) {
+                            try {
+                                val type = object : com.google.gson.reflect.TypeToken<List<com.pning80.watchmycalories.data.MenuItemResult>>() {}.type
+                                (com.google.gson.Gson().fromJson<List<com.pning80.watchmycalories.data.MenuItemResult>>(scan.itemsData, type) ?: emptyList()).size
+                            } catch (_: Exception) { 0 }
+                        }
                         Card(
                             modifier = Modifier.fillMaxWidth().clickable { onNavigateToDetail(scan.id) },
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                         ) {
-                            Row(modifier = Modifier.padding(Spacing.l), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column {
+                            Row(
+                                modifier = Modifier.padding(Spacing.l),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.m)
+                            ) {
+                                if (thumbnail != null && thumbnail.exists()) {
+                                    coil.compose.AsyncImage(
+                                        model = thumbnail,
+                                        contentDescription = null,
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp)),
+                                    )
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = scan.restaurantName ?: "Unknown Restaurant",
                                         style = MaterialTheme.typography.titleMedium,
@@ -126,6 +151,13 @@ fun ScannedMenusScreen(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
+                                    if (itemCount > 0) {
+                                        Text(
+                                            text = "$itemCount ${if (itemCount == 1) "item" else "items"}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             }
                         }
