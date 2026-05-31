@@ -110,4 +110,11 @@ object TestHooks {
         putExtra(TestSeed.EXTRA_MOCK_ESTIMATION_MODE, "noFood")
         putExtra(TestSeed.EXTRA_AI_CONSENT, "accepted")
     }
+
+    /** Launch directly at MenuAnalysisScreen with SUCCESS menu mock + seeded scans. */
+    fun intentStartAtMenuAnalysisSuccess(): Intent = intent {
+        putExtra(TestSeed.EXTRA_START_AT_MENU_ANALYSIS, true)
+        putExtra(TestSeed.EXTRA_MOCK_MENU_ANALYSIS_MODE, "success")
+        putExtra(TestSeed.EXTRA_AI_CONSENT, "accepted")
+    }
 }
