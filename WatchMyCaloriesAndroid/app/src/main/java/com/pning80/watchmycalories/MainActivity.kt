@@ -496,11 +496,16 @@ private fun MainAppContent(
                                 )
                                 viewModel.addEntry(entry)
                             }
+                            // D-008: do not navigate here — AnalysisScreen shows the
+                            // post-save confirmation. Navigation happens on the Done tap
+                            // via onDoneAfterSave below.
+                        },
+                        onDoneAfterSave = {
                             analysisImages = null
                             photoLibraryReviewBitmap = null
                             chosenMealType = null
-                            navController.navigate("history") {
-                                popUpTo("dashboard")
+                            navController.navigate("dashboard") {
+                                popUpTo("dashboard") { inclusive = true }
                             }
                         }
                     )
