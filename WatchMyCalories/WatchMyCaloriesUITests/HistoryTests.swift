@@ -230,4 +230,76 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         let emptyState = app.descendants(matching: .any)["history_emptyState"].firstMatch
         XCTAssertTrue(emptyState.waitForExistence(timeout: 3))
     }
+
+    // MARK: - Parity audit (2026-05-30) — group card / image / context menu coverage
+
+    func testHistoryMultiItemMealGroupAppears() {
+        launchWithMultiItemMeal()
+        app.tabBars.buttons["History"].tap()
+        // History day card collapsed; tap to expand
+        let dayCard = app.buttons["history_dayCard"]
+        if dayCard.waitForExistence(timeout: 5) {
+            dayCard.tap()
+        }
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0).waitForExistence(timeout: 5))
+    }
+
+    func testHistoryMultiItemMealGroupExpandsItems() {
+        launchWithMultiItemMeal()
+        app.tabBars.buttons["History"].tap()
+        let dayCard = app.buttons["history_dayCard"]
+        if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
+        let mealGroup = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
+        XCTAssertTrue(mealGroup.waitForExistence(timeout: 5))
+        mealGroup.tap()
+        XCTAssertTrue(app.staticTexts["Brown Rice"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Teriyaki Chicken"].exists)
+    }
+
+    func testHistoryMultiItemMealGroupLongPressShowsContextMenu() {
+        launchWithMultiItemMeal()
+        app.tabBars.buttons["History"].tap()
+        let dayCard = app.buttons["history_dayCard"]
+        if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
+        let mealGroup = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
+        XCTAssertTrue(mealGroup.waitForExistence(timeout: 5))
+        mealGroup.press(forDuration: 1.2)
+        let anyContextItem = app.buttons["View"].waitForExistence(timeout: 3)
+            || app.buttons["Edit"].exists
+            || app.buttons["Delete"].exists
+        XCTAssertTrue(anyContextItem, "Long-press on a meal group in history should reveal a context menu")
+    }
+
+    func testHistorySubItemLongPressShowsContextMenu() {
+        launchWithMultiItemMeal()
+        app.tabBars.buttons["History"].tap()
+        let dayCard = app.buttons["history_dayCard"]
+        if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
+        let mealGroup = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
+        XCTAssertTrue(mealGroup.waitForExistence(timeout: 5))
+        mealGroup.tap()
+        let subItem = app.staticTexts.matching(NSPredicate(format: "label == %@", "Brown Rice")).element(boundBy: 0)
+        XCTAssertTrue(subItem.waitForExistence(timeout: 3))
+        subItem.press(forDuration: 1.2)
+        let anyContextItem = app.buttons["View"].waitForExistence(timeout: 3)
+            || app.buttons["Edit"].exists
+            || app.buttons["Delete"].exists
+        XCTAssertTrue(anyContextItem)
+    }
+
+    func testHistoryThumbnailTapOpensFullScreenImage() {
+        launchWithImage()
+        app.tabBars.buttons["History"].tap()
+        let dayCard = app.buttons["history_dayCard"]
+        if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
+        XCTAssertTrue(app.staticTexts["Mock Lunch with Photo"].waitForExistence(timeout: 5))
+        let firstImage = app.images.firstMatch
+        XCTAssertTrue(firstImage.waitForExistence(timeout: 3))
+        firstImage.tap()
+        // FullScreenImageView close button is `Image(systemName: "xmark.circle.fill")` —
+        // exposed as a Button labeled "xmark.circle.fill" without an explicit a11y label.
+        let closeButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "xmark")).firstMatch
+        XCTAssertTrue(closeButton.waitForExistence(timeout: 3),
+                      "Full-screen image cover should expose an xmark.circle.fill close button")
+    }
 }

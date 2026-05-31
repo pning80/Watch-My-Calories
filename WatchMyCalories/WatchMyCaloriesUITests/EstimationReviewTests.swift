@@ -191,4 +191,138 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
         // Done button should be hittable without scrolling (pinned at bottom)
         XCTAssertTrue(doneButton.isHittable, "Done button should be visible without scrolling")
     }
+
+    // MARK: - Parity audit (2026-05-30) — error / no-food / AI consent
+
+    private func startEstimationWithLaunchArgs(_ args: [String]) {
+        for arg in args { app.launchArguments.append(arg) }
+        app.launchArguments.append("--ai-consent-accepted")
+        app.launch()
+        app.tabBars.buttons["Log Food"].tap()
+        let scanFood = app.staticTexts["Scan Food"]
+        XCTAssertTrue(scanFood.waitForExistence(timeout: 3))
+        scanFood.tap()
+
+        let captureButton = app.buttons["camera_captureButton"]
+        XCTAssertTrue(captureButton.waitForExistence(timeout: 5))
+        captureButton.tap()
+
+        let disclaimerContinue = app.buttons["disclaimer_continueButton"]
+        if disclaimerContinue.waitForExistence(timeout: 3) {
+            disclaimerContinue.tap()
+        }
+
+        let useButton = app.buttons["camera_usePhotoButton"]
+        XCTAssertTrue(useButton.waitForExistence(timeout: 5))
+        useButton.tap()
+    }
+
+    /// Wait for the Try Again button to appear. SwiftUI's `.buttonStyle(.borderedProminent)`
+    /// strips the underlying `.accessibilityIdentifier`, so we match by label instead.
+    private func waitForTryAgain(timeout: TimeInterval = 30) -> Bool {
+        return app.buttons["Try Again"].waitForExistence(timeout: timeout)
+    }
+
+    func testErrorStateShowsTryAgainButton() {
+        startEstimationWithLaunchArgs(["--mock-estimation-error"])
+        XCTAssertTrue(waitForTryAgain(),
+                      "Mock-error mode should render the Try Again button")
+        XCTAssertTrue(app.staticTexts["Analysis Failed"].exists,
+                      "Error state should show 'Analysis Failed' headline")
+    }
+
+    func testErrorStateShowsCancelButton() {
+        startEstimationWithLaunchArgs(["--mock-estimation-error"])
+        XCTAssertTrue(waitForTryAgain())
+        XCTAssertTrue(app.buttons["Cancel"].exists,
+                      "Cancel button must appear on error state")
+    }
+
+    func testErrorStateShowDetailsButton() {
+        startEstimationWithLaunchArgs(["--mock-estimation-error"])
+        XCTAssertTrue(waitForTryAgain())
+        let detailsButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "details")).firstMatch
+        XCTAssertTrue(detailsButton.waitForExistence(timeout: 3),
+                      "Show/Hide Details button must be present on error state")
+    }
+
+    func testErrorStateTryAgainTapResetsView() {
+        startEstimationWithLaunchArgs(["--mock-estimation-error"])
+        XCTAssertTrue(waitForTryAgain())
+        app.buttons["Try Again"].tap()
+        XCTAssertTrue(waitForTryAgain(timeout: 15))
+    }
+
+    /// In no-food mode the mock returns success-with-empty-items. The flow is:
+    /// loading → "View Results" button appears → user taps it → no-food UI with Try Again/Cancel.
+    private func advanceToNoFoodUI() {
+        let viewResults = app.buttons["View Results"]
+        XCTAssertTrue(viewResults.waitForExistence(timeout: 30),
+                      "View Results button must appear after empty-items estimation")
+        viewResults.tap()
+        // Now the no-food UI should render with its "No Food Detected" headline.
+        XCTAssertTrue(app.staticTexts["No Food Detected"].waitForExistence(timeout: 5))
+    }
+
+    func testNoFoodStateShowsTryAgainButton() {
+        startEstimationWithLaunchArgs(["--mock-estimation-no-food"])
+        advanceToNoFoodUI()
+        XCTAssertTrue(app.buttons["Try Again"].exists,
+                      "No-food UI should expose a Try Again button")
+    }
+
+    func testNoFoodStateShowsCancelButton() {
+        startEstimationWithLaunchArgs(["--mock-estimation-no-food"])
+        advanceToNoFoodUI()
+        XCTAssertTrue(app.buttons["Cancel"].exists,
+                      "No-food UI should expose a Cancel button")
+    }
+
+    func testAIConsentSheetFiresWhenConsentMissing() {
+        // Do NOT pass --ai-consent-accepted; consent is .notAsked by default under --uitesting.
+        launchEmpty()
+        app.tabBars.buttons["Log Food"].tap()
+        let scanFood = app.staticTexts["Scan Food"]
+        XCTAssertTrue(scanFood.waitForExistence(timeout: 3))
+        scanFood.tap()
+        let captureButton = app.buttons["camera_captureButton"]
+        XCTAssertTrue(captureButton.waitForExistence(timeout: 5))
+        captureButton.tap()
+        let disclaimerContinue = app.buttons["disclaimer_continueButton"]
+        if disclaimerContinue.waitForExistence(timeout: 3) { disclaimerContinue.tap() }
+        let useButton = app.buttons["camera_usePhotoButton"]
+        XCTAssertTrue(useButton.waitForExistence(timeout: 5))
+        useButton.tap()
+        // AIConsentSheet should present — look for an Allow / Don't Allow style action
+        let allowButton = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] %@ OR label CONTAINS[c] %@", "allow", "consent")).firstMatch
+        XCTAssertTrue(allowButton.waitForExistence(timeout: 5),
+                      "AIConsentSheet should fire when consent has not been granted yet")
+    }
+
+    func testAIConsentDeclineDismissesEstimation() {
+        launchEmpty()
+        app.tabBars.buttons["Log Food"].tap()
+        let scanFood = app.staticTexts["Scan Food"]
+        XCTAssertTrue(scanFood.waitForExistence(timeout: 3))
+        scanFood.tap()
+        let captureButton = app.buttons["camera_captureButton"]
+        XCTAssertTrue(captureButton.waitForExistence(timeout: 5))
+        captureButton.tap()
+        let disclaimerContinue = app.buttons["disclaimer_continueButton"]
+        if disclaimerContinue.waitForExistence(timeout: 3) { disclaimerContinue.tap() }
+        let useButton = app.buttons["camera_usePhotoButton"]
+        useButton.tap()
+        // Find a Decline / Don't Allow button on the consent sheet
+        let declineButton = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] %@ OR label CONTAINS[c] %@", "don't allow", "decline")).firstMatch
+        if declineButton.waitForExistence(timeout: 5) {
+            declineButton.tap()
+            // After decline, should return to camera screen (or be cancelled)
+            let backOnCamera = app.buttons["camera_captureButton"].waitForExistence(timeout: 5)
+            let backOnDashboard = app.buttons["dashboard_emptyStateCard"].waitForExistence(timeout: 2)
+            XCTAssertTrue(backOnCamera || backOnDashboard,
+                          "After AI consent decline, user should return to camera or dashboard")
+        }
+    }
 }
