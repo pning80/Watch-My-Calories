@@ -3,9 +3,10 @@ package com.pning80.watchmycalories.ui.menuscanner
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.DocumentScanner
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -54,7 +55,7 @@ fun ScanMenuSheet(
             SheetOption(
                 title = "Scan with Camera",
                 subtitle = "Take a photo of the menu",
-                icon = Icons.Default.Search,
+                icon = Icons.Default.DocumentScanner,
                 onClick = onScanCamera,
                 testTag = AccessibilityTags.ScanMenuSheet.SCAN_BUTTON,
             )
@@ -62,7 +63,7 @@ fun ScanMenuSheet(
             SheetOption(
                 title = "Choose from Library",
                 subtitle = "Select a menu photo from your library",
-                icon = Icons.Default.Add,
+                icon = Icons.Default.PhotoLibrary,
                 onClick = onChooseFromLibrary,
                 testTag = AccessibilityTags.ScanMenuSheet.CHOOSE_FROM_LIBRARY_BUTTON,
             )
@@ -110,7 +111,11 @@ private fun SheetOption(
                 Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Text("›", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

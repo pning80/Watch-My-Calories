@@ -334,6 +334,7 @@ private fun MainAppContent(
                     burnedCalories = burnedCalories,
                     onLogFood = { showLogFoodSheet = true },
                     onNavigateToSettings = { navController.navigate("settings") },
+                    onNavigateToAbout = { navController.navigate("about") },
                     onEditEntry = { id -> navController.navigate("manualEntry?entryId=$id") },
                     onDeleteEntry = { id -> viewModel.deleteEntry(id) },
                     onEditGroup = { imageID -> navController.navigate("editMealGroup/$imageID") },

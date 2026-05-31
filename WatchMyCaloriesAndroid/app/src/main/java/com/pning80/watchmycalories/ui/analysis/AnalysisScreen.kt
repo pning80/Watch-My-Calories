@@ -82,7 +82,7 @@ fun AnalysisScreen(
         topBar = {
             @OptIn(ExperimentalMaterial3Api::class)
             TopAppBar(
-                title = { Text("Menu Analysis", fontWeight = FontWeight.SemiBold) },
+                title = { Text("Analysis", fontWeight = FontWeight.SemiBold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )

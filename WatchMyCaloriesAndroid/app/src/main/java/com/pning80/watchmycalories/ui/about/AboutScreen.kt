@@ -6,14 +6,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -50,12 +55,22 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Spacing.l)
         ) {
-            Icon(
-                Icons.Filled.Info,
-                contentDescription = "App Logo",
+            // Brand mark — consistent with Dashboard header + Onboarding welcome.
+            Surface(
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.primary,
+                shadowElevation = 6.dp,
                 modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    Icon(
+                        Icons.Filled.LocalFireDepartment,
+                        contentDescription = "Watch My Calories logo",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(44.dp),
+                    )
+                }
+            }
 
             Text(
                 "Watch My Calories",
@@ -63,11 +78,23 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 fontWeight = FontWeight.Bold
             )
 
+            val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+            val versionLabel = remember {
+                val name = com.pning80.watchmycalories.BuildConfig.VERSION_NAME
+                val code = com.pning80.watchmycalories.BuildConfig.VERSION_CODE
+                "Version $name ($code)"
+            }
+            var versionCopied by remember { mutableStateOf(false) }
             Text(
-                "Version 1.4.1",
+                if (versionCopied) "$versionLabel — copied!" else versionLabel,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.testTag(AccessibilityTags.About.VERSION_LABEL)
+                modifier = Modifier
+                    .testTag(AccessibilityTags.About.VERSION_LABEL)
+                    .clickable {
+                        clipboard.setText(androidx.compose.ui.text.AnnotatedString(versionLabel))
+                        versionCopied = true
+                    }
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.l))
@@ -101,7 +128,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
 
             ListItem(
                 headlineContent = { Text("Help & Support") },
-                leadingContent = { Icon(Icons.Filled.Info, contentDescription = "Help") },
+                leadingContent = { Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = "Help") },
                 modifier = Modifier
                     .testTag(AccessibilityTags.About.HELP_AND_SUPPORT)
                     .clickable {
@@ -112,7 +139,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
 
             ListItem(
                 headlineContent = { Text("Privacy Policy") },
-                leadingContent = { Icon(Icons.Filled.Info, contentDescription = "Privacy") },
+                leadingContent = { Icon(Icons.Filled.PrivacyTip, contentDescription = "Privacy") },
                 modifier = Modifier
                     .testTag(AccessibilityTags.About.PRIVACY_POLICY)
                     .clickable {
