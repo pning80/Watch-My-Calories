@@ -3,6 +3,7 @@ import SwiftData
 import CoreLocation
 
 struct MenuAnalysisView: View {
+    @EnvironmentObject private var env: AppEnvironment
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
@@ -354,7 +355,7 @@ struct MenuAnalysisView: View {
         let locality = locationResult?.locality
 
         do {
-            let analysisResult = try await GeminiService().analyzeMenu(
+            let analysisResult = try await env.menuAnalysisService.analyzeMenu(
                 image: imageData,
                 location: location,
                 locality: locality
