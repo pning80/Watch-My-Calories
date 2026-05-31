@@ -266,6 +266,16 @@ final class ManualEntryTests: WatchMyCaloriesUITestBase {
 
     func testManualEntryWithFullNutritionSaves() {
         openManualEntry()
+        // IOS-BUG-5 fix: expand the nutrition disclosure FIRST (before any keyboard
+        // input) so the keyboard never has to recover from a disclosure-tap dismissal.
+        // Then fill all fields sequentially — each tap brings the keyboard up cleanly.
+        let disclosure = app.staticTexts["Nutrition Details (optional)"]
+        XCTAssertTrue(disclosure.waitForExistence(timeout: 3))
+        disclosure.tap()
+        let predicate = NSPredicate(format: "count >= 6")
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: app.textFields)
+        _ = XCTWaiter().wait(for: [expectation], timeout: 3)
+
         let nameField = app.textFields["manualEntry_foodName"]
         nameField.tap()
         nameField.typeText("Mock Salad")
@@ -278,15 +288,9 @@ final class ManualEntryTests: WatchMyCaloriesUITestBase {
         quantityField.tap()
         quantityField.typeText("1 bowl")
 
-        let proteinField = expandNutritionAndGetField(at: 3)
-        XCTAssertTrue(proteinField.waitForExistence(timeout: 3))
-        // After disclosure expansion the keyboard may have dismissed. Tap twice if needed
-        // and wait for the keyboard before typing.
+        // Protein field is index 3 after expansion (Food Name / Calories / Quantity precede it).
+        let proteinField = app.textFields.element(boundBy: 3)
         proteinField.tap()
-        if !app.keyboards.firstMatch.waitForExistence(timeout: 2) {
-            proteinField.tap()
-            _ = app.keyboards.firstMatch.waitForExistence(timeout: 3)
-        }
         proteinField.typeText("25")
 
         let saveButton = app.buttons["manualEntry_saveButton"]
