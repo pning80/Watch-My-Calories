@@ -38,19 +38,30 @@ fun AnalysisScreen(
     isMetric: Boolean,
     initialMealType: MealType = MealType.fromTimestamp(System.currentTimeMillis()),
     onNavigateBack: () -> Unit,
-    onSaveLog: (EstimationResult, MealType) -> Unit
+    onSaveLog: (EstimationResult, MealType) -> Unit,
+    onDoneAfterSave: () -> Unit,
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var rawResult by remember { mutableStateOf<EstimationResult?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    // hasSaved switches the screen from Review & Edit to the post-save
+    // confirmation view (D-008 — mirrors iOS "Logged Successfully!" + Done flow).
+    var hasSaved by remember { mutableStateOf(false) }
+    var savedTotalCalories by remember { mutableStateOf(0) }
+    var savedItemCount by remember { mutableStateOf(0) }
 
     // Editable state mapping
     var editableMealName by remember { mutableStateOf("") }
     val editableItems = remember { mutableStateListOf<EditableEstimationItem>() }
     var selectedMealType by remember { mutableStateOf(initialMealType) }
 
-    LaunchedEffect(images) {
+    // Incrementing this re-fires the estimation LaunchedEffect — used by the
+    // error view's Try Again button to retry without leaving the screen.
+    var retryTrigger by remember { mutableStateOf(0) }
+
+    LaunchedEffect(images, retryTrigger) {
         isLoading = true
+        errorMessage = null
         val response = geminiRepository.estimateCalories(images, isMetric)
         response.fold(
             onSuccess = { res ->
@@ -78,23 +89,42 @@ fun AnalysisScreen(
             )
         },
         bottomBar = {
-            if (!isLoading && rawResult != null && editableItems.isNotEmpty()) {
-                Button(
-                    onClick = {
-                        val finalResult = EstimationResult(
-                            mealName = editableMealName,
-                            items = editableItems.map { it.toEstimationItem() }
-                        )
-                        onSaveLog(finalResult, selectedMealType)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .imePadding()
-                        .padding(Spacing.l)
-                        .testTag(AccessibilityTags.EstimationReview.DONE_BUTTON),
-                    shape = RoundedCornerShape(Spacing.m)
-                ) {
-                    Text("Save to Log", modifier = Modifier.padding(vertical = Spacing.xs))
+            when {
+                // Post-save confirmation: Done returns to dashboard.
+                hasSaved -> {
+                    Button(
+                        onClick = onDoneAfterSave,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.l)
+                            .testTag(AccessibilityTags.EstimationReview.DONE_BUTTON),
+                        shape = RoundedCornerShape(Spacing.m)
+                    ) {
+                        Text("Done", modifier = Modifier.padding(vertical = Spacing.xs))
+                    }
+                }
+                // Review & Edit: Save commits to DB and switches to confirmation.
+                !isLoading && rawResult != null && editableItems.isNotEmpty() -> {
+                    Button(
+                        onClick = {
+                            val finalResult = EstimationResult(
+                                mealName = editableMealName,
+                                items = editableItems.map { it.toEstimationItem() }
+                            )
+                            savedTotalCalories = finalResult.items.sumOf { it.calories }.toInt()
+                            savedItemCount = finalResult.items.size
+                            onSaveLog(finalResult, selectedMealType)
+                            hasSaved = true
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .imePadding()
+                            .padding(Spacing.l)
+                            .testTag(AccessibilityTags.EstimationReview.SAVE_BUTTON),
+                        shape = RoundedCornerShape(Spacing.m)
+                    ) {
+                        Text("Save to Log", modifier = Modifier.padding(vertical = Spacing.xs))
+                    }
                 }
             }
         }
@@ -105,7 +135,51 @@ fun AnalysisScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (isLoading) {
+            if (hasSaved) {
+                // Post-save confirmation (D-008 — mirrors iOS "Logged Successfully!" + Total Added flow).
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Spacing.l),
+                        modifier = Modifier.padding(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.CheckCircle,
+                            contentDescription = "Logged",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Text(
+                            "Logged Successfully!",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "Total Added",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                "$savedTotalCalories kcal",
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                "$savedItemCount ${if (savedItemCount == 1) "item" else "items"}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            } else if (isLoading) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -148,11 +222,20 @@ fun AnalysisScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Button(
-                            onClick = onNavigateBack,
-                            modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
-                        ) {
-                            Text("Try Again")
+                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
+                            // D-009: Cancel returns to the previous screen (camera or dashboard).
+                            OutlinedButton(
+                                onClick = onNavigateBack,
+                                modifier = Modifier.testTag(AccessibilityTags.EstimationReview.CANCEL_BUTTON),
+                            ) {
+                                Text("Cancel")
+                            }
+                            Button(
+                                onClick = { retryTrigger++ },
+                                modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
+                            ) {
+                                Text("Try Again")
+                            }
                         }
                     }
                 }
@@ -176,11 +259,20 @@ fun AnalysisScreen(
                                 "We couldn't identify any food items.",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Button(
-                                onClick = onNavigateBack,
-                                modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
-                            ) {
-                                Text("Try Again")
+                            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
+                                // D-009: Cancel returns to the previous screen.
+                                OutlinedButton(
+                                    onClick = onNavigateBack,
+                                    modifier = Modifier.testTag(AccessibilityTags.EstimationReview.CANCEL_BUTTON),
+                                ) {
+                                    Text("Cancel")
+                                }
+                                Button(
+                                    onClick = onNavigateBack,
+                                    modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
+                                ) {
+                                    Text("Try Again")
+                                }
                             }
                         }
                     }
@@ -190,7 +282,7 @@ fun AnalysisScreen(
                         verticalArrangement = Arrangement.spacedBy(Spacing.l),
                         modifier = Modifier
                             .fillMaxSize()
-                            .testTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW),
+                            .testTag(AccessibilityTags.EstimationReview.EDIT_VIEW),
                     ) {
                         item {
                             // Thumbnail header
