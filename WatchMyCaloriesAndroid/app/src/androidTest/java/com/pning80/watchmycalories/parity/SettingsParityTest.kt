@@ -36,10 +36,12 @@ import org.junit.Test
  */
 class SettingsParityTest : MainActivityComposeTest() {
 
-    /** Open Settings via the TopAppBar gear icon (mirrors iOS appMenu_button). */
+    /** Open Settings via the Dashboard app menu (gear → "Settings"). */
     private fun openSettings() {
         launchEmpty()
         composeTestRule.onNodeWithTag(AccessibilityTags.AppMenu.MENU_BUTTON).performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Settings").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
     }
@@ -47,6 +49,8 @@ class SettingsParityTest : MainActivityComposeTest() {
     private fun openSettingsWithSeedData() {
         launchWithSeedData()
         composeTestRule.onNodeWithTag(AccessibilityTags.AppMenu.MENU_BUTTON).performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Settings").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
     }

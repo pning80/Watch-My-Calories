@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Settings
@@ -40,10 +41,12 @@ fun DashboardScreen(
     burnedCalories: Double,
     onLogFood: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToAbout: () -> Unit = {},
     onEditEntry: (String) -> Unit = {},
     onDeleteEntry: (String) -> Unit = {},
     onEditGroup: (String) -> Unit = {},
 ) {
+    var appMenuOpen by remember { mutableStateOf(false) }
     val todayEntries = entries.filter { com.pning80.watchmycalories.utils.TimeUtils.isToday(it.timestamp) }
     val groupedMeals = todayEntries.groupBy { MealType.fromRaw(it.mealTypeRaw) }
 
@@ -90,15 +93,28 @@ fun DashboardScreen(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
             }
+            // App menu overflow — Settings + About (mirrors iOS AppMenuToolbar).
+            Box {
             IconButton(
-                onClick = onNavigateToSettings,
+                onClick = { appMenuOpen = true },
                 modifier = Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.AppMenu.MENU_BUTTON)
             ) {
                 Icon(
                     imageVector = Icons.Filled.Settings,
-                    contentDescription = "Settings",
+                    contentDescription = "App menu",
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
+            }
+            DropdownMenu(expanded = appMenuOpen, onDismissRequest = { appMenuOpen = false }) {
+                DropdownMenuItem(
+                    text = { Text("Settings") },
+                    onClick = { appMenuOpen = false; onNavigateToSettings() },
+                )
+                DropdownMenuItem(
+                    text = { Text("About") },
+                    onClick = { appMenuOpen = false; onNavigateToAbout() },
+                )
+            }
             }
         }
 
@@ -291,10 +307,10 @@ private fun MealGroupItem(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    Text(
-                        "›",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    Icon(
+                        androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = if (expanded) "Collapse" else "Expand",
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                         modifier = Modifier.rotate(if (expanded) 90f else 0f)
                     )
                 }

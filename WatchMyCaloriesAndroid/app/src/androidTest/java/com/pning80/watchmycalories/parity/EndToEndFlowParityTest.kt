@@ -49,6 +49,8 @@ class EndToEndFlowParityTest : MainActivityComposeTest() {
     private fun goToSettings() {
         composeTestRule.onNodeWithTag(AccessibilityTags.AppMenu.MENU_BUTTON).performClick()
         composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Settings").performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
     }
 

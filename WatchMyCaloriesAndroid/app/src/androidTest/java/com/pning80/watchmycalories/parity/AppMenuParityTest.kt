@@ -31,13 +31,12 @@ import org.junit.Test
  */
 class AppMenuParityTest : MainActivityComposeTest() {
 
-    /** Open About via the Android path: gear → Settings → "About this app". */
+    /** Open About via Dashboard app menu → "About" (mirrors iOS AppMenuToolbar exactly). */
     private fun openAbout() {
         launchEmpty()
         composeTestRule.onNodeWithTag(AccessibilityTags.AppMenu.MENU_BUTTON).performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
-        composeTestRule.onNodeWithText("About this app").performScrollTo().performClick()
+        composeTestRule.onNodeWithText("About").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("About Watch My Calories").assertIsDisplayed()
     }
@@ -75,6 +74,8 @@ class AppMenuParityTest : MainActivityComposeTest() {
     fun testOpenSettingsFromMenu() {
         launchEmpty()
         composeTestRule.onNodeWithTag(AccessibilityTags.AppMenu.MENU_BUTTON).performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Settings").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
     }
