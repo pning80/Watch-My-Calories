@@ -291,19 +291,19 @@ private fun FoodEntryItem(entry: FoodEntry, onEdit: () -> Unit) {
                     )
                 }
             }
-            // Inline macros
-            val p = entry.protein
-            val c = entry.carbs
-            val f = entry.fat
-            if ((p != null && p > 0) || (c != null && c > 0) || (f != null && f > 0)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(top = 2.dp)
-                ) {
-                    if (p != null && p > 0) MacroChip("P", p, MaterialTheme.colorScheme.primary)
-                    if (c != null && c > 0) MacroChip("C", c, MaterialTheme.colorScheme.tertiary)
-                    if (f != null && f > 0) MacroChip("F", f, MaterialTheme.colorScheme.secondary)
-                }
+            // D-007: proportional macro bar (no literal "P: 10g" text).
+            // Replaces the per-entry MacroChip row to match iOS UX.
+            val p = entry.protein ?: 0.0
+            val c = entry.carbs ?: 0.0
+            val f = entry.fat ?: 0.0
+            if (p > 0 || c > 0 || f > 0) {
+                Spacer(modifier = Modifier.height(4.dp))
+                com.pning80.watchmycalories.ui.components.MacroProportionalBar(
+                    proteinCals = p * 4,
+                    carbsCals = c * 4,
+                    fatCals = f * 9,
+                    height = 6
+                )
             }
         }
         Text(

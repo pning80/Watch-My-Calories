@@ -111,25 +111,18 @@ class HistoryParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithText("LUNCH").assertIsDisplayed()
     }
 
-    /**
-     * iOS `testExpandedMealCardShowsProportionalBarNotGramLabels` asserts that
-     * expanded entry rows show the proportional bar (no literal "P: 10g" text).
-     * Android currently uses literal `MacroChip` text like `"P: 10g"` everywhere
-     * macros are shown — see `HistoryScreen.MacroChip` at L391. Documented as
-     * parity divergence **D-007** in PORTING_DEVIATIONS.md. This test pins the
-     * current Android behavior (asserts the chip text IS visible) so the next
-     * audit catches any regression / convergence work.
-     */
+    /** Mirror of iOS `testExpandedMealCardShowsProportionalBarNotGramLabels` (D-007 closed). */
     @Test
-    fun testExpandedMealCardShowsLiteralGramLabelsOnAndroid() {
+    fun testExpandedMealCardShowsProportionalBarNotGramLabels() {
         launchWithSeedData()
         goToHistory()
         composeTestRule.onNodeWithText("750").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Oatmeal with Berries").assertIsDisplayed()
-        // Android renders the per-entry macro chip with literal grams text.
-        assert(composeTestRule.onAllNodesWithText("P: 10g").fetchSemanticsNodes().isNotEmpty()) {
-            "Android currently shows literal 'P: 10g' MacroChip text; document any convergence in D-007"
+        // After D-007 fix the per-entry row uses MacroProportionalBar — no literal
+        // "P: 10g" gram-label text anywhere on the expanded meal entry.
+        assert(composeTestRule.onAllNodesWithText("P: 10g").fetchSemanticsNodes().isEmpty()) {
+            "Expanded meal entry should show proportional bar, not literal gram labels (D-007)"
         }
     }
 
