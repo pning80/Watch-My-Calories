@@ -1,10 +1,12 @@
 package com.pning80.watchmycalories.parity
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import org.junit.Test
 
@@ -174,5 +176,44 @@ class DashboardParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithText("Brown Rice", substring = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("Teriyaki Chicken", substring = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("Edamame", substring = true).assertIsDisplayed()
+    }
+
+    // MARK: - Long-press context menus (PR D — new feature)
+
+    /** Mirror of iOS `testDeleteEntryFromDashboard` — long-press → Delete reduces totals. */
+    @Test
+    fun testDeleteEntryFromDashboardContextMenu() {
+        launchWithSeedData()
+        composeTestRule.onNodeWithText("Oatmeal with Berries").performTouchInput { longClick() }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Delete").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Delete").performClick()
+        composeTestRule.waitForIdle()
+        // After deleting the 300 kcal oatmeal, total consumed becomes 450.
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText("450").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    /** Mirror of iOS `testEditEntryFromDashboardContextMenu` — long-press → Edit opens ManualEntry. */
+    @Test
+    fun testEditEntryFromDashboardContextMenu() {
+        launchWithSeedData()
+        composeTestRule.onNodeWithText("Oatmeal with Berries").performTouchInput { longClick() }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Edit").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Edit").performClick()
+        composeTestRule.waitForIdle()
+        // ManualEntry screen exposes the FOOD_NAME testTag.
+        composeTestRule.onNodeWithTag(AccessibilityTags.ManualEntry.FOOD_NAME).assertIsDisplayed()
+    }
+
+    /** Mirror of iOS `testEditMealGroupFromDashboardContextMenu` — long-press group → Edit. */
+    @Test
+    fun testEditMealGroupFromDashboardContextMenu() {
+        launchWithMultiItemMeal()
+        composeTestRule.onNodeWithText("Mock Bento Box").performTouchInput { longClick() }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Edit").assertIsDisplayed()
     }
 }
