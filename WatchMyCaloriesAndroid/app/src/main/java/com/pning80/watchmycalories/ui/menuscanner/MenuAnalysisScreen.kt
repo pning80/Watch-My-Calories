@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -39,11 +40,17 @@ fun MenuAnalysisScreen(
     geminiRepository: GeminiRepository,
     isMetric: Boolean,
     onNavigateBack: () -> Unit,
-    onSaveScan: (MenuScan) -> Unit
+    /** Persist-only — called automatically once analysis succeeds (D-12 fix). */
+    onSaveScan: (MenuScan) -> Unit,
+    /** Called when the user taps Done on the saved-confirmation screen. */
+    onDoneAfterSave: () -> Unit = onNavigateBack,
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var result by remember { mutableStateOf<MenuAnalysisResult?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    // True once a successful, non-empty analysis has been persisted. Prevents
+    // the LaunchedEffect from saving twice on recomposition.
+    var hasSavedScan by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val locationManager = remember { LocationManager(context) }
@@ -62,6 +69,22 @@ fun MenuAnalysisScreen(
             onSuccess = { res ->
                 result = res
                 isLoading = false
+                // Auto-save when the analysis yields items — mirrors iOS, which
+                // persists on success without requiring an explicit Save tap.
+                val items = res.items
+                if (!hasSavedScan && items != null && items.isNotEmpty()) {
+                    val imageID = com.pning80.watchmycalories.data.ImageStorage.newImageID()
+                    com.pning80.watchmycalories.data.ImageStorage.saveJpeg(context, image, imageID)
+                    val scan = MenuScan(
+                        id = UUID.randomUUID().toString(),
+                        restaurantName = res.restaurantName ?: "Unknown Restaurant",
+                        imageID = imageID,
+                        timestamp = System.currentTimeMillis(),
+                        itemsData = Gson().toJson(items),
+                    )
+                    onSaveScan(scan)
+                    hasSavedScan = true
+                }
             },
             onFailure = { err ->
                 errorMessage = err.message
@@ -82,29 +105,28 @@ fun MenuAnalysisScreen(
             )
         },
         bottomBar = {
-            if (!isLoading && result?.items != null && result?.items!!.isNotEmpty()) {
-                Button(
-                    onClick = {
-                        // T1.4 — persist the menu photo on Save (not at capture). Same imageID
-                        // is used as the on-disk filename so a future MenuScanDetail can render
-                        // from disk by `ImageStorage.getImageFile(context, scan.imageID)`.
-                        val imageID = com.pning80.watchmycalories.data.ImageStorage.newImageID()
-                        com.pning80.watchmycalories.data.ImageStorage.saveJpeg(context, image, imageID)
-                        val scan = MenuScan(
-                            id = UUID.randomUUID().toString(),
-                            restaurantName = result?.restaurantName ?: "Unknown Restaurant",
-                            imageID = imageID,
-                            timestamp = System.currentTimeMillis(),
-                            itemsData = Gson().toJson(result?.items)
-                        )
-                        onSaveScan(scan)
-                    },
+            // Post-save: Scan Again + Done. Auto-save happens in LaunchedEffect.
+            if (hasSavedScan) {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(Spacing.l),
-                    shape = RoundedCornerShape(Spacing.m)
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.m),
                 ) {
-                    Text("Save to Stored Menus", modifier = Modifier.padding(vertical = Spacing.xs))
+                    OutlinedButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(Spacing.m),
+                    ) {
+                        Text("Scan Again", modifier = Modifier.padding(vertical = Spacing.xs))
+                    }
+                    Button(
+                        onClick = onDoneAfterSave,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(Spacing.m),
+                    ) {
+                        Text("Done", modifier = Modifier.padding(vertical = Spacing.xs))
+                    }
                 }
             }
         }
@@ -130,6 +152,36 @@ fun MenuAnalysisScreen(
                     Spacer(modifier = Modifier.weight(1f))
                     NativeAdView()
                 }
+            } else if (errorMessage == "not_a_menu") {
+                // Dedicated "Not a Menu" state — mirrors iOS doc.questionmark UI.
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag(AccessibilityTags.EstimationReview.ERROR_VIEW),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Spacing.l),
+                        modifier = Modifier.padding(32.dp)
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.HelpOutline,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(64.dp),
+                        )
+                        Text("Not a Menu", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(
+                            "This doesn't appear to be a restaurant menu.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Button(
+                            onClick = onNavigateBack,
+                            modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
+                        ) { Text("Try Again") }
+                    }
+                }
             } else if (errorMessage != null) {
                 Box(
                     modifier = Modifier
@@ -149,8 +201,7 @@ fun MenuAnalysisScreen(
                             modifier = Modifier.size(48.dp)
                         )
                         Text("Analysis Failed", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        val text = if (errorMessage == "not_a_menu") "This doesn't look like a menu." else errorMessage ?: "An error occurred."
-                        Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(errorMessage ?: "An error occurred.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Button(
                             onClick = onNavigateBack,
                             modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
