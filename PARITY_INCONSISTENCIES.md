@@ -122,7 +122,25 @@ The 19 failures are **all in the 55 newly-added tests** — the original 130 bas
 | `testMenuScanDetailDeleteButtonShowsConfirmation` — Delete button query returns wrong element | 1 | Test queries via `NSPredicate(format: "label CONTAINS[c] %@", "delete")` which matches the toolbar Delete but also confirmation-dialog Delete simultaneously. **Not yet fixed.** |
 | `testSettingsBannerAdReachable` — banner ad not visible in 8s | 1 | Test ad SDK slow to fill; either extend timeout or skip in CI. Documented as known flake. |
 
-**No iOS-app-bugs surfaced by the failures.** Every failure is a test-side selector or timing issue. The iOS app itself behaves correctly across all 185 surfaces; the existing 130-test suite continues to pass.
+**Initial conclusion (revised by post-fix run, see below):** Every failure looked like a test-side selector or timing issue.
+
+### Post-fix results (2026-05-30 follow-up commit `3649792`)
+
+After applying targeted fixes to the categorized patterns, the second full run on iPhone 16 Pro · iOS 18.5 sim reports:
+
+- **191 tests total · 183 pass · 8 fail · 0 skipped** (95.8% green)
+- All 130 baseline tests still pass — zero regressions
+- New tests: **53/61 pass (87%)** ↑ from 75%
+
+The remaining 8 failures cluster into 3 root-cause classes — each is an **iOS-side gap that needs accessibility-identifier additions to source**, not test bugs. Filing as new audit findings:
+
+| ID | Surface | Count | Root cause | Fix in iOS source |
+|---|---|---:|---|---|
+| `IOS-BUG-3` | `FoodEntryGroupCard.summaryRow` not reliably tappable via inner StaticText | 5 | Uses `.onTapGesture` (not a Button) — tapping a StaticText child sometimes does not propagate to the parent gesture in XCUITest | Wrap the summary row in a Button with `.accessibilityIdentifier("groupCard_summaryRow")` so XCUITest can target the tap-receiver |
+| `IOS-BUG-4` | Thumbnail Button has no accessibility label | 2 | `Button(action:) { Image(uiImage:) }` exposes only as an unlabeled Button — `app.images.firstMatch` may match a decorative image first | Add `.accessibilityIdentifier("foodEntry_thumbnail")` to the thumbnail Button in `Components.swift` |
+| `IOS-BUG-5` | Manual Entry keyboard focus drops after disclosure expand | 1 | Tapping the DisclosureGroup dismisses the keyboard and a subsequent `.tap()` on the protein field doesn't reliably re-focus | Either rearrange the test flow to populate nutrition BEFORE other fields, OR add a deterministic focus-stabilization in `ManualEntryView` |
+
+Each `IOS-BUG-N` becomes a small standalone follow-up PR per the Operating Principle #7 escape clause, similar to IOS-BUG-1 (PR #2). Once landed, these 8 tests will pass without further test changes.
 
 ### Final spec coverage estimate
 
