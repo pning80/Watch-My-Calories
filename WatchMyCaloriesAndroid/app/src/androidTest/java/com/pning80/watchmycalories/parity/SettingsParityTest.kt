@@ -1,6 +1,7 @@
 package com.pning80.watchmycalories.parity
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -286,6 +287,51 @@ class SettingsParityTest : MainActivityComposeTest() {
     }
 
     // MARK: - Seed Data Preload
+
+    // MARK: - Picker change-selection (newly addressable after MockGemini infra)
+
+    /** Mirror of iOS `testThemePickerCanChangeSelection`. */
+    @Test
+    fun testThemePickerCanChangeSelection() {
+        openSettings()
+        // Tap a non-default option ("Light"); Save button flips to enabled.
+        composeTestRule.onNodeWithText("Light").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+    }
+
+    /** Mirror of iOS `testUnitPickerCanChangeSelection`. */
+    @Test
+    fun testUnitPickerCanChangeSelection() {
+        openSettings()
+        // Default is Metric (per fresh-launch). Tap US Customary; Save flips enabled.
+        composeTestRule.onNodeWithText("US Customary").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+    }
+
+    /** Mirror of iOS `testGenderPickerCanChangeSelection`. */
+    @Test
+    fun testGenderPickerCanChangeSelection() {
+        openSettings()
+        // Default is Other; tap Female (a different segment) — Save flips enabled.
+        composeTestRule.onNodeWithText("Female").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+    }
+
+    /** Mirror of iOS `testActivityPickerCanChangeSelection`. */
+    @Test
+    fun testActivityPickerCanChangeSelection() {
+        openSettings()
+        // Open the dropdown by tapping its OutlinedTextField anchor.
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.ACTIVITY_PICKER).performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        // Pick a non-default option.
+        composeTestRule.onNodeWithText("Very Active").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+    }
 
     /** Mirror of iOS `testSettingsLoadSeedProfileValues`. */
     @Test
