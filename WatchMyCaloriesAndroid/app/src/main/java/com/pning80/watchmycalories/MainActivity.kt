@@ -335,7 +335,10 @@ private fun MainAppContent(
                     targetCalories = targetCalories,
                     burnedCalories = burnedCalories,
                     onLogFood = { showLogFoodSheet = true },
-                    onNavigateToSettings = { navController.navigate("settings") }
+                    onNavigateToSettings = { navController.navigate("settings") },
+                    onEditEntry = { id -> navController.navigate("manualEntry?entryId=$id") },
+                    onDeleteEntry = { id -> viewModel.deleteEntry(id) },
+                    onEditGroup = { imageID -> navController.navigate("editMealGroup/$imageID") },
                 )
             }
             composable("history") {

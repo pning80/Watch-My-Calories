@@ -3,6 +3,7 @@ package com.pning80.watchmycalories.ui.history
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -261,12 +262,18 @@ private fun groupEntriesByImage(entries: List<FoodEntry>): List<List<FoodEntry>>
     return results
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-private fun FoodEntryItem(entry: FoodEntry, onEdit: () -> Unit) {
+private fun FoodEntryItem(entry: FoodEntry, onEdit: () -> Unit, onDelete: () -> Unit = {}) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Box {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onEdit() }
+            .combinedClickable(
+                onClick = { onEdit() },
+                onLongClick = { menuOpen = true },
+            )
             .padding(horizontal = 16.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top
@@ -313,21 +320,31 @@ private fun FoodEntryItem(entry: FoodEntry, onEdit: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
     }
+    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+        DropdownMenuItem(text = { Text("Edit") }, onClick = { menuOpen = false; onEdit() })
+        DropdownMenuItem(text = { Text("Delete") }, onClick = { menuOpen = false; onDelete() })
+    }
+    }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun MealGroupCard(
     entries: List<FoodEntry>,
-    // Retained on the API surface; long-press context menu (PR D) will wire this back.
-    @Suppress("UNUSED_PARAMETER") onEditGroup: (List<FoodEntry>) -> Unit,
+    onEditGroup: (List<FoodEntry>) -> Unit,
+    onDeleteGroup: (List<FoodEntry>) -> Unit = {},
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
     val title = entries.firstOrNull()?.mealName?.takeIf { it.isNotBlank() }
         ?: "Meal Scan (${entries.size} items)"
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { expanded = !expanded }
+            .combinedClickable(
+                onClick = { expanded = !expanded },
+                onLongClick = { menuOpen = true },
+            )
             .animateContentSize()
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -373,6 +390,10 @@ private fun MealGroupCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            DropdownMenuItem(text = { Text("Edit") }, onClick = { menuOpen = false; onEditGroup(entries) })
+            DropdownMenuItem(text = { Text("Delete") }, onClick = { menuOpen = false; onDeleteGroup(entries) })
         }
     }
 }

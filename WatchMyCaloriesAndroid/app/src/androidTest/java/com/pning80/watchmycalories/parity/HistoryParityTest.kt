@@ -1,12 +1,14 @@
 package com.pning80.watchmycalories.parity
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import org.junit.Test
 
@@ -204,5 +206,17 @@ class HistoryParityTest : MainActivityComposeTest() {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Brown Rice", substring = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("Teriyaki Chicken", substring = true).assertIsDisplayed()
+    }
+
+    /** Mirror of iOS `testHistoryMultiItemMealGroupLongPressShowsContextMenu`. */
+    @Test
+    fun testHistoryMultiItemMealGroupLongPressShowsContextMenu() {
+        launchWithMultiItemMeal()
+        goToHistory()
+        composeTestRule.onNodeWithText("690", substring = true).performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Mock Bento Box").performTouchInput { longClick() }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Edit").assertIsDisplayed()
     }
 }
