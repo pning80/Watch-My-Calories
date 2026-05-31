@@ -116,7 +116,13 @@ private fun MainAppContent(
     // null → falls back to MealType.fromTimestamp at save time).
     var chosenMealType by remember { mutableStateOf<com.pning80.watchmycalories.data.MealType?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
-    val geminiRepository = remember { GeminiRepository(context) }
+    val geminiRepository = remember {
+        // Returns a Mock repo if the launching intent has the test-mode mock
+        // extras; otherwise a real GeminiRepository. Production launches never
+        // pass EXTRA_UI_TESTING so the test branch is unreachable in release.
+        val activityIntent = (context as? android.app.Activity)?.intent
+        TestSeed.geminiRepositoryFor(context, activityIntent)
+    }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()

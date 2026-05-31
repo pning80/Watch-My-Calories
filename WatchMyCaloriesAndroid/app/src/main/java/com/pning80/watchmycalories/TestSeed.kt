@@ -3,6 +3,8 @@ package com.pning80.watchmycalories
 import android.content.Context
 import android.content.Intent
 import com.pning80.watchmycalories.ads.AdManager
+import com.pning80.watchmycalories.ai.GeminiRepository
+import com.pning80.watchmycalories.ai.MockGeminiRepository
 import com.pning80.watchmycalories.data.AppDatabase
 import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.data.MealType
@@ -39,6 +41,33 @@ object TestSeed {
 
     fun isUiTesting(intent: Intent?): Boolean =
         intent?.getBooleanExtra(EXTRA_UI_TESTING, false) == true
+
+    /**
+     * Returns a `MockGeminiRepository` configured from the intent extras if the
+     * launch is in test mode AND a mock-mode extra was set; otherwise returns
+     * a real `GeminiRepository`. The activity calls this exactly once at
+     * composition time (mirror of iOS `AppEnvironment.estimationService` /
+     * `MockEstimationService.swap`).
+     */
+    fun geminiRepositoryFor(context: Context, intent: Intent?): GeminiRepository {
+        if (!isUiTesting(intent)) return GeminiRepository(context)
+        val estMode = intent?.getStringExtra(EXTRA_MOCK_ESTIMATION_MODE)
+        val menuMode = intent?.getStringExtra(EXTRA_MOCK_MENU_ANALYSIS_MODE)
+        if (estMode == null && menuMode == null) return GeminiRepository(context)
+        return MockGeminiRepository(
+            context = context,
+            estimationMode = when (estMode) {
+                "error" -> MockGeminiRepository.EstimationMode.ERROR
+                "noFood" -> MockGeminiRepository.EstimationMode.NO_FOOD
+                else -> MockGeminiRepository.EstimationMode.SUCCESS
+            },
+            menuMode = when (menuMode) {
+                "error" -> MockGeminiRepository.MenuMode.ERROR
+                "notAMenu" -> MockGeminiRepository.MenuMode.NOT_A_MENU
+                else -> MockGeminiRepository.MenuMode.SUCCESS
+            },
+        )
+    }
 
     /**
      * Apply intent-extra seed instructions BEFORE setContent runs, so the

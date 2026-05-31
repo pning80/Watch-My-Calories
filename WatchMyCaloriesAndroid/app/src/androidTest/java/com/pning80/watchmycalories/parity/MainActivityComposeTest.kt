@@ -46,6 +46,11 @@ abstract class MainActivityComposeTest {
     protected fun launchWithMenuScans() = launch(TestHooks.intentWithMenuScans())
     protected fun launchWithAIConsentAccepted() = launch(TestHooks.intentWithAIConsentAccepted())
     protected fun launchResetOnboarding() = launch(TestHooks.intentResetOnboarding())
+    protected fun launchWithMockEstimationSuccess() = launch(TestHooks.intentWithMockEstimationSuccess())
+    protected fun launchWithMockEstimationError() = launch(TestHooks.intentWithMockEstimationError())
+    protected fun launchWithMockEstimationNoFood() = launch(TestHooks.intentWithMockEstimationNoFood())
+    protected fun launchWithMockMenuAnalysisSuccess() = launch(TestHooks.intentWithMockMenuAnalysisSuccess())
+    protected fun launchWithMockMenuAnalysisNotAMenu() = launch(TestHooks.intentWithMockMenuAnalysisNotAMenu())
 
     /** Custom launch — set arbitrary extras yourself via `TestHooks.intent { ... }`. */
     protected fun launch(intent: Intent) {
