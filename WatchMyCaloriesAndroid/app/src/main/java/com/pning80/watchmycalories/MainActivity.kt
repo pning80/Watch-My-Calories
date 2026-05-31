@@ -161,7 +161,15 @@ private fun MainAppContent(
     }
 
     // Shared state for Menu Analysis images
-    var menuAnalysisImage by remember { mutableStateOf<Bitmap?>(null) }
+    var menuAnalysisImage by remember {
+        // Mirror of analysisImages: pre-seed a stub Bitmap when EXTRA_START_AT_MENU_ANALYSIS
+        // is set so the menuAnalysis route renders immediately (camera-bypass for
+        // upcoming menu-analysis parity tests). Production: returns null.
+        val initial: Bitmap? = if (TestSeed.shouldStartAtMenuAnalysis(activityIntent)) {
+            TestSeed.stubBitmap()
+        } else null
+        mutableStateOf(initial)
+    }
     val menuPhotoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
