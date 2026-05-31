@@ -55,4 +55,9 @@ object TestHooks {
     fun intentWithAIConsentAccepted(): Intent = intent {
         putExtra(TestSeed.EXTRA_AI_CONSENT, "accepted")
     }
+
+    /** Launch with onboarding reset — iOS `--reset-onboarding`. */
+    fun intentResetOnboarding(): Intent = intent {
+        putExtra(TestSeed.EXTRA_RESET_ONBOARDING, true)
+    }
 }
