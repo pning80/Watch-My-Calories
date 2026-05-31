@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,7 +35,7 @@ fun SettingsScreen(
     settingsDataStore: SettingsDataStore,
     currentProfile: UserProfile? = null,
     onSaveProfile: ((UserProfile) -> Unit)? = null,
-    onNavigateToAbout: () -> Unit,
+    @Suppress("UNUSED_PARAMETER") onNavigateToAbout: () -> Unit = {},
     onCancel: () -> Unit
 ) {
     val isMetricNullable by settingsDataStore.isMetricFlow.collectAsState(initial = null)
@@ -243,50 +244,41 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                     Text("App Appearance", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
-                    // Theme picker — labels match iOS AppTheme rawValues exactly
-                    Text("Theme", style = MaterialTheme.typography.bodyMedium)
-                    SingleChoiceSegmentedButtonRow(
-                        modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.THEME_PICKER)
-                    ) {
-                        listOf("System", "Light", "Dark").forEachIndexed { index, theme ->
-                            SegmentedButton(
-                                selected = localAppTheme == theme,
-                                onClick = {
-                                    localAppTheme = theme
-                                    coroutineScope.launch { settingsDataStore.setAppTheme(theme) }
-                                },
-                                shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
-                            ) { Text(theme) }
-                        }
-                    }
+                    // Theme picker — inline trailing-value menu (mirror of iOS .pickerStyle(.menu))
+                    InlineMenuPickerRow(
+                        label = "Theme",
+                        options = listOf("System", "Light", "Dark"),
+                        selectedLabel = localAppTheme,
+                        onSelect = { theme ->
+                            localAppTheme = theme
+                            coroutineScope.launch { settingsDataStore.setAppTheme(theme) }
+                        },
+                        testTag = com.pning80.watchmycalories.utils.AccessibilityTags.Settings.THEME_PICKER,
+                    )
 
-                    // Unit System picker — labels and options match iOS UnitSystem rawValues exactly
-                    Text("Unit System", style = MaterialTheme.typography.bodyMedium)
-                    SingleChoiceSegmentedButtonRow(
-                        modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.UNIT_PICKER)
-                    ) {
-                        listOf("US Customary" to false, "Metric" to true).forEachIndexed { index, (label, metric) ->
-                            SegmentedButton(
-                                selected = localIsMetric == metric,
-                                onClick = {
-                                    if (localIsMetric == metric) return@SegmentedButton
-                                    localIsMetric = metric
-                                    coroutineScope.launch { settingsDataStore.setMetric(metric) }
-                                    if (metric) {
-                                        val totalInches = heightFeet * 12 + heightInches
-                                        heightCm = (totalInches * 2.54).roundToInt()
-                                        weightKg = (weightLbs / 2.20462).roundToInt()
-                                    } else {
-                                        val totalInches = (heightCm / 2.54).toInt()
-                                        heightFeet = totalInches / 12
-                                        heightInches = totalInches % 12
-                                        weightLbs = (weightKg * 2.20462).roundToInt()
-                                    }
-                                },
-                                shape = SegmentedButtonDefaults.itemShape(index = index, count = 2)
-                            ) { Text(label) }
-                        }
-                    }
+                    // Unit System picker — inline trailing-value menu
+                    InlineMenuPickerRow(
+                        label = "Unit System",
+                        options = listOf("US Customary", "Metric"),
+                        selectedLabel = if (localIsMetric) "Metric" else "US Customary",
+                        onSelect = { picked ->
+                            val metric = picked == "Metric"
+                            if (localIsMetric == metric) return@InlineMenuPickerRow
+                            localIsMetric = metric
+                            coroutineScope.launch { settingsDataStore.setMetric(metric) }
+                            if (metric) {
+                                val totalInches = heightFeet * 12 + heightInches
+                                heightCm = (totalInches * 2.54).roundToInt()
+                                weightKg = (weightLbs / 2.20462).roundToInt()
+                            } else {
+                                val totalInches = (heightCm / 2.54).toInt()
+                                heightFeet = totalInches / 12
+                                heightInches = totalInches % 12
+                                weightLbs = (weightKg * 2.20462).roundToInt()
+                            }
+                        },
+                        testTag = com.pning80.watchmycalories.utils.AccessibilityTags.Settings.UNIT_PICKER,
+                    )
                 }
             }
 
@@ -484,24 +476,9 @@ fun SettingsScreen(
                 }
             }
 
-            // ── About & Support ──
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
-                    Text("About & Support", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-                    
-                    ListItem(
-                        headlineContent = { Text("About this app") },
-                        supportingContent = { Text("Version and Attestation details") },
-                        leadingContent = { Icon(Icons.Filled.Info, contentDescription = "About") },
-                        modifier = Modifier
-                            .clickable { onNavigateToAbout() }
-                            .testTag("settings_about_row")
-                    )
-                }
-            }
+            // About is reached via the Dashboard overflow menu (gear → About),
+            // matching iOS's AppMenuToolbar pattern. The previous in-Settings
+            // "About this app" row was removed for parity (PR C).
 
             Spacer(modifier = Modifier.height(Spacing.l))
         }
@@ -568,6 +545,58 @@ private fun ProfileDropdown(
                         onValueChange(opt)
                         expanded = false
                     }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Settings row with a static `label` on the left and an inline trailing
+ * menu picker on the right that displays the current selection. Tap the
+ * row to open a DropdownMenu of options. Mirrors iOS's `.pickerStyle(.menu)`
+ * affordance closely — closes the "Settings is too visually heavy" gap from
+ * the cross-screen audit.
+ */
+@Composable
+private fun InlineMenuPickerRow(
+    label: String,
+    options: List<String>,
+    selectedLabel: String,
+    onSelect: (String) -> Unit,
+    testTag: String,
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Box {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { menuOpen = true }
+                .padding(vertical = Spacing.s)
+                .testTag(testTag),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(label, style = MaterialTheme.typography.bodyMedium)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    selectedLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Icon(
+                    androidx.compose.material.icons.Icons.Filled.UnfoldMore,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            options.forEach { opt ->
+                DropdownMenuItem(
+                    text = { Text(opt) },
+                    onClick = { menuOpen = false; onSelect(opt) },
                 )
             }
         }

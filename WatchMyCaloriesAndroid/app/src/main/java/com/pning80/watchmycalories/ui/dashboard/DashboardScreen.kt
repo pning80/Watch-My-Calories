@@ -365,11 +365,22 @@ private fun FoodEntryCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Initial badge — onSecondary text on secondary fill so it survives
-        // both light (#D9F2DB fill / dark green text) and dark (#B8D5C2 fill /
-        // dark green text) palettes. Previously used `primary` for text which
-        // collided with the new dark-mode pale-sage secondary fill (1.3:1).
-        Surface(
+        // Photo thumbnail when available; otherwise initial badge with
+        // onSecondary text on secondary fill (PR B contrast fix).
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val imageFile = remember(entry.imageID) {
+            entry.imageID?.let { com.pning80.watchmycalories.data.ImageStorage.getImageFile(context, it) }
+        }
+        if (imageFile != null && imageFile.exists()) {
+            coil.compose.AsyncImage(
+                model = imageFile,
+                contentDescription = null,
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+        } else Surface(
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.size(48.dp)

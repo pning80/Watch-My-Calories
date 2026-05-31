@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -58,6 +61,25 @@ fun MenuScanDetailScreen(
             verticalArrangement = Arrangement.spacedBy(Spacing.cardGap),
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
+            item {
+                // Menu photo (when present) — mirrors iOS detail screen.
+                val context = LocalContext.current
+                val photoFile = remember(scan.imageID) {
+                    scan.imageID?.let { com.pning80.watchmycalories.data.ImageStorage.getImageFile(context, it) }
+                }
+                if (photoFile != null && photoFile.exists()) {
+                    AsyncImage(
+                        model = photoFile,
+                        contentDescription = "Menu photo",
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 220.dp)
+                            .clip(RoundedCornerShape(Spacing.l)),
+                    )
+                }
+            }
+
             item {
                 Column(modifier = Modifier.padding(bottom = Spacing.l)) {
                     Text(
