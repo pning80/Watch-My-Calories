@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
@@ -236,23 +237,41 @@ private fun PrivacyStep(
             }
         }
 
-        // Mirror of iOS Privacy step "Connect Health" affordance. Compact
-        // single-row layout — the "active calories" copy lives in the label
-        // so the surrounding step still fits above the fold on small screens
-        // without verticalScroll (which conflicts with Spacer.weight=1f below).
+        // Mirror of iOS Privacy step "Connect Health" — request once, then
+        // swap to a green checkmark + disabled state so the user knows it
+        // registered. iOS's `heart.fill → checkmark.circle.fill` swap.
         val context = androidx.compose.ui.platform.LocalContext.current
+        var healthRequested by remember { mutableStateOf(false) }
         OutlinedButton(
+            enabled = !healthRequested,
             onClick = {
+                healthRequested = true
                 try {
                     val intent = android.content.Intent("androidx.health.connect.action.HEALTH_CONNECT_SETTINGS")
                     context.startActivity(intent)
-                } catch (_: Exception) { /* Health Connect not installed; button still hittable */ }
+                } catch (_: Exception) { /* Health Connect not installed; flag still flips */ }
             },
+            colors = if (healthRequested) {
+                androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    disabledContentColor = MaterialTheme.colorScheme.primary,
+                )
+            } else androidx.compose.material3.ButtonDefaults.outlinedButtonColors(),
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(AccessibilityTags.Onboarding.CONNECT_HEALTH_BUTTON),
         ) {
-            Text("Connect Health (active calories)")
+            if (healthRequested) {
+                Icon(
+                    androidx.compose.material.icons.Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Health Connect Requested")
+            } else {
+                Text("Connect Health (active calories)")
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -307,12 +326,39 @@ private fun GoalStep(
             Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                 Text("About You", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
-                // Height slider
-                SliderRow("Height", heightCm, 100..250, "cm", onHeightChanged)
-                // Weight slider
-                SliderRow("Weight", weightKg, 20..200, "kg", onWeightChanged)
-                // Age slider
-                SliderRow("Age", age, 1..100, "", onAgeChanged)
+                // Unit System toggle — defaults to metric. Internal storage stays cm/kg;
+                // display labels convert to ft/in or lbs when US Customary is selected.
+                var isMetric by remember { mutableStateOf(true) }
+                Text("Unit System", style = MaterialTheme.typography.bodyMedium)
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    listOf("US Customary" to false, "Metric" to true).forEachIndexed { index, (label, metric) ->
+                        SegmentedButton(
+                            selected = isMetric == metric,
+                            onClick = { isMetric = metric },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
+                        ) { Text(label, style = MaterialTheme.typography.labelSmall) }
+                    }
+                }
+
+                // Height slider — cm internally; display "5 ft 8 in" when US.
+                val heightDisplay = if (isMetric) {
+                    "$heightCm cm"
+                } else {
+                    val totalIn = (heightCm / 2.54).toInt()
+                    "${totalIn / 12} ft ${totalIn % 12} in"
+                }
+                SliderRow("Height", heightCm, 100..250, heightDisplay, onHeightChanged)
+
+                // Weight slider — kg internally; display lbs when US.
+                val weightDisplay = if (isMetric) {
+                    "$weightKg kg"
+                } else {
+                    "${(weightKg * 2.20462).toInt()} lbs"
+                }
+                SliderRow("Weight", weightKg, 20..200, weightDisplay, onWeightChanged)
+
+                // Age slider (unitless)
+                SliderRow("Age", age, 1..100, "$age", onAgeChanged)
 
                 // Gender
                 Text("Gender", style = MaterialTheme.typography.bodyMedium)
@@ -391,13 +437,18 @@ private fun GoalStep(
     }
 }
 
+/**
+ * `displayValue` is the pre-formatted right-aligned label (e.g. "175 cm" /
+ * "5 ft 9 in"); the slider operates on `value` in the canonical unit. Callers
+ * compose the display string so unit conversion logic stays at the call site.
+ */
 @Composable
-private fun SliderRow(label: String, value: Int, range: IntRange, unit: String, onChange: (Int) -> Unit) {
+private fun SliderRow(label: String, value: Int, range: IntRange, displayValue: String, onChange: (Int) -> Unit) {
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label, style = MaterialTheme.typography.bodyMedium)
             Text(
-                if (unit.isNotEmpty()) "$value $unit" else "$value",
+                displayValue,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary
