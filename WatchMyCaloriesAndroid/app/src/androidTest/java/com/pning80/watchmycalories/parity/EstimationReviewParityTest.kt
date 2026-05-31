@@ -12,86 +12,95 @@ import org.junit.Test
 /**
  * Parity mirror of iOS `WatchMyCaloriesUITests/EstimationReviewTests.swift`.
  *
- * Bypasses the camera flow with `EXTRA_START_AT_ANALYSIS` (added in the
- * MockGeminiRepository PR) — the activity boots directly into the analysis
- * route with a stub bitmap, and the mock repo returns the configured fixture.
+ * Updated for the D-008 + D-009 feature work:
+ *  - `SUCCESS_VIEW` now means the post-save confirmation screen
+ *    ("Logged Successfully!" + "Total Added"), matching iOS semantics
+ *  - `EDIT_VIEW` is the pre-save Review & Edit screen (Android-specific extra)
+ *  - `SAVE_BUTTON` is on Review & Edit; `DONE_BUTTON` is on the success screen
+ *  - Error and no-food views now expose CANCEL_BUTTON (D-009)
  *
- * Skipped — parity GAPs and host-platform constraints:
- *   - testAIConsentSheetFiresWhenConsentMissing — Android start-at-analysis path
- *     pre-accepts AI consent in the test fixture. The consent-gate flow uses
- *     the regular Log-Food → Scan-Food path, which is camera-permission-bound
- *     on Pixel 9a and currently not exercised by parity tests.
- *   - testAIConsentDeclineDismissesEstimation — same camera-permission constraint.
- *   - testLoadingStateAppears — mock estimation completes in ~150ms; the loading
- *     view is too short-lived to assert reliably without a tighter mock delay knob.
- *     (The success/error/no-food terminal states cover the same code path.)
- *
- * Known divergences (Android specifics):
- *   - testDoneButtonReturnsToDashboard — when the activity boots at "analysis"
- *     as startDestination, popBackStack from Done is a no-op on the back stack
- *     root. Test asserts the dashboard hero card appears via Tab.DASHBOARD instead.
+ * Bypasses the camera flow with `EXTRA_START_AT_ANALYSIS` — the activity boots
+ * directly into the analysis route with a stub bitmap.
  */
 class EstimationReviewParityTest : MainActivityComposeTest() {
 
-    // --- Success path ---
+    // --- Review & Edit (pre-save) ---
 
-    /** Mirror of iOS `testEstimationResultShowsActionButton` (success branch). */
+    /** Android extra: pre-save Review & Edit screen exposes editable items. */
     @Test
-    fun testSuccessShowsDoneButton() {
+    fun testReviewAndEditScreenShowsItems() {
         launchStartAtAnalysisSuccess()
         composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW).fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.DONE_BUTTON).assertIsDisplayed()
-    }
-
-    /** Mirror of iOS `testSuccessScreenShowsLoggedMessage` (asserts Android's analogous copy). */
-    @Test
-    fun testSuccessScreenShowsResultContent() {
-        launchStartAtAnalysisSuccess()
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW).fetchSemanticsNodes().isNotEmpty()
-        }
-        // SUCCESS fixture returns 3 items totalling 690 kcal; food names appear
-        // in the result list. "Brown Rice" is a stable substring.
+        // SUCCESS fixture returns 3 items totalling 690 kcal; food names appear in editable rows.
         composeTestRule.onNodeWithText("Brown Rice", substring = true).assertIsDisplayed()
     }
 
-    /**
-     * iOS `testSuccessScreenShowsTotalAdded` asserts a rolled-up `"Total Added"`
-     * row on the post-save success screen. Android's success view is a
-     * Review & Edit step — per-item OutlinedTextFields, no rolled-up total.
-     * Documented as **D-008** in `PORTING_DEVIATIONS.md`. This test pins the
-     * Android shape by asserting the `"Review & Edit"` headline is present.
-     */
+    /** Android extra: Save button is visible and clickable on Review & Edit. */
     @Test
-    fun testSuccessScreenShowsReviewAndEditHeading() {
+    fun testSaveButtonVisibleOnReviewAndEdit() {
         launchStartAtAnalysisSuccess()
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.SAVE_BUTTON).assertIsDisplayed()
+    }
+
+    // --- Post-save success confirmation (D-008 — strict iOS mirrors) ---
+
+    /** Mirror of iOS `testSuccessScreenShowsLoggedMessage`. */
+    @Test
+    fun testSuccessScreenShowsLoggedMessage() {
+        launchStartAtAnalysisSuccess()
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.SAVE_BUTTON).performClick()
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW).fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithText("Review & Edit").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Logged Successfully!").assertIsDisplayed()
     }
 
-    /** Mirror of iOS `testDoneButtonVisibleWithoutScrolling`. */
+    /** Mirror of iOS `testSuccessScreenShowsTotalAdded`. */
     @Test
-    fun testDoneButtonReachableOnSuccess() {
+    fun testSuccessScreenShowsTotalAdded() {
         launchStartAtAnalysisSuccess()
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.SAVE_BUTTON).performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Total Added").assertIsDisplayed()
+        // SUCCESS fixture: 220 + 350 + 120 = 690 kcal total.
+        composeTestRule.onNodeWithText("690", substring = true).assertIsDisplayed()
+    }
+
+    /** Mirror of iOS `testEstimationResultShowsActionButton` (success branch). */
+    @Test
+    fun testSuccessScreenShowsDoneButton() {
+        launchStartAtAnalysisSuccess()
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.SAVE_BUTTON).performClick()
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW).fetchSemanticsNodes().isNotEmpty()
         }
         composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.DONE_BUTTON).assertIsDisplayed()
     }
 
-    /**
-     * Mirror of iOS `testDoneButtonReturnsToDashboard`. Adapted: because we bootstrap
-     * AT the analysis route, Done's popBackStack lands on the dashboard via the
-     * onSaveLog → navigate("dashboard") code path, not via popBackStack. The
-     * dashboard hero card appearing is the reliable success signal.
-     */
+    /** Mirror of iOS `testDoneButtonReturnsToDashboard`. */
     @Test
     fun testDoneButtonReturnsToDashboard() {
         launchStartAtAnalysisSuccess()
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.SAVE_BUTTON).performClick()
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW).fetchSemanticsNodes().isNotEmpty()
         }
@@ -102,7 +111,7 @@ class EstimationReviewParityTest : MainActivityComposeTest() {
         }
     }
 
-    // --- Error path ---
+    // --- Error path (D-009 — Cancel buttons now exist) ---
 
     /** Mirror of iOS `testErrorStateShowsTryAgainButton`. */
     @Test
@@ -115,22 +124,14 @@ class EstimationReviewParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithText("Analysis Failed").assertIsDisplayed()
     }
 
-    /**
-     * iOS `testErrorStateShowsCancelButton` asserts a Cancel button on the error
-     * view. Android currently exposes only Try Again — see D-009 in
-     * `PORTING_DEVIATIONS.md`. This test pins the current Android shape (no
-     * Cancel testTag rendered on error). When the Cancel button lands on
-     * Android, convert this back to a strict mirror.
-     */
+    /** Mirror of iOS `testErrorStateShowsCancelButton` (D-009 closed). */
     @Test
-    fun testErrorStateHasNoCancelButtonOnAndroid() {
+    fun testErrorStateShowsCancelButton() {
         launchStartAtAnalysisError()
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.ERROR_VIEW).fetchSemanticsNodes().isNotEmpty()
         }
-        assert(composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.CANCEL_BUTTON).fetchSemanticsNodes().isEmpty()) {
-            "Android error view should not yet expose CANCEL_BUTTON testTag (D-009)"
-        }
+        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.CANCEL_BUTTON).assertIsDisplayed()
     }
 
     /** Mirror of iOS `testErrorStateTryAgainTapResetsView`. */
@@ -149,7 +150,7 @@ class EstimationReviewParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.ERROR_VIEW).assertIsDisplayed()
     }
 
-    // --- No-food path ---
+    // --- No-food path (D-009 — Cancel button now exists) ---
 
     /** Mirror of iOS `testNoFoodStateShowsTryAgainButton`. */
     @Test
@@ -162,19 +163,13 @@ class EstimationReviewParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON).assertIsDisplayed()
     }
 
-    /**
-     * iOS `testNoFoodStateShowsCancelButton` asserts a Cancel button on no-food.
-     * Android currently exposes only Try Again — same D-009 gap as the error
-     * view. This test pins the no-cancel state on no-food.
-     */
+    /** Mirror of iOS `testNoFoodStateShowsCancelButton` (D-009 closed). */
     @Test
-    fun testNoFoodStateHasNoCancelButtonOnAndroid() {
+    fun testNoFoodStateShowsCancelButton() {
         launchStartAtAnalysisNoFood()
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.NO_FOOD_VIEW).fetchSemanticsNodes().isNotEmpty()
         }
-        assert(composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.CANCEL_BUTTON).fetchSemanticsNodes().isEmpty()) {
-            "Android no-food view should not yet expose CANCEL_BUTTON testTag (D-009)"
-        }
+        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.CANCEL_BUTTON).assertIsDisplayed()
     }
 }
