@@ -57,7 +57,9 @@ class ManualEntryParityTest : MainActivityComposeTest() {
         openManualEntry()
         composeTestRule.onNodeWithTag(AccessibilityTags.ManualEntry.CANCEL_BUTTON).performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("No meals tracked yet").assertIsDisplayed()
+        // After cancel, dashboard re-shows the empty-state card.
+        // Mirrors iOS assertion on `dashboard_emptyStateCard` accessibility identifier.
+        composeTestRule.onNodeWithTag(AccessibilityTags.Dashboard.EMPTY_STATE_CARD).assertIsDisplayed()
     }
 
     /** Mirror of iOS `testCanSaveEntry`. */
@@ -138,14 +140,13 @@ class ManualEntryParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithTag("mealType_Dinner").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag(AccessibilityTags.ManualEntry.SAVE_BUTTON).performClick()
-        // After Save the bottom-sheet dismisses and the Dashboard re-binds.
-        // Poll for the new entry to appear rather than asserting immediately —
-        // the compose tree transitions briefly between the sheet's tree and the
-        // dashboard's tree, which sometimes makes `assertIsDisplayed` race with
-        // recomposition. Mirrors the iOS `waitForExistence` pattern.
+        // Strict mirror of iOS: assert the Dinner meal section header appears on
+        // the dashboard after save. Android renders headers UPPERCASE while iOS
+        // uses title case — visual divergence, same data. Poll because the
+        // dashboard rebinds after the manual-entry route pops.
         composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithText("Steak").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText("DINNER").fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithText("Steak").assertIsDisplayed()
+        composeTestRule.onNodeWithText("DINNER").assertIsDisplayed()
     }
 }
