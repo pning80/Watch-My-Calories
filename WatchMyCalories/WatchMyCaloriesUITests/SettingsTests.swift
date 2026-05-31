@@ -319,4 +319,136 @@ final class SettingsTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.staticTexts["Male"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Moderately Active"].exists)
     }
+
+    // MARK: - Parity audit (2026-05-30) — picker value-change coverage
+
+    func testThemePickerCanChangeSelection() {
+        openSettings()
+        let themePicker = app.buttons["settings_themePicker"]
+        XCTAssertTrue(themePicker.waitForExistence(timeout: 3))
+        themePicker.tap()
+        let lightOption = app.buttons["Light"]
+        XCTAssertTrue(lightOption.waitForExistence(timeout: 3))
+        lightOption.tap()
+        // After selecting Light, the picker should reflect Light as the active value.
+        XCTAssertTrue(themePicker.label.contains("Light"))
+    }
+
+    func testUnitPickerCanChangeSelection() {
+        openSettings()
+        let unitPicker = app.buttons["settings_unitPicker"]
+        XCTAssertTrue(unitPicker.waitForExistence(timeout: 3))
+        let initialLabel = unitPicker.label
+        unitPicker.tap()
+        let usOption = app.buttons["US Customary"]
+        let metricOption = app.buttons["Metric"]
+        let nextOption = initialLabel.contains("US") ? metricOption : usOption
+        XCTAssertTrue(nextOption.waitForExistence(timeout: 3))
+        nextOption.tap()
+        let updatedLabel = unitPicker.label
+        XCTAssertNotEqual(initialLabel, updatedLabel)
+    }
+
+    func testGenderPickerCanChangeSelection() {
+        openSettings()
+        let genderPicker = app.buttons["settings_genderPicker"]
+        XCTAssertTrue(genderPicker.waitForExistence(timeout: 3))
+        genderPicker.tap()
+        let femaleOption = app.buttons["Female"]
+        XCTAssertTrue(femaleOption.waitForExistence(timeout: 3))
+        femaleOption.tap()
+        XCTAssertTrue(genderPicker.label.contains("Female"))
+    }
+
+    func testActivityPickerCanChangeSelection() {
+        openSettings()
+        let activityPicker = app.buttons["settings_activityPicker"]
+        XCTAssertTrue(activityPicker.waitForExistence(timeout: 3))
+        activityPicker.tap()
+        let veryActiveOption = app.buttons["Very Active"]
+        XCTAssertTrue(veryActiveOption.waitForExistence(timeout: 3))
+        veryActiveOption.tap()
+        XCTAssertTrue(activityPicker.label.contains("Very Active"))
+    }
+
+    /// Force metric mode so Height/Weight render as DisclosureGroup + wheel
+    /// (US Customary shows separate inline feet/inches pickers instead).
+    private func switchToMetric() {
+        let unitPicker = app.buttons["settings_unitPicker"]
+        XCTAssertTrue(unitPicker.waitForExistence(timeout: 3))
+        if !unitPicker.label.contains("Metric") {
+            unitPicker.tap()
+            let metricOption = app.buttons["Metric"]
+            XCTAssertTrue(metricOption.waitForExistence(timeout: 3))
+            metricOption.tap()
+        }
+    }
+
+    func testHeightDisclosureGroupExpandsInMetricMode() {
+        openSettings()
+        switchToMetric()
+        let heightLabel = app.staticTexts["Height"]
+        XCTAssertTrue(heightLabel.waitForExistence(timeout: 3))
+        heightLabel.tap()
+        XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 2))
+    }
+
+    func testWeightDisclosureGroupExpandsInMetricMode() {
+        openSettings()
+        switchToMetric()
+        let weightLabel = app.staticTexts["Weight"]
+        XCTAssertTrue(weightLabel.waitForExistence(timeout: 3))
+        weightLabel.tap()
+        XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 2))
+    }
+
+    func testAgeDisclosureGroupExpands() {
+        openSettings()
+        let ageLabel = app.staticTexts["Age"]
+        XCTAssertTrue(ageLabel.waitForExistence(timeout: 3))
+        ageLabel.tap()
+        XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 2))
+    }
+
+    func testHeightFeetAndInchesPickersExistInUSMode() {
+        openSettings()
+        let unitPicker = app.buttons["settings_unitPicker"]
+        if unitPicker.label.contains("Metric") {
+            unitPicker.tap()
+            app.buttons["US Customary"].tap()
+        }
+        // US mode renders Feet + Inches as default-style (.menu) Pickers — exposed as
+        // tappable buttons with labels like "5'" / "9"". Look for a button whose label
+        // contains the foot mark — proves the Feet picker is rendered.
+        let feetButton = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "'")).firstMatch
+        XCTAssertTrue(feetButton.waitForExistence(timeout: 3),
+                      "US mode should expose a Feet picker button (label contains ')")
+    }
+
+    func testManagePrivacyChoicesButtonHiddenUnderUITesting() {
+        openSettings()
+        app.swipeUp()
+        app.swipeUp()
+        // The "Manage Privacy Choices" button is gated by `AdManager.isPrivacyOptionsRequired`,
+        // which is `false` under UI testing (AdManager skips the consent SDK init via
+        // `AdManager.isUITestingMode`). Verify the gating works — the button must NOT appear.
+        let privacyChoices = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Privacy Choices")).firstMatch
+        XCTAssertFalse(privacyChoices.waitForExistence(timeout: 2),
+                       "Manage Privacy Choices button should be hidden under --uitesting")
+    }
+
+    func testKeyboardDoneButtonDismissesKeyboard() {
+        openSettings()
+        app.swipeUp()
+        let targetField = app.textFields["settings_targetCalories"]
+        XCTAssertTrue(targetField.waitForExistence(timeout: 3))
+        targetField.tap()
+        // Verify keyboard is up by checking for the Return key
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 2))
+        let doneButton = app.buttons["Done"]
+        XCTAssertTrue(doneButton.waitForExistence(timeout: 2))
+        doneButton.tap()
+        // Keyboard should dismiss
+        XCTAssertFalse(app.keyboards.firstMatch.waitForExistence(timeout: 2))
+    }
 }

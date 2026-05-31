@@ -199,4 +199,141 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
             XCTAssertTrue(consumed.label.contains("450"))
         }
     }
+
+    // MARK: - Parity audit (2026-05-30) — group cards / full screen image
+
+    func testMultiItemMealGroupCardShowsMealName() {
+        launchWithMultiItemMeal()
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0).waitForExistence(timeout: 5))
+    }
+
+    func testMultiItemMealGroupSummaryRowExpandsToShowItems() {
+        launchWithMultiItemMeal()
+        let mealHeader = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
+        XCTAssertTrue(mealHeader.waitForExistence(timeout: 5))
+        // Tapping the group header should reveal child items
+        mealHeader.tap()
+        // Three seeded sub-items
+        XCTAssertTrue(app.staticTexts["Brown Rice"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Teriyaki Chicken"].exists)
+        XCTAssertTrue(app.staticTexts["Edamame"].exists)
+    }
+
+    func testMultiItemMealGroupLongPressShowsContextMenu() {
+        launchWithMultiItemMeal()
+        let mealHeader = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
+        XCTAssertTrue(mealHeader.waitForExistence(timeout: 5))
+        mealHeader.press(forDuration: 1.2)
+        // Context menu items: View / Edit / Delete (we expect at least one to surface)
+        let viewItem = app.buttons["View"]
+        let editItem = app.buttons["Edit"]
+        let deleteItem = app.buttons["Delete"]
+        let anyContextItem = viewItem.waitForExistence(timeout: 3)
+            || editItem.exists
+            || deleteItem.exists
+        XCTAssertTrue(anyContextItem, "Long-press on a meal group should reveal a context menu")
+    }
+
+    func testMultiItemMealSubItemLongPressShowsContextMenu() {
+        launchWithMultiItemMeal()
+        // Expand the group first
+        let mealHeader = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
+        XCTAssertTrue(mealHeader.waitForExistence(timeout: 5))
+        mealHeader.tap()
+        let subItem = app.staticTexts.matching(NSPredicate(format: "label == %@", "Brown Rice")).element(boundBy: 0)
+        XCTAssertTrue(subItem.waitForExistence(timeout: 3))
+        subItem.press(forDuration: 1.2)
+        let anyContextItem = app.buttons["View"].waitForExistence(timeout: 3)
+            || app.buttons["Edit"].exists
+            || app.buttons["Delete"].exists
+        XCTAssertTrue(anyContextItem, "Long-press on a sub-item should reveal a context menu")
+    }
+
+    func testThumbnailTapOpensFullScreenImage() {
+        launchWithImage()
+        let entry = app.staticTexts["Mock Lunch with Photo"]
+        XCTAssertTrue(entry.waitForExistence(timeout: 5))
+        // The thumbnail is a `Button { Image(uiImage:) }` with no label. Find the
+        // first image element and tap — the tap dispatches through to the Button.
+        let firstImage = app.images.firstMatch
+        XCTAssertTrue(firstImage.waitForExistence(timeout: 3))
+        firstImage.tap()
+        // The FullScreenImageView close button is `Image(systemName: "xmark.circle.fill")`
+        // with no explicit label — XCUITest exposes it as a Button labeled "xmark.circle.fill".
+        let closeButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "xmark")).firstMatch
+        XCTAssertTrue(closeButton.waitForExistence(timeout: 3),
+                      "Full-screen image cover should expose an xmark.circle.fill close button")
+    }
+
+    func testPullToRefreshGestureCompletesWithoutError() {
+        launchWithSeedData()
+        XCTAssertTrue(app.staticTexts["Breakfast"].waitForExistence(timeout: 5))
+        // Pull-to-refresh by swiping down from the top of the list
+        let firstCell = app.staticTexts["Breakfast"]
+        let start = firstCell.coordinate(withNormalizedOffset: .init(dx: 0.5, dy: 0.0))
+        let end = firstCell.coordinate(withNormalizedOffset: .init(dx: 0.5, dy: 4.0))
+        start.press(forDuration: 0.1, thenDragTo: end)
+        // After refresh, the screen should still be intact
+        XCTAssertTrue(app.staticTexts["Breakfast"].waitForExistence(timeout: 5))
+    }
+
+    // MARK: - Parity audit (2026-05-30) — Edit / View context-menu actions
+
+    func testEditEntryFromDashboardContextMenu() {
+        launchWithSeedData()
+        let entry = app.staticTexts["Oatmeal with Berries"]
+        XCTAssertTrue(entry.waitForExistence(timeout: 5))
+        entry.press(forDuration: 1.2)
+        let editButton = app.buttons["Edit"]
+        if editButton.waitForExistence(timeout: 3) {
+            editButton.tap()
+            // Edit sheet exposes text fields for name + calories + quantity (no testID per
+            // EditFoodEntryView's textfields). Assert at least one TextField is present.
+            XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 3),
+                          "Edit sheet should show editable text fields")
+        }
+    }
+
+    func testViewEntryFromDashboardContextMenu() {
+        launchWithSeedData()
+        let entry = app.staticTexts["Oatmeal with Berries"]
+        XCTAssertTrue(entry.waitForExistence(timeout: 5))
+        entry.press(forDuration: 1.2)
+        let viewButton = app.buttons["View"]
+        if viewButton.waitForExistence(timeout: 3) {
+            viewButton.tap()
+            // View sheet is read-only — assert a Done button is present
+            XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 3),
+                          "View sheet should expose a Done button")
+        }
+    }
+
+    func testEditMealGroupFromDashboardContextMenu() {
+        launchWithMultiItemMeal()
+        let mealHeader = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
+        XCTAssertTrue(mealHeader.waitForExistence(timeout: 5))
+        mealHeader.press(forDuration: 1.2)
+        let editButton = app.buttons["Edit"]
+        if editButton.waitForExistence(timeout: 3) {
+            editButton.tap()
+            XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 3),
+                          "Edit meal group sheet should show editable text fields")
+        }
+    }
+
+    func testEditSubItemFromDashboardContextMenu() {
+        launchWithMultiItemMeal()
+        let mealHeader = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
+        XCTAssertTrue(mealHeader.waitForExistence(timeout: 5))
+        mealHeader.tap()  // expand the group first
+        let subItem = app.staticTexts.matching(NSPredicate(format: "label == %@", "Brown Rice")).element(boundBy: 0)
+        XCTAssertTrue(subItem.waitForExistence(timeout: 3))
+        subItem.press(forDuration: 1.2)
+        let editButton = app.buttons["Edit"]
+        if editButton.waitForExistence(timeout: 3) {
+            editButton.tap()
+            XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 3),
+                          "Edit sub-item sheet should show editable text fields")
+        }
+    }
 }

@@ -394,11 +394,41 @@ final class GeminiService: EstimationService {
 
 // MARK: - Mocks (Kept for fallback/testing)
 final class MockEstimationService: EstimationService {
+    enum Mode {
+        case success
+        case error
+        case noFood
+    }
+
+    var mode: Mode
+
+    init() {
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("--mock-estimation-error") {
+            self.mode = .error
+        } else if args.contains("--mock-estimation-no-food") {
+            self.mode = .noFood
+        } else {
+            self.mode = .success
+        }
+    }
+
     func estimateCalories(images: [Data]) async throws -> EstimationResult {
         try await Task.sleep(nanoseconds: 1_000_000_000)
-        return EstimationResult(mealName: "Mock Chicken and Rice", items: [
-            EstimationItem(name: "Mock Chicken", quantity: "5 oz", calories: 250, confidence: 0.95),
-            EstimationItem(name: "Mock Rice", quantity: "1 cup", calories: 200, confidence: 0.90)
-        ])
+        switch mode {
+        case .error:
+            throw NSError(
+                domain: "MockEstimationError",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Mock estimation error for UI tests"]
+            )
+        case .noFood:
+            return EstimationResult(mealName: nil, items: [])
+        case .success:
+            return EstimationResult(mealName: "Mock Chicken and Rice", items: [
+                EstimationItem(name: "Mock Chicken", quantity: "5 oz", calories: 250, confidence: 0.95),
+                EstimationItem(name: "Mock Rice", quantity: "1 cup", calories: 200, confidence: 0.90)
+            ])
+        }
     }
 }

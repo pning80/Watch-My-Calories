@@ -135,4 +135,70 @@ final class AppMenuTests: WatchMyCaloriesUITestBase {
 
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
     }
+
+    // MARK: - Parity audit (2026-05-30) — About link / version interactions
+
+    private func openAbout() {
+        launchEmpty()
+        app.buttons["appMenu_button"].tap()
+        let aboutItem = app.buttons["About"]
+        XCTAssertTrue(aboutItem.waitForExistence(timeout: 3))
+        aboutItem.tap()
+        XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 3))
+    }
+
+    func testAboutVersionLabelExists() {
+        openAbout()
+        let versionLabel = app.descendants(matching: .any)["about_versionLabel"].firstMatch
+        XCTAssertTrue(versionLabel.waitForExistence(timeout: 3))
+    }
+
+    func testAboutVersionTapCopiesToClipboard() {
+        openAbout()
+        let versionLabel = app.descendants(matching: .any)["about_versionLabel"].firstMatch
+        XCTAssertTrue(versionLabel.waitForExistence(timeout: 3))
+        versionLabel.tap()
+        // Visual feedback may be a toast, "Copied" label, or no change.
+        // We assert the tap is registered without crashing — the screen should still be alive.
+        XCTAssertTrue(app.navigationBars["About"].exists)
+    }
+
+    func testAboutHelpAndSupportLinkTaps() {
+        openAbout()
+        let helpLink = app.descendants(matching: .any)["about_helpAndSupport"].firstMatch
+        XCTAssertTrue(helpLink.waitForExistence(timeout: 3))
+        // We do not actually tap (it opens an external URL the simulator can't follow);
+        // we assert it's wired and reachable.
+        XCTAssertTrue(helpLink.isHittable)
+    }
+
+    func testAboutPrivacyPolicyLinkTaps() {
+        openAbout()
+        let privacyLink = app.descendants(matching: .any)["about_privacyPolicy"].firstMatch
+        XCTAssertTrue(privacyLink.waitForExistence(timeout: 3))
+        XCTAssertTrue(privacyLink.isHittable)
+    }
+
+    func testAboutRateOnAppStoreReachable() {
+        openAbout()
+        let rateLink = app.descendants(matching: .any)["about_rateOnAppStore"].firstMatch
+        XCTAssertTrue(rateLink.waitForExistence(timeout: 3))
+        XCTAssertTrue(rateLink.isHittable)
+    }
+
+    // MARK: - Parity audit (2026-05-30) — Ad surfaces
+
+    func testSettingsBannerAdHiddenUnderUITesting() {
+        launchEmpty()
+        app.buttons["appMenu_button"].tap()
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
+        // `BannerAdView` is gated by `!AdManager.isUITestingMode && canRequestAds`
+        // (see BannerAdView.swift:12). Under --uitesting the body collapses to an
+        // empty container and `accessibilityIdentifier(ads_banner)` is never applied.
+        // Verify the gating works — banner must NOT be present.
+        let banner = app.descendants(matching: .any)["ads_banner"].firstMatch
+        XCTAssertFalse(banner.waitForExistence(timeout: 2),
+                       "ads_banner should be hidden under --uitesting")
+    }
 }

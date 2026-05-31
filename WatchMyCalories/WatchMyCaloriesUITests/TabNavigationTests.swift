@@ -77,4 +77,33 @@ final class TabNavigationTests: WatchMyCaloriesUITestBase {
         let emptyState = app.buttons["dashboard_emptyStateCard"]
         XCTAssertTrue(emptyState.waitForExistence(timeout: 3))
     }
+
+    // MARK: - Parity audit (2026-05-30) — modal-root cancel/done flows
+
+    func testCameraRootCancelReturnsToDashboard() {
+        launchEmpty()
+        app.tabBars.buttons["Log Food"].tap()
+        let scanFood = app.staticTexts["Scan Food"]
+        XCTAssertTrue(scanFood.waitForExistence(timeout: 3))
+        scanFood.tap()
+        let cancelButton = app.buttons["Cancel"]
+        XCTAssertTrue(cancelButton.waitForExistence(timeout: 5))
+        cancelButton.tap()
+        XCTAssertTrue(app.buttons["dashboard_emptyStateCard"].waitForExistence(timeout: 5))
+    }
+
+    func testScannedMenusDoneReturnsToDashboard() {
+        let app = self.app!
+        app.launchArguments.append("--seed-menu-scans")
+        app.launch()
+        app.tabBars.buttons["Scan Menu"].tap()
+        let storedButton = app.descendants(matching: .any)["scanMenuSheet_storedMenus"].firstMatch
+        XCTAssertTrue(storedButton.waitForExistence(timeout: 3))
+        storedButton.tap()
+        // The Stored Menus screen presents a Done button to dismiss.
+        let doneButton = app.buttons["Done"]
+        XCTAssertTrue(doneButton.waitForExistence(timeout: 5))
+        doneButton.tap()
+        XCTAssertTrue(app.buttons["dashboard_emptyStateCard"].waitForExistence(timeout: 5))
+    }
 }
