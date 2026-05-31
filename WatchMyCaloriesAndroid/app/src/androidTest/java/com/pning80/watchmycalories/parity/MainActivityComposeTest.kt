@@ -45,6 +45,7 @@ abstract class MainActivityComposeTest {
     protected fun launchWithMultiItemMeal() = launch(TestHooks.intentWithMultiItemMeal())
     protected fun launchWithMenuScans() = launch(TestHooks.intentWithMenuScans())
     protected fun launchWithAIConsentAccepted() = launch(TestHooks.intentWithAIConsentAccepted())
+    protected fun launchResetOnboarding() = launch(TestHooks.intentResetOnboarding())
 
     /** Custom launch — set arbitrary extras yourself via `TestHooks.intent { ... }`. */
     protected fun launch(intent: Intent) {

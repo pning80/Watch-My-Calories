@@ -35,6 +35,7 @@ object TestSeed {
     const val EXTRA_AI_CONSENT = "wmc.test.aiConsent"                    // "accepted" / "declined" / "notAsked"
     const val EXTRA_MOCK_ESTIMATION_MODE = "wmc.test.mockEstimationMode" // "success" / "error" / "noFood"
     const val EXTRA_MOCK_MENU_ANALYSIS_MODE = "wmc.test.mockMenuAnalysisMode"
+    const val EXTRA_RESET_ONBOARDING = "wmc.test.resetOnboarding"        // mirror of iOS --reset-onboarding
 
     fun isUiTesting(intent: Intent?): Boolean =
         intent?.getBooleanExtra(EXTRA_UI_TESTING, false) == true
@@ -62,8 +63,11 @@ object TestSeed {
             // Wipe Room tables so each test starts clean (Room built-in).
             db.clearAllTables()
 
-            // Mark onboarding complete so tests don't have to skip it.
-            settingsDataStore.setOnboardingCompleted(true)
+            // Mark onboarding complete so tests don't have to skip it —
+            // UNLESS EXTRA_RESET_ONBOARDING is set, in which case explicitly
+            // reset to false so onboarding shows on next launch.
+            val resetOnboarding = intent?.getBooleanExtra(EXTRA_RESET_ONBOARDING, false) == true
+            settingsDataStore.setOnboardingCompleted(!resetOnboarding)
 
             // AI consent — mirrors iOS `--ai-consent-accepted` (defaults to notAsked).
             when (intent?.getStringExtra(EXTRA_AI_CONSENT)) {
