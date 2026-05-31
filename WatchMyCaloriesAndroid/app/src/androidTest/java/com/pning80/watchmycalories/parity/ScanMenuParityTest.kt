@@ -7,6 +7,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import org.junit.Test
 
@@ -28,9 +30,8 @@ import org.junit.Test
  *   - testMenuCameraScreenHasCaptureButton
  *   - testMenuCameraCancelDismissesToDashboard
  *
- * Skipped — D-010 (no edit mode / swipe-to-delete on Android):
+ * Skipped — Android does not have an Edit/Done toolbar toggle (Material idiom):
  *   - testScannedMenusEditButtonTogglesMode
- *   - testScannedMenusSwipeToDeleteRevealsAction
  *
  * Mirrored (5):
  *   - testScannedMenusShowsEmptyState
@@ -87,6 +88,19 @@ class ScanMenuParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithContentDescription("Delete").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Delete this scanned menu?").assertIsDisplayed()
+    }
+
+    /** Mirror of iOS `testScannedMenusSwipeToDeleteRevealsAction` (D-010 closed). */
+    @Test
+    fun testScannedMenusSwipeToDeleteRemovesRow() {
+        launchWithMenuScans()
+        openScannedMenus()
+        composeTestRule.onNodeWithText("Mock Italian Place").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Mock Italian Place").performTouchInput { swipeLeft() }
+        composeTestRule.waitForIdle()
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText("Mock Italian Place").fetchSemanticsNodes().isEmpty()
+        }
     }
 
     /** Android extra: Cancel in the delete dialog keeps the entry — verifies the dialog dismiss path. */
