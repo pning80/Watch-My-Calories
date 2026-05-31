@@ -87,4 +87,27 @@ object TestHooks {
     fun intentWithMockMenuAnalysisNotAMenu(): Intent = intent {
         putExtra(TestSeed.EXTRA_MOCK_MENU_ANALYSIS_MODE, "notAMenu")
     }
+
+    // --- Direct-to-screen launches (skip camera flow) ---
+
+    /** Launch directly at AnalysisScreen with the SUCCESS-mode mock estimation. */
+    fun intentStartAtAnalysisSuccess(): Intent = intent {
+        putExtra(TestSeed.EXTRA_START_AT_ANALYSIS, true)
+        putExtra(TestSeed.EXTRA_MOCK_ESTIMATION_MODE, "success")
+        putExtra(TestSeed.EXTRA_AI_CONSENT, "accepted")
+    }
+
+    /** Launch directly at AnalysisScreen with the ERROR-mode mock estimation. */
+    fun intentStartAtAnalysisError(): Intent = intent {
+        putExtra(TestSeed.EXTRA_START_AT_ANALYSIS, true)
+        putExtra(TestSeed.EXTRA_MOCK_ESTIMATION_MODE, "error")
+        putExtra(TestSeed.EXTRA_AI_CONSENT, "accepted")
+    }
+
+    /** Launch directly at AnalysisScreen with the NO_FOOD-mode mock estimation. */
+    fun intentStartAtAnalysisNoFood(): Intent = intent {
+        putExtra(TestSeed.EXTRA_START_AT_ANALYSIS, true)
+        putExtra(TestSeed.EXTRA_MOCK_ESTIMATION_MODE, "noFood")
+        putExtra(TestSeed.EXTRA_AI_CONSENT, "accepted")
+    }
 }
