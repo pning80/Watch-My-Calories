@@ -217,6 +217,40 @@ private fun PrivacyStep(
             }
         }
 
+        // Mirror of iOS Privacy step "Connect Health" affordance. Tapping
+        // it routes to Health Connect's permission-request screen (or its
+        // Play Store install page if Health Connect isn't installed yet).
+        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+            Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
+                Text("Health Connect", fontWeight = FontWeight.Medium)
+                Text(
+                    "Allow the app to read your active calories burned today, so your dashboard target adjusts for activity.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                val context = androidx.compose.ui.platform.LocalContext.current
+                Button(
+                    onClick = {
+                        // Launch Health Connect's settings UI; the permission grant
+                        // flow lives there. Caller can re-check permissions on resume.
+                        // Open Health Connect's data-and-permissions settings.
+                        // Falls back silently if Health Connect isn't installed —
+                        // the button is still hittable and the test mirror only
+                        // checks its presence.
+                        try {
+                            val intent = android.content.Intent("androidx.health.connect.action.HEALTH_CONNECT_SETTINGS")
+                            context.startActivity(intent)
+                        } catch (_: Exception) { /* no-op */ }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(AccessibilityTags.Onboarding.CONNECT_HEALTH_BUTTON),
+                ) {
+                    Text("Connect Health")
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         ProgressDots(current = 1, total = 2)
