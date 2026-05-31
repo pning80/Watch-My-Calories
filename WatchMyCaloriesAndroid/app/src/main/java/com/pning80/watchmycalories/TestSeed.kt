@@ -1,0 +1,199 @@
+package com.pning80.watchmycalories
+
+import android.content.Context
+import android.content.Intent
+import com.pning80.watchmycalories.data.AppDatabase
+import com.pning80.watchmycalories.data.FoodEntry
+import com.pning80.watchmycalories.data.MealType
+import com.pning80.watchmycalories.data.MenuScan
+import com.pning80.watchmycalories.data.UserProfile
+import com.pning80.watchmycalories.ui.settings.SettingsDataStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import java.util.Calendar
+import java.util.UUID
+
+/**
+ * Test-mode seed helpers driven by intent extras. Mirrors the iOS
+ * `--uitesting`/`--seed-data`/`--seed-multi-item-meal` launch arg system that
+ * landed in PR #1.
+ *
+ * Used only when the launching Intent contains `EXTRA_UI_TESTING = true`. In
+ * production launches the extra is absent and none of this code runs.
+ *
+ * Counterpart in iOS: `WatchMyCalories/WatchMyCalories/WatchMyCaloriesApp.swift`
+ * (the `--uitesting` / `Self.shouldSeed*` block).
+ */
+object TestSeed {
+    const val EXTRA_UI_TESTING = "wmc.test.uitesting"
+    const val EXTRA_SEED_DATA = "wmc.test.seedData"
+    const val EXTRA_SEED_HISTORY = "wmc.test.seedHistory"
+    const val EXTRA_SEED_MULTI_ITEM_MEAL = "wmc.test.seedMultiItemMeal"
+    const val EXTRA_SEED_MENU_SCANS = "wmc.test.seedMenuScans"
+    const val EXTRA_AI_CONSENT = "wmc.test.aiConsent"                    // "accepted" / "declined" / "notAsked"
+    const val EXTRA_MOCK_ESTIMATION_MODE = "wmc.test.mockEstimationMode" // "success" / "error" / "noFood"
+    const val EXTRA_MOCK_MENU_ANALYSIS_MODE = "wmc.test.mockMenuAnalysisMode"
+
+    fun isUiTesting(intent: Intent?): Boolean =
+        intent?.getBooleanExtra(EXTRA_UI_TESTING, false) == true
+
+    /**
+     * Apply intent-extra seed instructions BEFORE setContent runs, so the
+     * first composition sees the seeded state. Synchronous on purpose — uses
+     * `runBlocking` so the activity doesn't render an empty state then jump.
+     */
+    fun applyIfTesting(context: Context, intent: Intent?) {
+        if (!isUiTesting(intent)) return
+
+        val db = AppDatabase.getDatabase(context)
+        val foodDao = db.foodEntryDao()
+        val userDao = db.userProfileDao()
+        val menuScanDao = db.menuScanDao()
+        val settingsDataStore = SettingsDataStore(context)
+
+        runBlocking(Dispatchers.IO) {
+            // Wipe Room tables so each test starts clean (Room built-in).
+            db.clearAllTables()
+
+            // Mark onboarding complete so tests don't have to skip it.
+            settingsDataStore.setOnboardingCompleted(true)
+
+            // AI consent — mirrors iOS `--ai-consent-accepted` (defaults to notAsked).
+            when (intent?.getStringExtra(EXTRA_AI_CONSENT)) {
+                "accepted" -> settingsDataStore.setAiConsent("accepted")
+                "declined" -> settingsDataStore.setAiConsent("declined")
+                "notAsked", null -> { /* leave at default */ }
+            }
+
+            if (intent?.getBooleanExtra(EXTRA_SEED_DATA, false) == true) {
+                seedBasicData(foodDao, userDao)
+            }
+            if (intent?.getBooleanExtra(EXTRA_SEED_HISTORY, false) == true) {
+                seedHistoryData(foodDao, userDao)
+            }
+            if (intent?.getBooleanExtra(EXTRA_SEED_MULTI_ITEM_MEAL, false) == true) {
+                seedMultiItemMeal(foodDao, userDao)
+            }
+            if (intent?.getBooleanExtra(EXTRA_SEED_MENU_SCANS, false) == true) {
+                seedMenuScans(menuScanDao)
+            }
+        }
+    }
+
+    private suspend fun seedBasicData(
+        foodDao: com.pning80.watchmycalories.data.FoodEntryDao,
+        userDao: com.pning80.watchmycalories.data.UserProfileDao,
+    ) = withContext(Dispatchers.IO) {
+        val profile = UserProfile(
+            id = 1, height = 175.0, weight = 70.0, age = 30,
+            genderRaw = "Male", activityLevelRaw = "Moderately Active",
+            targetCalories = 2200.0,
+        )
+        userDao.insertProfile(profile)
+        val cal = Calendar.getInstance()
+        val breakfast = cal.apply { set(Calendar.HOUR_OF_DAY, 8); set(Calendar.MINUTE, 0) }.timeInMillis
+        val lunch = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 12); set(Calendar.MINUTE, 30) }.timeInMillis
+        foodDao.insertEntry(FoodEntry(
+            id = UUID.randomUUID().toString(),
+            name = "Oatmeal with Berries",
+            calories = 300.0, quantity = "1 bowl",
+            timestamp = breakfast,
+            protein = 10.0, carbs = 50.0, fat = 6.0,
+            imageID = null, mealName = null,
+            mealTypeRaw = MealType.BREAKFAST.displayName,
+        ))
+        foodDao.insertEntry(FoodEntry(
+            id = UUID.randomUUID().toString(),
+            name = "Chicken Salad",
+            calories = 450.0, quantity = "1 plate",
+            timestamp = lunch,
+            protein = 35.0, carbs = 20.0, fat = 18.0,
+            imageID = null, mealName = null,
+            mealTypeRaw = MealType.LUNCH.displayName,
+        ))
+    }
+
+    private suspend fun seedHistoryData(
+        foodDao: com.pning80.watchmycalories.data.FoodEntryDao,
+        userDao: com.pning80.watchmycalories.data.UserProfileDao,
+    ) = withContext(Dispatchers.IO) {
+        seedBasicData(foodDao, userDao)
+        val yesterday = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, -1); set(Calendar.HOUR_OF_DAY, 18); set(Calendar.MINUTE, 0)
+        }.timeInMillis
+        foodDao.insertEntry(FoodEntry(
+            id = UUID.randomUUID().toString(),
+            name = "Pasta Bolognese",
+            calories = 600.0, quantity = "1 plate",
+            timestamp = yesterday,
+            protein = 25.0, carbs = 70.0, fat = 20.0,
+            imageID = null, mealName = null,
+            mealTypeRaw = MealType.DINNER.displayName,
+        ))
+        val twoDaysAgo = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, -2); set(Calendar.HOUR_OF_DAY, 12); set(Calendar.MINUTE, 0)
+        }.timeInMillis
+        foodDao.insertEntry(FoodEntry(
+            id = UUID.randomUUID().toString(),
+            name = "Turkey Sandwich",
+            calories = 400.0, quantity = "1 sandwich",
+            timestamp = twoDaysAgo,
+            protein = 30.0, carbs = 35.0, fat = 12.0,
+            imageID = null, mealName = null,
+            mealTypeRaw = MealType.LUNCH.displayName,
+        ))
+    }
+
+    private suspend fun seedMultiItemMeal(
+        foodDao: com.pning80.watchmycalories.data.FoodEntryDao,
+        userDao: com.pning80.watchmycalories.data.UserProfileDao,
+    ) = withContext(Dispatchers.IO) {
+        val profile = UserProfile(
+            id = 1, height = 175.0, weight = 70.0, age = 30,
+            genderRaw = "Male", activityLevelRaw = "Moderately Active",
+            targetCalories = 2200.0,
+        )
+        userDao.insertProfile(profile)
+        val lunchTime = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 12); set(Calendar.MINUTE, 30)
+        }.timeInMillis
+        val mealName = "Mock Bento Box"
+        data class SeedItem(val name: String, val cals: Double, val qty: String, val p: Double, val c: Double, val f: Double)
+        listOf(
+            SeedItem("Brown Rice", 220.0, "1 cup", 5.0, 45.0, 2.0),
+            SeedItem("Teriyaki Chicken", 350.0, "5 oz", 30.0, 12.0, 18.0),
+            SeedItem("Edamame", 120.0, "1 cup", 11.0, 9.0, 5.0),
+        ).forEach { item ->
+            foodDao.insertEntry(FoodEntry(
+                id = UUID.randomUUID().toString(),
+                name = item.name,
+                calories = item.cals, quantity = item.qty,
+                timestamp = lunchTime,
+                protein = item.p, carbs = item.c, fat = item.f,
+                imageID = null,
+                mealName = mealName,
+                mealTypeRaw = MealType.LUNCH.displayName,
+            ))
+        }
+    }
+
+    private suspend fun seedMenuScans(
+        menuScanDao: com.pning80.watchmycalories.data.MenuScanDao,
+    ) = withContext(Dispatchers.IO) {
+        menuScanDao.insertScan(MenuScan(
+            id = UUID.randomUUID().toString(),
+            restaurantName = "Mock Italian Place",
+            imageID = null,
+            timestamp = System.currentTimeMillis(),
+            itemsData = """[{"name":"Margherita Pizza","description":"Classic tomato + mozzarella","calories":800,"protein":30,"carbs":90,"fat":30}]""",
+        ))
+        menuScanDao.insertScan(MenuScan(
+            id = UUID.randomUUID().toString(),
+            restaurantName = "Mock Sushi Bar",
+            imageID = null,
+            timestamp = System.currentTimeMillis() - 86_400_000L,
+            itemsData = """[{"name":"Salmon Roll","description":null,"calories":320,"protein":18,"carbs":38,"fat":10}]""",
+        ))
+    }
+}

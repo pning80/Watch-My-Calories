@@ -53,8 +53,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // Phase 3 of PARITY_FIX_PLAN.md: intent-extra-driven test mode. When the
+        // launching Intent contains EXTRA_UI_TESTING=true, TestSeed wipes Room
+        // and applies the requested seed/consent state synchronously before the
+        // first composition. Production launches don't carry the extra, so this
+        // is a no-op. Mirrors iOS `--uitesting`+`--seed-*` launch args.
+        TestSeed.applyIfTesting(this, intent)
+
         val settingsDataStore = SettingsDataStore(this)
-        
+
         AdManager.initialize(this)
 
         lifecycleScope.launch {
