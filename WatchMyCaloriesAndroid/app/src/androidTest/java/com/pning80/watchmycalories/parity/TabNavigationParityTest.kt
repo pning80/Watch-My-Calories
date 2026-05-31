@@ -74,18 +74,14 @@ class TabNavigationParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithText("Log Manually").assertIsDisplayed()
     }
 
-    /**
-     * Android-adapted mirror. iOS tests `testTappingScanMenuTabShowsSheet` because
-     * iOS shows the `ScanMenuSheet` (3 options) when tapping the tab. Android
-     * navigates directly to the Scanned Menus screen per deviation D-002 —
-     * asserting the Scanned Menus TopAppBar title is the parity-aware check.
-     */
+    /** Mirror of iOS `testTappingScanMenuTabShowsSheet` (D-002 closed). */
     @Test
-    fun testTappingScanMenuTabNavigatesToScannedMenus() {
+    fun testTappingScanMenuTabShowsSheet() {
         launchEmpty()
         composeTestRule.onNodeWithTag(AccessibilityTags.Tab.SCAN_MENU).performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithTag("ScannedMenusTitle").assertIsDisplayed()
+        // Sheet exposes 3 options; "Stored Menus" is a stable text marker.
+        composeTestRule.onNodeWithText("Stored Menus").assertIsDisplayed()
     }
 
     /** Mirror of iOS `testRoundTripTabNavigation`. */
