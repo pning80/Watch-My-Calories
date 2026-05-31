@@ -105,6 +105,8 @@ private fun MainAppContent(
 ) {
     val navController = rememberNavController()
     var showLogFoodSheet by remember { mutableStateOf(false) }
+    var showScanMenuSheet by remember { mutableStateOf(false) }
+    var menuCaptureMode by remember { mutableStateOf(com.pning80.watchmycalories.ui.camera.CaptureMode.Food) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val activityIntent = (context as? android.app.Activity)?.intent
 
@@ -296,11 +298,7 @@ private fun MainAppContent(
                     icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = "Scan Menu") },
                     label = { Text("Scan Menu") },
                     selected = currentRoute == "scannedMenus",
-                    onClick = {
-                        navController.navigate("scannedMenus") {
-                            popUpTo("dashboard")
-                        }
-                    },
+                    onClick = { showScanMenuSheet = true },  // D-002 — sheet, not direct nav
                     colors = navItemColors,
                     modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.SCAN_MENU),
                 )
@@ -404,12 +402,28 @@ private fun MainAppContent(
                 AboutScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable("camera") {
-                CameraScreen(onPhotosCaptured = { bitmaps ->
-                    analysisImages = bitmaps
-                    // Reset any prior meal type so the review screen defaults to now.
-                    chosenMealType = null
-                    navController.navigate("cameraReview")
-                })
+                CameraScreen(
+                    captureMode = menuCaptureMode,
+                    onPhotosCaptured = { bitmaps ->
+                        when (menuCaptureMode) {
+                            com.pning80.watchmycalories.ui.camera.CaptureMode.Menu -> {
+                                // D-003b — single shot routes to menuAnalysis. Reset
+                                // the mode flag so the next camera entry defaults to Food.
+                                menuAnalysisImage = bitmaps.firstOrNull()
+                                menuCaptureMode = com.pning80.watchmycalories.ui.camera.CaptureMode.Food
+                                navController.navigate("menuAnalysis") {
+                                    popUpTo("dashboard")
+                                }
+                            }
+                            com.pning80.watchmycalories.ui.camera.CaptureMode.Food -> {
+                                analysisImages = bitmaps
+                                // Reset any prior meal type so the review screen defaults to now.
+                                chosenMealType = null
+                                navController.navigate("cameraReview")
+                            }
+                        }
+                    }
+                )
             }
             composable("cameraReview") {
                 val images = analysisImages
@@ -601,6 +615,32 @@ private fun MainAppContent(
                 navController.navigate("manualEntry")
             },
             onDismiss = { showLogFoodSheet = false }
+        )
+    }
+
+    // Scan Menu bottom sheet (D-002 — mirrors iOS ScanMenuSheet 3-option modal).
+    if (showScanMenuSheet) {
+        com.pning80.watchmycalories.ui.menuscanner.ScanMenuSheet(
+            onScanCamera = {
+                showScanMenuSheet = false
+                menuCaptureMode = com.pning80.watchmycalories.ui.camera.CaptureMode.Menu
+                navController.navigate("camera")
+            },
+            onChooseFromLibrary = {
+                showScanMenuSheet = false
+                menuPhotoPickerLauncher.launch(
+                    androidx.activity.result.PickVisualMediaRequest(
+                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                    )
+                )
+            },
+            onStoredMenus = {
+                showScanMenuSheet = false
+                navController.navigate("scannedMenus") {
+                    popUpTo("dashboard")
+                }
+            },
+            onDismiss = { showScanMenuSheet = false }
         )
     }
 }

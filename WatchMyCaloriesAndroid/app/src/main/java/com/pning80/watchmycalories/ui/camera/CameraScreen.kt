@@ -40,9 +40,16 @@ import androidx.core.content.ContextCompat
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import java.util.concurrent.Executor
 
+/**
+ * Capture mode for [CameraScreen]. Mirrors iOS's split between food capture
+ * (multi-photo bundle) and menu capture (single OCR-friendly frame).
+ */
+enum class CaptureMode { Food, Menu }
+
 @Composable
 fun CameraScreen(
-    onPhotosCaptured: (List<Bitmap>) -> Unit
+    onPhotosCaptured: (List<Bitmap>) -> Unit,
+    captureMode: CaptureMode = CaptureMode.Food,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -122,6 +129,10 @@ fun CameraScreen(
                             val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
                             capturedImages = capturedImages + bitmap
                             image.close()
+                            // D-003b — menu mode is single-shot; route immediately.
+                            if (captureMode == CaptureMode.Menu) {
+                                onPhotosCaptured(listOf(bitmap))
+                            }
                         }
                         override fun onError(exception: ImageCaptureException) {
                             exception.printStackTrace()
@@ -138,7 +149,9 @@ fun CameraScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White)
             ) {}
 
-            if (capturedImages.isNotEmpty()) {
+            // Food mode shows the bundle thumbnail row + "Analyze N" CTA. Menu mode
+            // skips this UI since capture routes immediately on first shot.
+            if (capturedImages.isNotEmpty() && captureMode == CaptureMode.Food) {
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -165,6 +178,20 @@ fun CameraScreen(
                         )
                     }
                 }
+            }
+
+            if (captureMode == CaptureMode.Menu) {
+                // OCR-friendly hint overlay (D-003b — single-photo menu capture).
+                Text(
+                    "Align the menu within the frame",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 80.dp)
+                        .background(Color.Black.copy(alpha = 0.45f))
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                )
             }
         }
     } else {
