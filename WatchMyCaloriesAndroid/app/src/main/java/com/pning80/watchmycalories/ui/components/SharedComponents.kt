@@ -43,11 +43,14 @@ import kotlin.math.min
  * Phase E (E2): padding-inside-only so vertical gaps don't double up.
  */
 fun Modifier.cwCard(): Modifier = composed {
-    val surface = MaterialTheme.colorScheme.surface
+    // Use surfaceContainer so cards visibly lift off the background in dark
+    // mode (where dropshadows on near-black are invisible). In light mode
+    // surfaceContainer is close to surface so the visual change is minimal.
+    val cardFill = MaterialTheme.colorScheme.surfaceContainer
     this
-        .shadow(elevation = 8.dp, shape = RoundedCornerShape(Spacing.cardCorner))
+        .shadow(elevation = 4.dp, shape = RoundedCornerShape(Spacing.cardCorner))
         .clip(RoundedCornerShape(Spacing.cardCorner))
-        .background(surface)
+        .background(cardFill)
         .padding(Spacing.cardContent)
 }
 

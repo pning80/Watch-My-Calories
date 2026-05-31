@@ -12,14 +12,31 @@ import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
     primary = CwPrimaryDark,
+    onPrimary = CwOnPrimaryDark,
+    primaryContainer = CwPrimaryContainerDark,
+    onPrimaryContainer = CwOnPrimaryContainerDark,
     secondary = CwSecondaryDark,
-    tertiary = CwAccent,
+    onSecondary = CwOnSecondaryDark,
+    secondaryContainer = CwSecondaryContainerDark,
+    onSecondaryContainer = CwOnSecondaryContainerDark,
+    tertiary = CwAccentDark,
+    onTertiary = CwOnTertiaryDark,
+    tertiaryContainer = CwTertiaryContainerDark,
+    onTertiaryContainer = CwOnTertiaryContainerDark,
     background = CwBackgroundDark,
-    surface = CwSurfaceDark,
-    onPrimary = CwTextPrimaryDark,
-    onSecondary = CwTextPrimaryDark,
     onBackground = CwTextPrimaryDark,
-    onSurface = CwTextPrimaryDark
+    surface = CwSurfaceDark,
+    onSurface = CwTextPrimaryDark,
+    surfaceVariant = CwSurfaceVariantDark,
+    onSurfaceVariant = CwOnSurfaceVariantDark,
+    surfaceTint = CwSurfaceTintDark,
+    surfaceContainerLowest = CwSurfaceContainerLowestDark,
+    surfaceContainerLow = CwSurfaceContainerLowDark,
+    surfaceContainer = CwSurfaceContainerDark,
+    surfaceContainerHigh = CwSurfaceContainerHighDark,
+    surfaceContainerHighest = CwSurfaceContainerHighestDark,
+    outline = CwOutlineDark,
+    outlineVariant = CwOutlineVariantDark,
 )
 
 private val LightColorScheme = lightColorScheme(

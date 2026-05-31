@@ -279,7 +279,7 @@ private fun MealGroupItem(
                 onLongClick = { menuOpen = true },
             )
             .animateContentSize(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
             Row(
@@ -355,7 +355,7 @@ private fun FoodEntryCard(
             .padding(vertical = 3.dp) // tight inter-entry gap; not on token grid
             .shadow(elevation = 3.dp, shape = RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             .combinedClickable(
                 onClick = { onEdit() },
                 onLongClick = { menuOpen = true },
@@ -365,7 +365,10 @@ private fun FoodEntryCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Initial badge
+        // Initial badge — onSecondary text on secondary fill so it survives
+        // both light (#D9F2DB fill / dark green text) and dark (#B8D5C2 fill /
+        // dark green text) palettes. Previously used `primary` for text which
+        // collided with the new dark-mode pale-sage secondary fill (1.3:1).
         Surface(
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.secondary,
@@ -376,7 +379,7 @@ private fun FoodEntryCard(
                     text = entry.name.take(1).uppercase(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
             }
         }
