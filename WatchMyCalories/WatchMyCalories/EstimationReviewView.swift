@@ -163,7 +163,18 @@ struct EstimationReviewView: View {
                     .padding(.bottom, 40)
                     .animation(.easeInOut(duration: 0.3), value: estimationComplete)
                 }
-                .accessibilityIdentifier(AccessibilityID.EstimationReview.loadingView)
+                // IOS-BUG-1 fix: the outer container's accessibilityIdentifier inherits
+                // down to all descendant Text views in SwiftUI, overriding any nested
+                // `.accessibilityIdentifier()` on individual children. To let XCUITest
+                // distinguish loading vs error states reliably, we switch the container's
+                // identifier based on the rendered state:
+                //   - "review_error" when the error UI is showing
+                //   - "review_loading" otherwise (initial spinner, success-loading branch)
+                .accessibilityIdentifier(
+                    estimationComplete && pendingError != nil
+                        ? AccessibilityID.EstimationReview.errorView
+                        : AccessibilityID.EstimationReview.loadingView
+                )
             } else if let result {
                 if result.items.isEmpty {
                     // No food detected

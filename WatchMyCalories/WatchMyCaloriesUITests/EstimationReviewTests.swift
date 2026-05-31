@@ -217,30 +217,38 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
         useButton.tap()
     }
 
-    /// Wait for the Try Again button to appear. SwiftUI's `.buttonStyle(.borderedProminent)`
-    /// strips the underlying `.accessibilityIdentifier`, so we match by label instead.
-    private func waitForTryAgain(timeout: TimeInterval = 30) -> Bool {
-        return app.buttons["Try Again"].waitForExistence(timeout: timeout)
+    /// Wait for the error VIEW (the inline error VStack inside the loading container) to
+    /// appear. With the IOS-BUG-1 fix landed (this PR), the error VStack now exposes the
+    /// `review_error` accessibility identifier, so we can detect the error state directly
+    /// instead of inferring it from the "Try Again" button label.
+    ///
+    /// We still tap action buttons via their LABEL ("Try Again", "Cancel") because IOS-BUG-2
+    /// (SwiftUI `.buttonStyle(.borderedProminent)` strips `.accessibilityIdentifier`) is
+    /// unrelated and unfixed.
+    private func waitForErrorView(timeout: TimeInterval = 30) -> Bool {
+        return elementExists("review_error", timeout: timeout)
     }
 
     func testErrorStateShowsTryAgainButton() {
         startEstimationWithLaunchArgs(["--mock-estimation-error"])
-        XCTAssertTrue(waitForTryAgain(),
-                      "Mock-error mode should render the Try Again button")
+        XCTAssertTrue(waitForErrorView(),
+                      "Mock-error mode should render the review_error view")
+        XCTAssertTrue(app.buttons["Try Again"].exists,
+                      "Try Again button must appear inside the error view")
         XCTAssertTrue(app.staticTexts["Analysis Failed"].exists,
                       "Error state should show 'Analysis Failed' headline")
     }
 
     func testErrorStateShowsCancelButton() {
         startEstimationWithLaunchArgs(["--mock-estimation-error"])
-        XCTAssertTrue(waitForTryAgain())
+        XCTAssertTrue(waitForErrorView())
         XCTAssertTrue(app.buttons["Cancel"].exists,
                       "Cancel button must appear on error state")
     }
 
     func testErrorStateShowDetailsButton() {
         startEstimationWithLaunchArgs(["--mock-estimation-error"])
-        XCTAssertTrue(waitForTryAgain())
+        XCTAssertTrue(waitForErrorView())
         let detailsButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "details")).firstMatch
         XCTAssertTrue(detailsButton.waitForExistence(timeout: 3),
                       "Show/Hide Details button must be present on error state")
@@ -248,9 +256,10 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
 
     func testErrorStateTryAgainTapResetsView() {
         startEstimationWithLaunchArgs(["--mock-estimation-error"])
-        XCTAssertTrue(waitForTryAgain())
+        XCTAssertTrue(waitForErrorView())
         app.buttons["Try Again"].tap()
-        XCTAssertTrue(waitForTryAgain(timeout: 15))
+        // After Try Again, the loading state re-fires and we end up back in error.
+        XCTAssertTrue(waitForErrorView(timeout: 15))
     }
 
     /// In no-food mode the mock returns success-with-empty-items. The flow is:
