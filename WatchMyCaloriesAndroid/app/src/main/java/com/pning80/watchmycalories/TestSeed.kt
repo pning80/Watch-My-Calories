@@ -2,6 +2,7 @@ package com.pning80.watchmycalories
 
 import android.content.Context
 import android.content.Intent
+import com.pning80.watchmycalories.ads.AdManager
 import com.pning80.watchmycalories.data.AppDatabase
 import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.data.MealType
@@ -45,6 +46,11 @@ object TestSeed {
      */
     fun applyIfTesting(context: Context, intent: Intent?) {
         if (!isUiTesting(intent)) return
+
+        // Suppress AdMob interstitials in test mode — an interstitial fullscreen
+        // takeover destroys the compose tree mid-test and surfaces as
+        // "No compose hierarchies found" on the next assertion.
+        AdManager.disableForUITesting = true
 
         val db = AppDatabase.getDatabase(context)
         val foodDao = db.foodEntryDao()

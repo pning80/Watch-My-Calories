@@ -21,6 +21,11 @@ object AdManager {
     private var lastInterstitialTime = 0L
     private const val INTERSTITIAL_COOLDOWN_MS = 60_000L // 1 min cooldown
 
+    // Test hook: when true, showInterstitialIfReady is a no-op so the compose
+    // tree is never destroyed mid-test by an interstitial fullscreen takeover.
+    // Set by TestSeed when EXTRA_UI_TESTING is passed.
+    var disableForUITesting = false
+
     private var interstitialAd: InterstitialAd? = null
     var isInterstitialReady = false
         private set
@@ -78,6 +83,10 @@ object AdManager {
     }
 
     fun showInterstitialIfReady(activity: Activity, onDismissed: () -> Unit) {
+        if (disableForUITesting) {
+            onDismissed()
+            return
+        }
         val now = System.currentTimeMillis()
         if (interstitialAd != null && isInterstitialReady && (now - lastInterstitialTime > INTERSTITIAL_COOLDOWN_MS)) {
             interstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
