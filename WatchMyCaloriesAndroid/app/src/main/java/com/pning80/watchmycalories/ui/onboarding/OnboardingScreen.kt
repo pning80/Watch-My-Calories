@@ -8,6 +8,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -125,7 +128,12 @@ private fun WelcomeStep(onNext: () -> Unit) {
             modifier = Modifier.size(120.dp)
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Text("🔥", fontSize = 48.sp)
+                Icon(
+                    Icons.Filled.LocalFireDepartment,
+                    contentDescription = "Watch My Calories logo",
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(64.dp),
+                )
             }
         }
 
@@ -151,11 +159,22 @@ private fun WelcomeStep(onNext: () -> Unit) {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Text(
-            "🔒 Your data is never stored outside this device",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(
+                Icons.Filled.Lock,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+            Text(
+                "Your data is never stored outside this device",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+        }
 
         Spacer(modifier = Modifier.height(Spacing.l))
 
