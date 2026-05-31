@@ -2,7 +2,7 @@
 
 Produced 2026-05-30 as Task #4 output. Sibling to `PARITY_LEDGER.md` (per-element enumeration) and `PARITY_INCONSISTENCIES.md` (forthcoming).
 
-**Coverage rollup (300 ledger rows):**
+**Coverage rollup (300 fine-grained elements; the `PARITY_LEDGER.md` table consolidates these into 189 rows):**
 
 | Bucket | Count | % of total |
 |---|---:|---:|

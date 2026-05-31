@@ -3,7 +3,7 @@
 Produced 2026-05-30 as Task #10 output. The deliverable the user asked for: every divergence between iOS reference behavior and Android verified behavior, structured for actioning in `PARITY_FIX_PLAN.md`.
 
 **Inputs:**
-- `PARITY_LEDGER.md` — 300-row enumeration of iOS interactive surfaces
+- `PARITY_LEDGER.md` — **189-row enumeration** of iOS interactive surfaces (the coverage audit further decomposed several surfaces into ~300 finer-grained sub-elements — each picker option, each sub-button — for categorization; both views of the same audit data)
 - `PARITY_COVERAGE_AUDIT.md` — iOS XCUITest coverage map (81 full / 44 partial / 132 SPEC-GAP / 43 display-only)
 - `PARITY_ANDROID_COVERAGE_AUDIT.md` — Android instrumented coverage (8 instrumented / 48 robo-only / 127 GAP / 15 display-only)
 - iOS baseline: `/tmp/parity-audit/ios-baseline.xcresult` — **130/130 passed** (existing suite, 2026-05-30)
@@ -146,8 +146,8 @@ Each `IOS-BUG-N` becomes a small standalone follow-up PR per the Operating Princ
 
 After fixing the 11 patched tests (multi-match + nutrition) and treating the other 8 as deferred:
 
-- **Original baseline coverage:** 81 full + 44 partial / 300 ledger rows = ~42% effective coverage
-- **Extended coverage (this PR):** ~125 full + ~44 partial / 300 ledger rows = ~56% effective coverage
+- **Original baseline coverage:** 81 full + 44 partial / 300 fine-grained elements (189 consolidated rows) = ~42% effective coverage
+- **Extended coverage (this PR):** ~125 full + ~44 partial / 300 fine-grained elements (189 consolidated rows) = ~56% effective coverage
 - **Realistic ceiling on iOS test-driven coverage** (given Class C blockers): ~70–75% with architectural refactor
 
 These are still well above the Android-side 4% instrumented coverage, so the Android gap remains the dominant inconsistency.

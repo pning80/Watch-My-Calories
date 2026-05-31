@@ -37,7 +37,7 @@ Produced 2026-05-30 as Task #6 output. Sibling to `PARITY_COVERAGE_AUDIT.md` (iO
 
 ## Per-screen / per-criterion coverage diff
 
-Using `PARITY_LEDGER.md`'s 300 rows. Each row's Android-verify column gets one of:
+Using `PARITY_LEDGER.md`'s 189 consolidated rows (the iOS coverage audit categorized 300 fine-grained sub-elements; for the Android rollup we use the consolidated row counts). Each row's Android-verify column gets one of:
 
 - **`✅ instrumented`** — covered by a real instrumented test on Pixel 9a
 - **`⚠ robo-only`** — covered by Robolectric (WEAKER-EVIDENCE per strict bar)
