@@ -103,6 +103,10 @@ protocol EstimationService {
     func estimateCalories(images: [Data]) async throws -> EstimationResult
 }
 
+protocol MenuAnalysisService {
+    func analyzeMenu(image: Data, location: CLLocation?, locality: String?) async throws -> MenuAnalysisResult
+}
+
 // MARK: - Gemini Implementation
 
 enum GeminiError: Error, LocalizedError {
@@ -127,7 +131,7 @@ enum GeminiError: Error, LocalizedError {
     }
 }
 
-final class GeminiService: EstimationService {
+final class GeminiService: EstimationService, MenuAnalysisService {
 
     // MARK: - Shared HTTP/Retry Infrastructure
 
@@ -389,6 +393,52 @@ final class GeminiService: EstimationService {
         }
 
         return result
+    }
+}
+
+final class MockMenuAnalysisService: MenuAnalysisService {
+    enum Mode {
+        case success
+        case error
+        case notAMenu
+    }
+
+    var mode: Mode
+
+    init() {
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("--mock-menu-analysis-error") {
+            self.mode = .error
+        } else if args.contains("--mock-menu-analysis-not-a-menu") {
+            self.mode = .notAMenu
+        } else {
+            self.mode = .success
+        }
+    }
+
+    func analyzeMenu(image: Data, location: CLLocation?, locality: String?) async throws -> MenuAnalysisResult {
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+        switch mode {
+        case .error:
+            throw NSError(
+                domain: "MockMenuAnalysisError",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Mock menu analysis error for UI tests"]
+            )
+        case .notAMenu:
+            return MenuAnalysisResult(restaurantName: nil, items: nil, error: "not_a_menu")
+        case .success:
+            return MenuAnalysisResult(
+                restaurantName: "Mock Restaurant",
+                items: [
+                    MenuItemResult(name: "Mock Burger", description: "1/4 lb beef patty",
+                                   calories: 550, protein: 28, carbs: 35, fat: 30),
+                    MenuItemResult(name: "Mock Salad", description: nil,
+                                   calories: 220, protein: 6, carbs: 18, fat: 14)
+                ],
+                error: nil
+            )
+        }
     }
 }
 

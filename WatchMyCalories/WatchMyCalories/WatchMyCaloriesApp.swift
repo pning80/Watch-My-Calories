@@ -71,6 +71,7 @@ struct WatchMyCaloriesApp: App {
                 ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
             ])
             AppEnvironment.shared.swapService(MockEstimationService())
+            AppEnvironment.shared.swapMenuAnalysisService(MockMenuAnalysisService())
         } else if let persistent = try? ModelContainer(for: schema, configurations: [
             ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         ]) {
