@@ -204,12 +204,12 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
 
     func testMultiItemMealGroupCardShowsMealName() {
         launchWithMultiItemMeal()
-        XCTAssertTrue(app.staticTexts["Mock Bento Box"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0).waitForExistence(timeout: 5))
     }
 
     func testMultiItemMealGroupSummaryRowExpandsToShowItems() {
         launchWithMultiItemMeal()
-        let mealHeader = app.staticTexts["Mock Bento Box"].firstMatch
+        let mealHeader = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
         XCTAssertTrue(mealHeader.waitForExistence(timeout: 5))
         // Tapping the group header should reveal child items
         mealHeader.tap()
@@ -221,7 +221,7 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
 
     func testMultiItemMealGroupLongPressShowsContextMenu() {
         launchWithMultiItemMeal()
-        let mealHeader = app.staticTexts["Mock Bento Box"].firstMatch
+        let mealHeader = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
         XCTAssertTrue(mealHeader.waitForExistence(timeout: 5))
         mealHeader.press(forDuration: 1.2)
         // Context menu items: View / Edit / Delete (we expect at least one to surface)
@@ -237,10 +237,10 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
     func testMultiItemMealSubItemLongPressShowsContextMenu() {
         launchWithMultiItemMeal()
         // Expand the group first
-        let mealHeader = app.staticTexts["Mock Bento Box"].firstMatch
+        let mealHeader = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
         XCTAssertTrue(mealHeader.waitForExistence(timeout: 5))
         mealHeader.tap()
-        let subItem = app.staticTexts["Brown Rice"]
+        let subItem = app.staticTexts.matching(NSPredicate(format: "label == %@", "Brown Rice")).element(boundBy: 0)
         XCTAssertTrue(subItem.waitForExistence(timeout: 3))
         subItem.press(forDuration: 1.2)
         let anyContextItem = app.buttons["View"].waitForExistence(timeout: 3)
@@ -253,17 +253,16 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         launchWithImage()
         let entry = app.staticTexts["Mock Lunch with Photo"]
         XCTAssertTrue(entry.waitForExistence(timeout: 5))
-        // Thumbnails live inside the entry card — tap on the entry's image area.
-        // SwiftUI images appear as `images` query targets when accessible.
+        // The thumbnail is a `Button { Image(uiImage:) }` with no label. Find the
+        // first image element and tap — the tap dispatches through to the Button.
         let firstImage = app.images.firstMatch
-        if firstImage.waitForExistence(timeout: 3) {
-            firstImage.tap()
-            // Full-screen cover should expose a close button (any X / Close)
-            let closeButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@ OR label CONTAINS[c] %@",
-                                                               "close", "done")).firstMatch
-            XCTAssertTrue(closeButton.waitForExistence(timeout: 3),
-                          "Full-screen image cover should be presented with a dismiss control")
-        }
+        XCTAssertTrue(firstImage.waitForExistence(timeout: 3))
+        firstImage.tap()
+        // The FullScreenImageView close button is `Image(systemName: "xmark.circle.fill")`
+        // with no explicit label — XCUITest exposes it as a Button labeled "xmark.circle.fill".
+        let closeButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "xmark")).firstMatch
+        XCTAssertTrue(closeButton.waitForExistence(timeout: 3),
+                      "Full-screen image cover should expose an xmark.circle.fill close button")
     }
 
     func testPullToRefreshGestureCompletesWithoutError() {
@@ -311,7 +310,7 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
 
     func testEditMealGroupFromDashboardContextMenu() {
         launchWithMultiItemMeal()
-        let mealHeader = app.staticTexts["Mock Bento Box"].firstMatch
+        let mealHeader = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
         XCTAssertTrue(mealHeader.waitForExistence(timeout: 5))
         mealHeader.press(forDuration: 1.2)
         let editButton = app.buttons["Edit"]
@@ -324,10 +323,10 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
 
     func testEditSubItemFromDashboardContextMenu() {
         launchWithMultiItemMeal()
-        let mealHeader = app.staticTexts["Mock Bento Box"].firstMatch
+        let mealHeader = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
         XCTAssertTrue(mealHeader.waitForExistence(timeout: 5))
         mealHeader.tap()  // expand the group first
-        let subItem = app.staticTexts["Brown Rice"]
+        let subItem = app.staticTexts.matching(NSPredicate(format: "label == %@", "Brown Rice")).element(boundBy: 0)
         XCTAssertTrue(subItem.waitForExistence(timeout: 3))
         subItem.press(forDuration: 1.2)
         let editButton = app.buttons["Edit"]

@@ -241,7 +241,7 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         if dayCard.waitForExistence(timeout: 5) {
             dayCard.tap()
         }
-        XCTAssertTrue(app.staticTexts["Mock Bento Box"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0).waitForExistence(timeout: 5))
     }
 
     func testHistoryMultiItemMealGroupExpandsItems() {
@@ -249,7 +249,7 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         app.tabBars.buttons["History"].tap()
         let dayCard = app.buttons["history_dayCard"]
         if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
-        let mealGroup = app.staticTexts["Mock Bento Box"].firstMatch
+        let mealGroup = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
         XCTAssertTrue(mealGroup.waitForExistence(timeout: 5))
         mealGroup.tap()
         XCTAssertTrue(app.staticTexts["Brown Rice"].waitForExistence(timeout: 3))
@@ -261,7 +261,7 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         app.tabBars.buttons["History"].tap()
         let dayCard = app.buttons["history_dayCard"]
         if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
-        let mealGroup = app.staticTexts["Mock Bento Box"].firstMatch
+        let mealGroup = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
         XCTAssertTrue(mealGroup.waitForExistence(timeout: 5))
         mealGroup.press(forDuration: 1.2)
         let anyContextItem = app.buttons["View"].waitForExistence(timeout: 3)
@@ -275,10 +275,10 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         app.tabBars.buttons["History"].tap()
         let dayCard = app.buttons["history_dayCard"]
         if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
-        let mealGroup = app.staticTexts["Mock Bento Box"].firstMatch
+        let mealGroup = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
         XCTAssertTrue(mealGroup.waitForExistence(timeout: 5))
         mealGroup.tap()
-        let subItem = app.staticTexts["Brown Rice"]
+        let subItem = app.staticTexts.matching(NSPredicate(format: "label == %@", "Brown Rice")).element(boundBy: 0)
         XCTAssertTrue(subItem.waitForExistence(timeout: 3))
         subItem.press(forDuration: 1.2)
         let anyContextItem = app.buttons["View"].waitForExistence(timeout: 3)
@@ -294,11 +294,12 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
         XCTAssertTrue(app.staticTexts["Mock Lunch with Photo"].waitForExistence(timeout: 5))
         let firstImage = app.images.firstMatch
-        if firstImage.waitForExistence(timeout: 3) {
-            firstImage.tap()
-            let closeButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@ OR label CONTAINS[c] %@",
-                                                               "close", "done")).firstMatch
-            XCTAssertTrue(closeButton.waitForExistence(timeout: 3))
-        }
+        XCTAssertTrue(firstImage.waitForExistence(timeout: 3))
+        firstImage.tap()
+        // FullScreenImageView close button is `Image(systemName: "xmark.circle.fill")` —
+        // exposed as a Button labeled "xmark.circle.fill" without an explicit a11y label.
+        let closeButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "xmark")).firstMatch
+        XCTAssertTrue(closeButton.waitForExistence(timeout: 3),
+                      "Full-screen image cover should expose an xmark.circle.fill close button")
     }
 }

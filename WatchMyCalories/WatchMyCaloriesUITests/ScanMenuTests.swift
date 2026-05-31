@@ -145,13 +145,17 @@ final class ScanMenuTests: WatchMyCaloriesUITestBase {
         let row = app.staticTexts["Mock Italian Place"]
         XCTAssertTrue(row.waitForExistence(timeout: 3))
         row.tap()
-        let deleteToolbarButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "delete")).firstMatch
-        XCTAssertTrue(deleteToolbarButton.waitForExistence(timeout: 3))
-        deleteToolbarButton.tap()
-        // Confirmation dialog: look for a Delete confirm button or "Are you sure" text
-        let confirmExists = app.buttons["Delete"].waitForExistence(timeout: 3)
-            || app.alerts.firstMatch.waitForExistence(timeout: 2)
-        XCTAssertTrue(confirmExists, "Delete should present a confirmation dialog or alert")
+        // The detail view's delete is a toolbar Button with `Image(systemName: "trash")`
+        // and `role: .destructive`. Find it by image identifier rather than label
+        // (which is ambiguous with the confirmation dialog's "Delete" button).
+        let trashButton = app.navigationBars.buttons["trash"].firstMatch
+        XCTAssertTrue(trashButton.waitForExistence(timeout: 3),
+                      "Detail screen should expose a trash toolbar button")
+        trashButton.tap()
+        // After tap, the confirmationDialog "Delete this scanned menu?" appears.
+        let confirmTitle = app.staticTexts["Delete this scanned menu?"]
+        XCTAssertTrue(confirmTitle.waitForExistence(timeout: 3),
+                      "Trash button should present a deletion confirmation dialog")
     }
 
     // MARK: - Parity audit (2026-05-30) — Menu Camera UI elements

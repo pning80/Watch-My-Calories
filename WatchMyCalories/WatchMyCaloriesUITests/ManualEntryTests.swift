@@ -279,7 +279,14 @@ final class ManualEntryTests: WatchMyCaloriesUITestBase {
         quantityField.typeText("1 bowl")
 
         let proteinField = expandNutritionAndGetField(at: 3)
+        XCTAssertTrue(proteinField.waitForExistence(timeout: 3))
+        // After disclosure expansion the keyboard may have dismissed. Tap twice if needed
+        // and wait for the keyboard before typing.
         proteinField.tap()
+        if !app.keyboards.firstMatch.waitForExistence(timeout: 2) {
+            proteinField.tap()
+            _ = app.keyboards.firstMatch.waitForExistence(timeout: 3)
+        }
         proteinField.typeText("25")
 
         let saveButton = app.buttons["manualEntry_saveButton"]

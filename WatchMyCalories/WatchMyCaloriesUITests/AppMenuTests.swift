@@ -188,16 +188,17 @@ final class AppMenuTests: WatchMyCaloriesUITestBase {
 
     // MARK: - Parity audit (2026-05-30) — Ad surfaces
 
-    func testSettingsBannerAdReachable() {
+    func testSettingsBannerAdHiddenUnderUITesting() {
         launchEmpty()
         app.buttons["appMenu_button"].tap()
         app.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
-        // ads_banner is present at top of Settings (see SettingsView.swift:51)
+        // `BannerAdView` is gated by `!AdManager.isUITestingMode && canRequestAds`
+        // (see BannerAdView.swift:12). Under --uitesting the body collapses to an
+        // empty container and `accessibilityIdentifier(ads_banner)` is never applied.
+        // Verify the gating works — banner must NOT be present.
         let banner = app.descendants(matching: .any)["ads_banner"].firstMatch
-        // Test ads may take time to load — give them up to 8s. If still absent, fail with a
-        // helpful message that distinguishes "missing UI" from "ad SDK slow".
-        XCTAssertTrue(banner.waitForExistence(timeout: 8),
-                      "ads_banner should be present in Settings (may be invisible until SDK fills)")
+        XCTAssertFalse(banner.waitForExistence(timeout: 2),
+                       "ads_banner should be hidden under --uitesting")
     }
 }

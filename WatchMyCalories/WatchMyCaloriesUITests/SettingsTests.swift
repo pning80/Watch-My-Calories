@@ -417,18 +417,24 @@ final class SettingsTests: WatchMyCaloriesUITestBase {
             unitPicker.tap()
             app.buttons["US Customary"].tap()
         }
-        // US mode shows inline feet/inches pickers without a disclosure
-        XCTAssertTrue(app.pickerWheels.count >= 1, "US mode should expose at least one inline picker wheel for height")
+        // US mode renders Feet + Inches as default-style (.menu) Pickers — exposed as
+        // tappable buttons with labels like "5'" / "9"". Look for a button whose label
+        // contains the foot mark — proves the Feet picker is rendered.
+        let feetButton = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "'")).firstMatch
+        XCTAssertTrue(feetButton.waitForExistence(timeout: 3),
+                      "US mode should expose a Feet picker button (label contains ')")
     }
 
-    func testManagePrivacyChoicesButtonExists() {
+    func testManagePrivacyChoicesButtonHiddenUnderUITesting() {
         openSettings()
         app.swipeUp()
         app.swipeUp()
-        // "Manage Privacy Choices" reveals the UMP form. We only assert presence,
-        // not the form contents (the SDK presents a sheet that's not under our control).
-        let privacyChoices = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Privacy Choices")).firstMatch
-        XCTAssertTrue(privacyChoices.waitForExistence(timeout: 3))
+        // The "Manage Privacy Choices" button is gated by `AdManager.isPrivacyOptionsRequired`,
+        // which is `false` under UI testing (AdManager skips the consent SDK init via
+        // `AdManager.isUITestingMode`). Verify the gating works — the button must NOT appear.
+        let privacyChoices = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Privacy Choices")).firstMatch
+        XCTAssertFalse(privacyChoices.waitForExistence(timeout: 2),
+                       "Manage Privacy Choices button should be hidden under --uitesting")
     }
 
     func testKeyboardDoneButtonDismissesKeyboard() {
