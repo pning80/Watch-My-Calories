@@ -255,8 +255,17 @@ private fun MainAppContent(
                             "scannedMenus" -> "ScannedMenusTitle"
                             else -> null
                         }
+                        // Serif hero title mirroring iOS `cwTitle()` in
+                        // HistoryView / ScannedMenusView (large bold serif in
+                        // brand primary), instead of the default small system
+                        // bar text. Closes the deferred PR-S audit item.
                         Text(
                             text = titleText,
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Serif
+                            ),
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = titleTag?.let {
                                 androidx.compose.ui.Modifier.testTag(it)
                             } ?: androidx.compose.ui.Modifier
