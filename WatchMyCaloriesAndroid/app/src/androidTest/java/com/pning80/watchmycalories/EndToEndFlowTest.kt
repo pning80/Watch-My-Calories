@@ -32,7 +32,7 @@ class EndToEndFlowTest {
             composeTestRule.waitForIdle()
             // After skip, the onboarding writes to DataStore and calls onComplete. Give recomposition time to settle.
             composeTestRule.waitUntil(timeoutMillis = 5000) {
-                composeTestRule.onAllNodesWithText("Dashboard").fetchSemanticsNodes().isNotEmpty()
+                composeTestRule.onAllNodesWithText("Today").fetchSemanticsNodes().isNotEmpty()
             }
         }
 
@@ -58,7 +58,7 @@ class EndToEndFlowTest {
         composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
         
         // Return to Dashboard
-        composeTestRule.onAllNodesWithText("Dashboard")[0].performClick()
+        composeTestRule.onAllNodesWithText("Today")[0].performClick()
         composeTestRule.waitForIdle()
     }
 }

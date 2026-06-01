@@ -30,7 +30,7 @@ class EndToEndFlowTest {
             // After skip, the onboarding writes to DataStore and calls onComplete.
             // Give the recomposition time to settle.
             composeTestRule.waitUntil(timeoutMillis = 5000) {
-                composeTestRule.onAllNodesWithText("Dashboard").fetchSemanticsNodes().isNotEmpty()
+                composeTestRule.onAllNodesWithText("Today").fetchSemanticsNodes().isNotEmpty()
             }
         }
 
@@ -47,16 +47,20 @@ class EndToEndFlowTest {
         // Ensure History screen is displayed (title now lives on MainActivity's TopAppBar)
         composeTestRule.onNodeWithTag("HistoryTitle").assertIsDisplayed()
 
-        // Settings is no longer in the bottom nav; reach it via the gear icon in the
-        // TopAppBar (AppMenu.MENU_BUTTON), mirroring the iOS toolbar gear affordance.
+        // Settings is no longer in the bottom nav; reach it via the MoreVert
+        // overflow in the TopAppBar (AppMenu.MENU_BUTTON), which now opens a
+        // dropdown with Settings + About items (mirrors the iOS AppMenuToolbar
+        // ellipsis menu).
         composeTestRule.onNodeWithTag(AccessibilityTags.AppMenu.MENU_BUTTON).performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Settings").performClick()
         composeTestRule.waitForIdle()
 
         // Ensure Settings screen is displayed
         composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
         
         // Return to Dashboard
-        composeTestRule.onAllNodesWithText("Dashboard")[0].performClick()
+        composeTestRule.onAllNodesWithText("Today")[0].performClick()
         composeTestRule.waitForIdle()
     }
 }
