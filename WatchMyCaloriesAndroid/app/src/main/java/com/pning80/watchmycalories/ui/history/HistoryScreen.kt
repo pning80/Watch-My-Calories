@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.pning80.watchmycalories.ads.BannerAdView
 import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.data.MealType
 import com.pning80.watchmycalories.ui.components.EmptyStateCard
@@ -46,6 +47,10 @@ fun HistoryScreen(
     }.toList().sortedByDescending { it.first }
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        // Banner ad below the TopAppBar — mirrors iOS HistoryView where
+        // BannerAdView sits between the "History" title row and the day cards.
+        BannerAdView()
+
         if (groupedEntries.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -63,7 +68,7 @@ fun HistoryScreen(
             }
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(start = Spacing.pageHorizontal, end = Spacing.pageHorizontal, bottom = 100.dp),
+                contentPadding = PaddingValues(start = Spacing.pageHorizontal, end = Spacing.pageHorizontal, top = Spacing.s, bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(Spacing.cardGap),
                 modifier = Modifier.testTag("HistoryLazyColumn")
             ) {
