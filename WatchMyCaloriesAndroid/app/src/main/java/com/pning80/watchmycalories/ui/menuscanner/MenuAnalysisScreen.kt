@@ -197,15 +197,25 @@ fun MenuAnalysisScreen(
                         Icon(
                             Icons.Filled.Warning,
                             contentDescription = "Error",
-                            tint = MaterialTheme.colorScheme.error,
+                            // Accent orange (iOS Color.orange), not Material error red.
+                            tint = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.size(48.dp)
                         )
                         Text("Analysis Failed", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         Text(errorMessage ?: "An error occurred.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Button(
-                            onClick = onNavigateBack,
-                            modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
-                        ) { Text("Try Again") }
+                        // Cancel + Try Again — mirrors iOS MenuAnalysisView.swift:309-336
+                        // (both buttons). The Food estimation screen already has this
+                        // pair via D-009; this brings the menu path to the same shape.
+                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
+                            OutlinedButton(
+                                onClick = onNavigateBack,
+                                modifier = Modifier.testTag(AccessibilityTags.EstimationReview.CANCEL_BUTTON),
+                            ) { Text("Cancel") }
+                            Button(
+                                onClick = onNavigateBack,
+                                modifier = Modifier.testTag(AccessibilityTags.EstimationReview.TRY_AGAIN_BUTTON),
+                            ) { Text("Try Again") }
+                        }
                     }
                 }
             } else if (result?.items != null) {
