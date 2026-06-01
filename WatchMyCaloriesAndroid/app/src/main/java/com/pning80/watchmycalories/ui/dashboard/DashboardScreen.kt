@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.data.MealType
+import com.pning80.watchmycalories.ads.BannerAdView
 import com.pning80.watchmycalories.ui.components.EmptyStateCard
 import com.pning80.watchmycalories.ui.components.HeroSummaryCard
 import com.pning80.watchmycalories.ui.theme.Spacing
@@ -129,6 +130,13 @@ fun DashboardScreen(
                     burnedCalories = burnedCalories,
                     entries = todayEntries
                 )
+            }
+
+            // Banner ad — mirrors iOS Dashboard placement (between the
+            // HeroSummaryCard and the meal sections / empty state).
+            item {
+                Spacer(modifier = Modifier.height(Spacing.s))
+                BannerAdView()
             }
 
             if (todayEntries.isEmpty()) {
