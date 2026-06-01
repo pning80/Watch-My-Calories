@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import com.pning80.watchmycalories.data.UserProfile
 import com.pning80.watchmycalories.ui.settings.SettingsDataStore
 import com.pning80.watchmycalories.utils.AccessibilityTags
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNotNull
@@ -355,9 +356,16 @@ class OnboardingScreenTest {
         composeTestRule.onNodeWithText("US Customary").performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
-        // The DataStore was written — the Settings screen would see this on next read.
-        val isMetric = settingsDataStore.isMetricFlow.first()
-        assertTrue("Toggling US should persist isMetric=false", !isMetric)
+        // OnboardingScreen runs `coroutineScope.launch { settingsDataStore.setMetric(...) }`
+        // off the click — the launched coroutine outlives waitForIdle(). Linux CI
+        // runners finish the click handler before the launched coroutine flushes
+        // the DataStore write; Mac local happens to flush in time. Bound the wait
+        // by collecting the flow until we observe the flipped value, with a
+        // 2s deadline.
+        val observed = kotlinx.coroutines.withTimeoutOrNull(2000) {
+            settingsDataStore.isMetricFlow.filter { !it }.first()
+        }
+        assertTrue("Toggling US should persist isMetric=false (timed out)", observed != null)
     }
 
     // MARK: - Connect Health checkmark (PR E review fix)
