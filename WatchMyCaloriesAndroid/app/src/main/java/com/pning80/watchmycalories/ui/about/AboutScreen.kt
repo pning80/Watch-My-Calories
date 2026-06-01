@@ -14,9 +14,10 @@ import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.GppMaybe
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,7 +50,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("About Watch My Calories") },
+                title = { Text("About") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -103,8 +104,16 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                     "Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
                 }
                 var versionCopied by remember { mutableStateOf(false) }
+                // Transient "copied!" — reverts after 1.5s, mirroring iOS
+                // AboutView.swift:37-39 (showCopiedToast asyncAfter 1.5).
+                LaunchedEffect(versionCopied) {
+                    if (versionCopied) {
+                        kotlinx.coroutines.delay(1500)
+                        versionCopied = false
+                    }
+                }
                 Text(
-                    if (versionCopied) "$versionLabel — copied!" else versionLabel,
+                    if (versionCopied) "Copied!" else versionLabel,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
@@ -189,10 +198,13 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 ListItem(
                     headlineContent = { Text(if (isVerified) "Verified" else "Not Verified") },
                     leadingContent = {
+                        // Not-verified is informational, not an error — iOS uses
+                        // shield.slash in .secondary, not a red alarm. GppMaybe +
+                        // onSurfaceVariant is the Material equivalent.
                         Icon(
-                            if (isVerified) Icons.Filled.CheckCircle else Icons.Filled.Warning,
+                            if (isVerified) Icons.Filled.CheckCircle else Icons.Filled.GppMaybe,
                             contentDescription = "Status",
-                            tint = if (isVerified) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                            tint = if (isVerified) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 )

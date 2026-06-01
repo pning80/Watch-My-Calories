@@ -103,7 +103,7 @@ class SettingsScreenTest : BaseComposeTest() {
         }
 
         // No dialog initially
-        composeTestRule.onNodeWithText("Discard changes?").assertDoesNotExist()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertDoesNotExist()
 
         // Make change
         composeTestRule.onNodeWithTag(AccessibilityTags.Settings.CALCULATE_GOAL).performScrollTo().performClick()
@@ -112,8 +112,7 @@ class SettingsScreenTest : BaseComposeTest() {
         composeTestRule.onNodeWithTag("settings_cancel_button").performClick()
 
         // Dialog should show
-        composeTestRule.onNodeWithText("Discard changes?").assertIsDisplayed()
-        composeTestRule.onNodeWithText("You have unsaved changes. Are you sure you want to discard them?").assertIsDisplayed()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertIsDisplayed()
     }
 
     @Test
@@ -142,7 +141,7 @@ class SettingsScreenTest : BaseComposeTest() {
 
         // Cancel -> Discard
         composeTestRule.onNodeWithTag("settings_cancel_button").performClick()
-        composeTestRule.onNodeWithText("Discard").performClick()
+        composeTestRule.onNodeWithText("Discard Changes").performClick()
 
         assertTrue("onCancel should be triggered after confirming discard", cancelTriggered)
     }
@@ -243,13 +242,13 @@ class SettingsScreenTest : BaseComposeTest() {
         }
 
         // No dialog initially
-        composeTestRule.onNodeWithText("Discard changes?").assertDoesNotExist()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertDoesNotExist()
 
         // Tap Cancel without making any changes
         composeTestRule.onNodeWithTag("settings_cancel_button").performClick()
 
         // No dialog should appear, cancel should fire directly
-        composeTestRule.onNodeWithText("Discard changes?").assertDoesNotExist()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertDoesNotExist()
         assertTrue("onCancel should fire directly when no changes exist", cancelTriggered)
     }
 
@@ -285,13 +284,13 @@ class SettingsScreenTest : BaseComposeTest() {
         composeTestRule.onNodeWithTag("settings_cancel_button").performClick()
 
         // Dialog should show
-        composeTestRule.onNodeWithText("Discard changes?").assertIsDisplayed()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertIsDisplayed()
 
         // Tap Keep Editing
         composeTestRule.onNodeWithText("Keep Editing").performClick()
 
         // Dialog should dismiss but we should still be on Settings
-        composeTestRule.onNodeWithText("Discard changes?").assertDoesNotExist()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertDoesNotExist()
         composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
     }
 
