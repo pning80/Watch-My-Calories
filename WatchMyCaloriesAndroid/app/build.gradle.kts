@@ -14,6 +14,23 @@ val localProps = Properties().apply {
 }
 val appBackendApiKey: String = localProps.getProperty("APP_BACKEND_API_KEY", "")
 
+// AdMob — production IDs come from local.properties; absent values fall back
+// to Google's published test IDs so debug/CI/fresh-checkout builds keep
+// working. Mirrors iOS pattern (DEBUG → hardcoded test IDs;
+// RELEASE → `Bundle.main.infoDictionary` reads `AdMob*AdUnitID` env vars).
+//   Test app ID:        ca-app-pub-3940256099942544~3347511713
+//   Test banner:        ca-app-pub-3940256099942544/6300978111
+//   Test native:        ca-app-pub-3940256099942544/2247696110
+//   Test interstitial:  ca-app-pub-3940256099942544/1033173712
+val admobAppId: String =
+    localProps.getProperty("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
+val admobBannerId: String =
+    localProps.getProperty("ADMOB_BANNER_ID", "ca-app-pub-3940256099942544/6300978111")
+val admobNativeId: String =
+    localProps.getProperty("ADMOB_NATIVE_ID", "ca-app-pub-3940256099942544/2247696110")
+val admobInterstitialId: String =
+    localProps.getProperty("ADMOB_INTERSTITIAL_ID", "ca-app-pub-3940256099942544/1033173712")
+
 // Upload-key signing config for release builds. Absent on CI / fresh checkouts —
 // we fall back to no signingConfig on release in that case, which lets ./gradlew
 // :app:assembleDebug / lintDebug keep working without the keystore. A real
@@ -51,6 +68,15 @@ android {
         // local.properties; absent in release builds anyway (BackendConfig.devLegacyKey
         // gates by BuildConfig.DEBUG). See PORTING_CRITERIA.md T1.8.
         buildConfigField("String", "APP_BACKEND_API_KEY", "\"$appBackendApiKey\"")
+
+        // AdMob unit IDs — read by `ads/AdManager.kt`. Test IDs in debug,
+        // production IDs in release (sourced from local.properties).
+        buildConfigField("String", "ADMOB_BANNER_ID", "\"$admobBannerId\"")
+        buildConfigField("String", "ADMOB_NATIVE_ID", "\"$admobNativeId\"")
+        buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"$admobInterstitialId\"")
+
+        // App ID injected into AndroidManifest.xml via `${ADMOB_APP_ID}`.
+        manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
     }
 
     testOptions {

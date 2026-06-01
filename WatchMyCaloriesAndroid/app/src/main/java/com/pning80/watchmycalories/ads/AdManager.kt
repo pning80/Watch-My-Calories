@@ -10,6 +10,7 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.ump.UserMessagingPlatform
+import com.pning80.watchmycalories.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 
 object AdManager {
@@ -33,10 +34,16 @@ object AdManager {
     var isPrivacyOptionsRequired = MutableStateFlow(false)
         private set
 
-    // Replace with actual AdMob App ID / Unit IDs for release
-    const val BANNER_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
-    const val NATIVE_UNIT_ID = "ca-app-pub-3940256099942544/2247696110"
-    const val INTERSTITIAL_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
+    // Ad unit IDs are sourced from BuildConfig. Production IDs come from
+    // `local.properties` (ADMOB_BANNER_ID / ADMOB_NATIVE_ID /
+    // ADMOB_INTERSTITIAL_ID); absent values fall back to Google's published
+    // test IDs at build time so debug / CI / fresh-checkout builds keep
+    // working. App ID lives in `AndroidManifest.xml` via the same mechanism
+    // (`${ADMOB_APP_ID}` manifestPlaceholder). Mirrors the iOS pattern in
+    // `AdManager.swift` (DEBUG → hardcoded test IDs, RELEASE → Info.plist).
+    val BANNER_UNIT_ID: String = BuildConfig.ADMOB_BANNER_ID
+    val NATIVE_UNIT_ID: String = BuildConfig.ADMOB_NATIVE_ID
+    val INTERSTITIAL_UNIT_ID: String = BuildConfig.ADMOB_INTERSTITIAL_ID
 
     fun initialize(context: Context) {
         if (isInitialized) return
