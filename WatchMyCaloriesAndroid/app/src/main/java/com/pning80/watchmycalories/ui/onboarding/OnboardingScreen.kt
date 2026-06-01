@@ -1,5 +1,6 @@
 package com.pning80.watchmycalories.ui.onboarding
 
+import android.content.Intent
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -9,13 +10,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -24,8 +27,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pning80.watchmycalories.data.CalorieCalculator
-import com.pning80.watchmycalories.data.CalorieCalculator.Gender
 import com.pning80.watchmycalories.data.CalorieCalculator.ActivityLevel
+import com.pning80.watchmycalories.data.CalorieCalculator.Gender
 import com.pning80.watchmycalories.data.UserProfile
 import com.pning80.watchmycalories.ui.settings.SettingsDataStore
 import com.pning80.watchmycalories.ui.theme.Spacing
@@ -38,16 +41,37 @@ fun OnboardingScreen(
     settingsDataStore: SettingsDataStore,
     onComplete: (UserProfile) -> Unit
 ) {
-    var currentStep by remember { mutableIntStateOf(0) }
+    var currentStep by rememberSaveable { mutableIntStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
 
-    // Profile state
-    var heightCm by remember { mutableIntStateOf(173) }
-    var weightKg by remember { mutableIntStateOf(68) }
-    var age by remember { mutableIntStateOf(30) }
-    var gender by remember { mutableStateOf(Gender.MALE) }
-    var activityLevel by remember { mutableStateOf(ActivityLevel.SEDENTARY) }
-    var targetCaloriesText by remember { mutableStateOf("") }
+    // Unit system from the app-wide preference. Onboarding reads and writes
+    // through the same DataStore the Settings screen uses, so the choice
+    // persists and stays in sync app-wide.
+    val isMetric by settingsDataStore.isMetricFlow.collectAsState(initial = true)
+
+    // Profile state. Metric and US inputs are stored independently — mirrors
+    // iOS, which avoids lossy round-trips between cm/kg sliders and ft/in/lbs
+    // pickers by giving each unit system its own backing state.
+    var heightCmUI by rememberSaveable { mutableIntStateOf(173) }
+    var weightKgUI by rememberSaveable { mutableIntStateOf(68) }
+    var heightFeet by rememberSaveable { mutableIntStateOf(5) }
+    var heightInchesPart by rememberSaveable { mutableIntStateOf(8) }
+    var weightLbs by rememberSaveable { mutableIntStateOf(150) }
+    var age by rememberSaveable { mutableIntStateOf(30) }
+    var genderRaw by rememberSaveable { mutableStateOf(Gender.MALE.displayName) }
+    var activityLevelRaw by rememberSaveable { mutableStateOf(ActivityLevel.SEDENTARY.displayName) }
+    var targetCaloriesText by rememberSaveable { mutableStateOf("") }
+
+    val gender = Gender.fromRaw(genderRaw)
+    val activityLevel = ActivityLevel.fromRaw(activityLevelRaw)
+
+    // Canonical metric values used by the save + recommend paths.
+    fun computedHeightCm(): Double =
+        if (isMetric) heightCmUI.toDouble()
+        else (heightFeet * 12 + heightInchesPart) * 2.54
+    fun computedWeightKg(): Double =
+        if (isMetric) weightKgUI.toDouble()
+        else weightLbs / 2.20462
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         AnimatedContent(targetState = currentStep, label = "onboarding") { step ->
@@ -58,24 +82,40 @@ fun OnboardingScreen(
                     onNext = { currentStep = 2 }
                 )
                 2 -> GoalStep(
-                    heightCm = heightCm,
-                    weightKg = weightKg,
+                    isMetric = isMetric,
+                    onMetricChanged = { metric ->
+                        coroutineScope.launch { settingsDataStore.setMetric(metric) }
+                    },
+                    heightCmUI = heightCmUI,
+                    onHeightCmChanged = { heightCmUI = it },
+                    weightKgUI = weightKgUI,
+                    onWeightKgChanged = { weightKgUI = it },
+                    heightFeet = heightFeet,
+                    onHeightFeetChanged = { heightFeet = it },
+                    heightInchesPart = heightInchesPart,
+                    onHeightInchesChanged = { heightInchesPart = it },
+                    weightLbs = weightLbs,
+                    onWeightLbsChanged = { weightLbs = it },
                     age = age,
-                    gender = gender,
-                    activityLevel = activityLevel,
-                    targetCaloriesText = targetCaloriesText,
-                    onHeightChanged = { heightCm = it },
-                    onWeightChanged = { weightKg = it },
                     onAgeChanged = { age = it },
-                    onGenderChanged = { gender = it },
-                    onActivityChanged = { activityLevel = it },
+                    gender = gender,
+                    onGenderChanged = { genderRaw = it.displayName },
+                    activityLevel = activityLevel,
+                    onActivityChanged = { activityLevelRaw = it.displayName },
+                    targetCaloriesText = targetCaloriesText,
                     onCaloriesTextChanged = { targetCaloriesText = it },
+                    onCalculateRecommended = {
+                        val recommended = CalorieCalculator.recommended(
+                            computedHeightCm(), computedWeightKg(), age, gender, activityLevel
+                        )
+                        targetCaloriesText = recommended.toInt().toString()
+                    },
                     onFinish = {
                         val target = targetCaloriesText.toDoubleOrNull() ?: 2000.0
                         val profile = UserProfile(
                             id = 1,
-                            height = heightCm.toDouble(),
-                            weight = weightKg.toDouble(),
+                            height = computedHeightCm(),
+                            weight = computedWeightKg(),
                             age = age,
                             genderRaw = gender.displayName,
                             activityLevelRaw = activityLevel.displayName,
@@ -236,23 +276,42 @@ private fun PrivacyStep(
             }
         }
 
-        // Mirror of iOS Privacy step "Connect Health" affordance. Compact
-        // single-row layout — the "active calories" copy lives in the label
-        // so the surrounding step still fits above the fold on small screens
-        // without verticalScroll (which conflicts with Spacer.weight=1f below).
-        val context = androidx.compose.ui.platform.LocalContext.current
+        // Mirror of iOS Privacy step "Connect Health" — request once, then
+        // swap to a green checkmark + disabled state so the user knows it
+        // registered. iOS's `heart.fill → checkmark.circle.fill` swap.
+        // `rememberSaveable` so the requested state survives rotation.
+        val context = LocalContext.current
+        var healthRequested by rememberSaveable { mutableStateOf(false) }
         OutlinedButton(
+            enabled = !healthRequested,
             onClick = {
+                healthRequested = true
                 try {
-                    val intent = android.content.Intent("androidx.health.connect.action.HEALTH_CONNECT_SETTINGS")
+                    val intent = Intent("androidx.health.connect.action.HEALTH_CONNECT_SETTINGS")
                     context.startActivity(intent)
-                } catch (_: Exception) { /* Health Connect not installed; button still hittable */ }
+                } catch (_: Exception) { /* Health Connect not installed; flag still flips */ }
             },
+            colors = if (healthRequested) {
+                ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    disabledContentColor = MaterialTheme.colorScheme.primary,
+                )
+            } else ButtonDefaults.outlinedButtonColors(),
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(AccessibilityTags.Onboarding.CONNECT_HEALTH_BUTTON),
         ) {
-            Text("Connect Health (active calories)")
+            if (healthRequested) {
+                Icon(
+                    Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Health Connect Requested")
+            } else {
+                Text("Connect Health (active calories)")
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -272,18 +331,27 @@ private fun PrivacyStep(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GoalStep(
-    heightCm: Int,
-    weightKg: Int,
+    isMetric: Boolean,
+    onMetricChanged: (Boolean) -> Unit,
+    heightCmUI: Int,
+    onHeightCmChanged: (Int) -> Unit,
+    weightKgUI: Int,
+    onWeightKgChanged: (Int) -> Unit,
+    heightFeet: Int,
+    onHeightFeetChanged: (Int) -> Unit,
+    heightInchesPart: Int,
+    onHeightInchesChanged: (Int) -> Unit,
+    weightLbs: Int,
+    onWeightLbsChanged: (Int) -> Unit,
     age: Int,
-    gender: Gender,
-    activityLevel: ActivityLevel,
-    targetCaloriesText: String,
-    onHeightChanged: (Int) -> Unit,
-    onWeightChanged: (Int) -> Unit,
     onAgeChanged: (Int) -> Unit,
+    gender: Gender,
     onGenderChanged: (Gender) -> Unit,
+    activityLevel: ActivityLevel,
     onActivityChanged: (ActivityLevel) -> Unit,
+    targetCaloriesText: String,
     onCaloriesTextChanged: (String) -> Unit,
+    onCalculateRecommended: () -> Unit,
     onFinish: () -> Unit
 ) {
     Column(
@@ -307,12 +375,49 @@ private fun GoalStep(
             Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                 Text("About You", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
-                // Height slider
-                SliderRow("Height", heightCm, 100..250, "cm", onHeightChanged)
-                // Weight slider
-                SliderRow("Weight", weightKg, 20..200, "kg", onWeightChanged)
-                // Age slider
-                SliderRow("Age", age, 1..100, "", onAgeChanged)
+                // Unit System toggle — wired to the app-wide DataStore so it
+                // persists and stays in sync with the Settings screen.
+                Text("Unit System", style = MaterialTheme.typography.bodyMedium)
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    listOf("US Customary" to false, "Metric" to true).forEachIndexed { index, (label, metric) ->
+                        SegmentedButton(
+                            selected = isMetric == metric,
+                            onClick = { onMetricChanged(metric) },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
+                        ) { Text(label, style = MaterialTheme.typography.labelSmall) }
+                    }
+                }
+
+                // Height — separate native inputs per unit system so values
+                // are exactly representable in the active system. iOS does the
+                // same (ft / in pickers vs cm slider).
+                if (isMetric) {
+                    SliderRow("Height", heightCmUI, 100..250, "$heightCmUI cm", onHeightCmChanged)
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Height", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "$heightFeet ft $heightInchesPart in",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        SliderRow("Feet", heightFeet, 4..8, "$heightFeet ft", onHeightFeetChanged)
+                        SliderRow("Inches", heightInchesPart, 0..11, "$heightInchesPart in", onHeightInchesChanged)
+                    }
+                }
+
+                // Weight
+                if (isMetric) {
+                    SliderRow("Weight", weightKgUI, 20..200, "$weightKgUI kg", onWeightKgChanged)
+                } else {
+                    SliderRow("Weight", weightLbs, 50..400, "$weightLbs lbs", onWeightLbsChanged)
+                }
+
+                // Age slider (unitless)
+                SliderRow("Age", age, 1..100, "$age", onAgeChanged)
 
                 // Gender
                 Text("Gender", style = MaterialTheme.typography.bodyMedium)
@@ -364,12 +469,7 @@ private fun GoalStep(
                 )
 
                 Button(
-                    onClick = {
-                        val recommended = CalorieCalculator.recommended(
-                            heightCm.toDouble(), weightKg.toDouble(), age, gender, activityLevel
-                        )
-                        onCaloriesTextChanged(recommended.toInt().toString())
-                    },
+                    onClick = onCalculateRecommended,
                     modifier = Modifier.fillMaxWidth().testTag(AccessibilityTags.Onboarding.CALCULATE_GOAL_BUTTON)
                 ) {
                     Text("Calculate Recommended Goal")
@@ -392,12 +492,12 @@ private fun GoalStep(
 }
 
 @Composable
-private fun SliderRow(label: String, value: Int, range: IntRange, unit: String, onChange: (Int) -> Unit) {
+private fun SliderRow(label: String, value: Int, range: IntRange, displayValue: String, onChange: (Int) -> Unit) {
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(label, style = MaterialTheme.typography.bodyMedium)
             Text(
-                if (unit.isNotEmpty()) "$value $unit" else "$value",
+                displayValue,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary

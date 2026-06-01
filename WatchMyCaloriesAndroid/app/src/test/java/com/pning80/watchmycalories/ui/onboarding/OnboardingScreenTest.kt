@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import com.pning80.watchmycalories.data.UserProfile
 import com.pning80.watchmycalories.ui.settings.SettingsDataStore
 import com.pning80.watchmycalories.utils.AccessibilityTags
+import kotlinx.coroutines.flow.first
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -27,6 +28,13 @@ class OnboardingScreenTest {
     @Before
     fun setup() {
         settingsDataStore = SettingsDataStore(RuntimeEnvironment.getApplication())
+        // DataStore is process-scoped under Robolectric, so its contents
+        // survive between tests. Reset the keys Onboarding reads so each
+        // test starts from a known default.
+        kotlinx.coroutines.runBlocking {
+            settingsDataStore.setMetric(true)
+            settingsDataStore.setAiConsent("notAsked")
+        }
     }
 
     // MARK: - Welcome Step (Step 0)
@@ -292,6 +300,90 @@ class OnboardingScreenTest {
         composeTestRule.waitForIdle()
 
         assertNotNull("Skip from Goal step should trigger onComplete", completedProfile)
+    }
+
+    // MARK: - Unit System Toggle (PR E review fix)
+
+    @Test
+    fun testGoalStepDefaultsToMetric() {
+        composeTestRule.setContent {
+            OnboardingScreen(settingsDataStore = settingsDataStore, onComplete = {})
+        }
+
+        navigateToGoalStep()
+
+        // Default profile in metric — "173 cm" / "68 kg" labels visible.
+        composeTestRule.onNodeWithText("173 cm", substring = true).performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("68 kg", substring = true).performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun testUnitToggleSwapsToUSCustomary() {
+        composeTestRule.setContent {
+            OnboardingScreen(settingsDataStore = settingsDataStore, onComplete = {})
+        }
+
+        navigateToGoalStep()
+
+        // Switch to US Customary.
+        composeTestRule.onNodeWithText("US Customary").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+
+        // Defaults in US Customary: 5'8" / 150 lbs.
+        composeTestRule.onNodeWithText("5 ft 8 in", substring = true).performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("150 lbs", substring = true).performScrollTo().assertIsDisplayed()
+        // Metric labels no longer present.
+        composeTestRule.onAllNodesWithText("173 cm", substring = true).fetchSemanticsNodes().let {
+            assertTrue("Metric height label should be gone in US mode", it.isEmpty())
+        }
+    }
+
+    @Test
+    fun testUnitTogglePersistsToDataStore() = kotlinx.coroutines.runBlocking {
+        composeTestRule.setContent {
+            OnboardingScreen(settingsDataStore = settingsDataStore, onComplete = {})
+        }
+
+        navigateToGoalStep()
+        composeTestRule.onNodeWithText("US Customary").performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+
+        // The DataStore was written — the Settings screen would see this on next read.
+        val isMetric = settingsDataStore.isMetricFlow.first()
+        assertTrue("Toggling US should persist isMetric=false", !isMetric)
+    }
+
+    // MARK: - Connect Health checkmark (PR E review fix)
+
+    @Test
+    fun testConnectHealthButtonInitialLabel() {
+        composeTestRule.setContent {
+            OnboardingScreen(settingsDataStore = settingsDataStore, onComplete = {})
+        }
+
+        composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.GET_STARTED_BUTTON).performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Connect Health", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun testConnectHealthButtonSwapsToRequestedAfterClick() {
+        composeTestRule.setContent {
+            OnboardingScreen(settingsDataStore = settingsDataStore, onComplete = {})
+        }
+
+        composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.GET_STARTED_BUTTON).performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.CONNECT_HEALTH_BUTTON).performClick()
+        composeTestRule.waitForIdle()
+
+        // Label swap.
+        composeTestRule.onNodeWithText("Health Connect Requested").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("Connect Health (active calories)").fetchSemanticsNodes().let {
+            assertTrue("Initial label should be gone after click", it.isEmpty())
+        }
     }
 
     // MARK: - Navigation Helper
