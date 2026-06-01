@@ -171,7 +171,11 @@ fun HeroSummaryCard(targetCalories: Double, burnedCalories: Double, entries: Lis
                     label = "Goal",
                     value = "${targetCalories.toInt()}",
                     icon = Icons.Filled.Flag,
-                    badgeColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    // outlineVariant instead of onSurface@0.4 — the transparent
+                    // fill rendered as an ashy near-black circle on the dark
+                    // surface; outlineVariant is a solid neutral that reads
+                    // sharper in both themes (PR T dark-contrast pass).
+                    badgeColor = MaterialTheme.colorScheme.outlineVariant,
                     iconTint = Color.White,
                     testTag = "dashboard_goalValue"
                 )
