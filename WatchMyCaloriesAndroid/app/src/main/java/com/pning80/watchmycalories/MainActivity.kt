@@ -5,13 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.DocumentScanner
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -262,15 +263,37 @@ private fun MainAppContent(
                         )
                     },
                     actions = {
-                        IconButton(
-                            onClick = {
-                                navController.navigate("settings") {
-                                    popUpTo("dashboard")
-                                }
-                            },
-                            modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.AppMenu.MENU_BUTTON)
-                        ) {
-                            Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                        // Mirror Dashboard's AppMenu — MoreVert overflow with
+                        // Settings + About items. Previously this was a
+                        // Settings-only gear, which hid About from
+                        // History/ScannedMenus (audit finding).
+                        var topBarMenuOpen by remember { mutableStateOf(false) }
+                        Box {
+                            IconButton(
+                                onClick = { topBarMenuOpen = true },
+                                modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.AppMenu.MENU_BUTTON)
+                            ) {
+                                Icon(Icons.Filled.MoreVert, contentDescription = "App menu")
+                            }
+                            DropdownMenu(
+                                expanded = topBarMenuOpen,
+                                onDismissRequest = { topBarMenuOpen = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Settings") },
+                                    onClick = {
+                                        topBarMenuOpen = false
+                                        navController.navigate("settings") { popUpTo("dashboard") }
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("About") },
+                                    onClick = {
+                                        topBarMenuOpen = false
+                                        navController.navigate("about") { popUpTo("dashboard") }
+                                    },
+                                )
+                            }
                         }
                     }
                 )
@@ -287,8 +310,9 @@ private fun MainAppContent(
                 )
                 NavigationBar {
                     NavigationBarItem(
-                    icon = { Icon(Icons.Filled.Home, contentDescription = "Dashboard") },
-                    label = { Text("Dashboard") },
+                    // iOS uses Label("Today", systemImage: "flame.fill"); mirror that.
+                    icon = { Icon(Icons.Filled.LocalFireDepartment, contentDescription = "Today") },
+                    label = { Text("Today") },
                     selected = currentRoute == "dashboard",
                     onClick = {
                         navController.navigate("dashboard") {
@@ -307,7 +331,10 @@ private fun MainAppContent(
                     modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.CAMERA),
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = "Scan Menu") },
+                    // iOS uses Label("Scan Menu", systemImage: "doc.viewfinder").
+                    // DocumentScanner is the closest Material match — document
+                    // frame with viewfinder corner brackets.
+                    icon = { Icon(Icons.Filled.DocumentScanner, contentDescription = "Scan Menu") },
                     label = { Text("Scan Menu") },
                     selected = currentRoute == "scannedMenus",
                     onClick = { showScanMenuSheet = true },  // D-002 — sheet, not direct nav
@@ -315,7 +342,8 @@ private fun MainAppContent(
                     modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Tab.SCAN_MENU),
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "History") },
+                    // iOS uses Label("History", systemImage: "calendar").
+                    icon = { Icon(Icons.Filled.CalendarMonth, contentDescription = "History") },
                     label = { Text("History") },
                     selected = currentRoute == "history",
                     onClick = {
