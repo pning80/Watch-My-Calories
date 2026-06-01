@@ -147,7 +147,7 @@ Both parse JSON responses with food items containing `{ name, quantity, calories
 - **Legacy/deprecated files**:
   - **iOS**: `TodayView.swift`, `CaptureView.swift`, `CoreDataService.swift`, and `GeminiEstimationService.swift` (in parent `WatchMyCalories/` directory) are stubs or superseded — the active implementations are `DashboardView.swift` and `Services.swift`.
   - **Android**: `ui/dashboard/DashboardScreen.kt` is the active dashboard. There is no `ui/today/` directory in the current code despite older docs referencing one.
-- **Android `local.properties`**: `APP_BACKEND_API_KEY=...` is the dev-only legacy `x-backend-key` fallback used by debug builds on emulators (no Gemini key on the device). Release builds rely on Play Integrity per-request HMAC headers instead (see T1.8).
+- **Android `local.properties`**: `APP_BACKEND_API_KEY=...` is the dev-only legacy `x-backend-key` fallback used by debug builds on emulators (no Gemini key on the device). Release builds rely on Play Integrity per-request HMAC headers instead (see T1.8). The AdMob production unit IDs are also sourced from `local.properties` for release builds — `ADMOB_APP_ID`, `ADMOB_BANNER_ID`, `ADMOB_NATIVE_ID`, `ADMOB_INTERSTITIAL_ID`. Absent values fall back to Google's published test IDs so debug / CI / fresh-checkout builds keep working; release builds without these set will silently use test IDs (`BannerAdView` early-returns on the test prefix as a safety net). Mirrors the iOS pattern where `AdManager.swift` reads `Info.plist` env vars in RELEASE builds and uses hardcoded test IDs in DEBUG.
 
 ## Porting
 

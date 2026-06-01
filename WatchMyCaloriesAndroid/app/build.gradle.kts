@@ -14,6 +14,37 @@ val localProps = Properties().apply {
 }
 val appBackendApiKey: String = localProps.getProperty("APP_BACKEND_API_KEY", "")
 
+// AdMob — production IDs live in the committed `../Ads/AdMob-Android.properties`
+// (mirror of `Ads/AdMob-iOS.xcconfig`). `local.properties` takes precedence so
+// individual devs can override locally without touching the committed file.
+// Absent both, the values fall back to Google's published test IDs so
+// debug/CI/fresh-checkout builds keep working. iOS uses the same shape (DEBUG
+// → hardcoded test IDs; RELEASE → `Bundle.main.infoDictionary` reads of
+// `AdMob*AdUnitID` env vars sourced from `Ads/AdMob-iOS.xcconfig`).
+//   Test app ID:        ca-app-pub-3940256099942544~3347511713
+//   Test banner:        ca-app-pub-3940256099942544/6300978111
+//   Test native:        ca-app-pub-3940256099942544/2247696110
+//   Test interstitial:  ca-app-pub-3940256099942544/1033173712
+val admobProps = Properties().apply {
+    val f = rootProject.layout.projectDirectory
+        .dir("../Ads")
+        .file("AdMob-Android.properties")
+        .asFile
+    if (f.exists()) load(FileInputStream(f))
+}
+// `Properties.getProperty("KEY=")` returns "" (not null), so a dev who comments
+// out their override by writing `ADMOB_BANNER_ID=` would otherwise short-circuit
+// the chain to an empty BuildConfig string and AdMob would reject at runtime.
+// `takeIf { it.isNotBlank() }` makes empty values defer to the next source.
+fun admobIdFor(key: String, fallback: String): String =
+    localProps.getProperty(key)?.takeIf { it.isNotBlank() }
+        ?: admobProps.getProperty(key)?.takeIf { it.isNotBlank() }
+        ?: fallback
+val admobAppId: String = admobIdFor("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
+val admobBannerId: String = admobIdFor("ADMOB_BANNER_ID", "ca-app-pub-3940256099942544/6300978111")
+val admobNativeId: String = admobIdFor("ADMOB_NATIVE_ID", "ca-app-pub-3940256099942544/2247696110")
+val admobInterstitialId: String = admobIdFor("ADMOB_INTERSTITIAL_ID", "ca-app-pub-3940256099942544/1033173712")
+
 // Upload-key signing config for release builds. Absent on CI / fresh checkouts —
 // we fall back to no signingConfig on release in that case, which lets ./gradlew
 // :app:assembleDebug / lintDebug keep working without the keystore. A real
@@ -51,6 +82,19 @@ android {
         // local.properties; absent in release builds anyway (BackendConfig.devLegacyKey
         // gates by BuildConfig.DEBUG). See PORTING_CRITERIA.md T1.8.
         buildConfigField("String", "APP_BACKEND_API_KEY", "\"$appBackendApiKey\"")
+
+        // AdMob unit IDs — read by `ads/AdManager.kt`. defaultConfig pins
+        // Google's published test IDs so debug builds + parity tests never
+        // fire real AdMob impressions (mirrors iOS `#if DEBUG` in
+        // AdManager.swift). The `release { }` block below overrides with
+        // production IDs from `Ads/AdMob-Android.properties`.
+        buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
+        buildConfigField("String", "ADMOB_NATIVE_ID", "\"ca-app-pub-3940256099942544/2247696110\"")
+        buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
+
+        // App ID injected into AndroidManifest.xml via `${ADMOB_APP_ID}`.
+        // defaultConfig pins the test app ID for the same reason as above.
+        manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-3940256099942544~3347511713"
     }
 
     testOptions {
@@ -84,6 +128,15 @@ android {
 
     buildTypes {
         release {
+            // Override defaultConfig's test IDs with the production unit IDs
+            // resolved from local.properties / Ads/AdMob-Android.properties at
+            // configuration time. Mirror of iOS `#else` branch in
+            // AdManager.swift (RELEASE → Info.plist `AdMob*AdUnitID` env vars).
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"$admobBannerId\"")
+            buildConfigField("String", "ADMOB_NATIVE_ID", "\"$admobNativeId\"")
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"$admobInterstitialId\"")
+            manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
+
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
