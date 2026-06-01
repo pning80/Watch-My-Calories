@@ -163,7 +163,9 @@ private fun UseButton(onClick: () -> Unit) {
         modifier = Modifier.testTag(AccessibilityTags.PhotoLibrary.USE_PHOTO_BUTTON),
         shape = RoundedCornerShape(50),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
+            // iOS Use button is cwAccent orange (PhotoLibraryReviewView.swift:63).
+            // `tertiary` is the themed accent token.
+            containerColor = MaterialTheme.colorScheme.tertiary,
             contentColor = Color.White,
         ),
         // 14.dp vertical is off-token; intentional to give pill buttons a tighter touch target than 16.dp
