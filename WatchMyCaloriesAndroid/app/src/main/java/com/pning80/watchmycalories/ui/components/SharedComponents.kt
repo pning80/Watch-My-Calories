@@ -20,10 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
@@ -354,11 +357,25 @@ fun EmptyStateCard(
     subtitle: String = "Tap to scan your first meal.",
     icon: ImageVector = Icons.Filled.PhotoCamera,
 ) {
+    // Dashed rounded border, transparent interior — mirrors iOS EmptyStateCard
+    // (Components.swift:108-113: strokeBorder dash [5], no fill). Previously a
+    // solid surface fill with no border.
+    val dashColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+    val cardCornerPx = with(androidx.compose.ui.platform.LocalDensity.current) { Spacing.cardCorner.toPx() }
+    val dashOnPx = with(androidx.compose.ui.platform.LocalDensity.current) { 5.dp.toPx() }
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Spacing.cardCorner))
-            .background(MaterialTheme.colorScheme.surface)
+            .drawBehind {
+                drawRoundRect(
+                    color = dashColor,
+                    cornerRadius = CornerRadius(cardCornerPx, cardCornerPx),
+                    style = Stroke(
+                        width = 1.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dashOnPx, dashOnPx)),
+                    ),
+                )
+            }
             .padding(horizontal = Spacing.xxl, vertical = Spacing.xxl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(10.dp) // intra-card; not on the token grid
@@ -372,7 +389,9 @@ fun EmptyStateCard(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
+                    // iOS uses cwSecondary (light green) on the cwPrimary circle,
+                    // not white — `secondary` is the themed match.
+                    tint = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.size(28.dp)
                 )
             }
