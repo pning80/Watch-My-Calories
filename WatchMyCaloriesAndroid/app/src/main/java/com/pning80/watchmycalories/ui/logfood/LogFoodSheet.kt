@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,7 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.pning80.watchmycalories.ads.BannerAdView
 import com.pning80.watchmycalories.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,15 +42,18 @@ fun LogFoodSheet(
         ) {
             Text(
                 text = "Log Food",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = Spacing.s)
             )
 
+            // Icons mirror iOS LogFoodSheet.swift: camera.fill / photo.on.rectangle
+            // / square.and.pencil → PhotoCamera / PhotoLibrary / Edit.
             LogOptionButton(
                 title = "Scan Food",
                 subtitle = "Take a photo of your meal",
-                icon = Icons.Default.Search,
+                icon = Icons.Filled.PhotoCamera,
                 onClick = onScanFood,
                 testTag = "logFood_scanFood"
             )
@@ -56,7 +61,7 @@ fun LogFoodSheet(
             LogOptionButton(
                 title = "Choose from Library",
                 subtitle = "Select a photo from your library",
-                icon = Icons.Default.Add,
+                icon = Icons.Filled.PhotoLibrary,
                 onClick = onChooseFromLibrary,
                 testTag = "logFood_chooseLibrary"
             )
@@ -64,10 +69,14 @@ fun LogFoodSheet(
             LogOptionButton(
                 title = "Log Manually",
                 subtitle = "Enter food details by hand",
-                icon = Icons.Default.Create,
+                icon = Icons.Filled.Edit,
                 onClick = onLogManually,
                 testTag = "logFood_logManually"
             )
+
+            // Banner ad — mirrors iOS LogFoodSheet.swift:56 (BannerAdView at the
+            // bottom of the sheet). Self-hides under test IDs / no-consent.
+            BannerAdView()
         }
     }
 }

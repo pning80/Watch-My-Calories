@@ -14,7 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.pning80.watchmycalories.ads.BannerAdView
 import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
@@ -47,14 +50,16 @@ fun ScanMenuSheet(
         ) {
             Text(
                 text = "Scan Menu",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = Spacing.s)
             )
 
+            // Titles + subtitles mirror iOS ScanMenuSheet.swift verbatim.
             SheetOption(
-                title = "Scan with Camera",
-                subtitle = "Take a photo of the menu",
+                title = "Scan Menu",
+                subtitle = "Take a photo of a restaurant menu",
                 icon = Icons.Default.DocumentScanner,
                 onClick = onScanCamera,
                 testTag = AccessibilityTags.ScanMenuSheet.SCAN_BUTTON,
@@ -62,7 +67,7 @@ fun ScanMenuSheet(
 
             SheetOption(
                 title = "Choose from Library",
-                subtitle = "Select a menu photo from your library",
+                subtitle = "Select a photo from your library",
                 icon = Icons.Default.PhotoLibrary,
                 onClick = onChooseFromLibrary,
                 testTag = AccessibilityTags.ScanMenuSheet.CHOOSE_FROM_LIBRARY_BUTTON,
@@ -75,6 +80,9 @@ fun ScanMenuSheet(
                 onClick = onStoredMenus,
                 testTag = AccessibilityTags.ScanMenuSheet.STORED_MENUS_BUTTON,
             )
+
+            // Banner ad — mirrors iOS ScanMenuSheet.swift:52.
+            BannerAdView()
         }
     }
 }
