@@ -2,6 +2,7 @@ package com.pning80.watchmycalories.ui.onboarding
 
 import android.content.Intent
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,21 +12,23 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pning80.watchmycalories.R
 import com.pning80.watchmycalories.data.CalorieCalculator
 import com.pning80.watchmycalories.data.CalorieCalculator.ActivityLevel
 import com.pning80.watchmycalories.data.CalorieCalculator.Gender
@@ -161,21 +164,16 @@ private fun WelcomeStep(onNext: () -> Unit) {
     ) {
         Spacer(modifier = Modifier.weight(1f))
 
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.primary,
-            shadowElevation = 10.dp,
-            modifier = Modifier.size(120.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Icon(
-                    Icons.Filled.LocalFireDepartment,
-                    contentDescription = "Watch My Calories logo",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(64.dp),
-                )
-            }
-        }
+        // Brand mark — mirrors iOS Onboarding welcome
+        // (OnboardingView.swift:60-63 → `AppIconView()`). Shares the same
+        // 1024.png source as the launcher icon.
+        Image(
+            painter = painterResource(id = R.drawable.app_icon),
+            contentDescription = "Watch My Calories logo",
+            modifier = Modifier
+                .size(120.dp)
+                .clip(RoundedCornerShape(28.dp))
+        )
 
         Spacer(modifier = Modifier.height(Spacing.xxl))
 

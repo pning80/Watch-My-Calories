@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Adaptive-icon background — dark forest green, matches the rounded-rect
+        frame on the iOS app icon (Assets.xcassets/AppIcon.appiconset/1024.png).
+        Used by `mipmap-anydpi-v26/ic_launcher.xml`. The brand mint is `#66CC99`;
+        the dark forest used here as the icon bed is `#264D33` (same as the iOS
+        secondary token).
+    -->
+    <color name="ic_launcher_background">#264D33</color>
+</resources>

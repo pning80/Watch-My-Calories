@@ -2,6 +2,7 @@ package com.pning80.watchmycalories.ui.about
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,7 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
@@ -24,14 +24,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.pning80.watchmycalories.BuildConfig
+import com.pning80.watchmycalories.R
 import com.pning80.watchmycalories.ads.BannerAdView
 import com.pning80.watchmycalories.security.PlayIntegrityManager
 import com.pning80.watchmycalories.ui.theme.Spacing
@@ -76,21 +80,17 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Spacing.l),
             ) {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    shadowElevation = 6.dp,
-                    modifier = Modifier.size(80.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        Icon(
-                            Icons.Filled.LocalFireDepartment,
-                            contentDescription = "Watch My Calories logo",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(44.dp),
-                        )
-                    }
-                }
+                // Brand mark — mirrors iOS About header
+                // (AboutView.swift:23-28 → `Image("MiniAppIcon")`). Shares the
+                // same 1024.png source as the launcher icon.
+                Image(
+                    painter = painterResource(id = R.drawable.app_icon),
+                    contentDescription = "Watch My Calories logo",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .shadow(elevation = 6.dp, shape = RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(20.dp))
+                )
 
                 Text(
                     "Watch My Calories",
