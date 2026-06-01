@@ -96,7 +96,10 @@ fun DashboardScreen(
                     ).format(Date()).uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    // 0.7 (was 0.5) — on the dark `#0F1411` background, 0.5 alpha
+                    // labelSmall sits at borderline WCAG contrast. Bumping to 0.7
+                    // keeps the date legible in dark mode (PR T dark-contrast pass).
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
             // App menu overflow — Settings + About (mirrors iOS AppMenuToolbar).

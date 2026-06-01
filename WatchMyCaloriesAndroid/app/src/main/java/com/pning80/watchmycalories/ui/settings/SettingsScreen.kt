@@ -378,6 +378,16 @@ fun SettingsScreen(
                             onValueChange = {},
                             readOnly = true,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = activityExpanded) },
+                            // Default M3 outline (`outline`) is near-invisible on
+                            // the dark `#1A211C` surface; pin the border + value
+                            // text to primary mint so the picker reads clearly
+                            // and echoes iOS's mint picker value (PR T).
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedTextColor = MaterialTheme.colorScheme.primary,
+                                focusedTextColor = MaterialTheme.colorScheme.primary,
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .menuAnchor()
