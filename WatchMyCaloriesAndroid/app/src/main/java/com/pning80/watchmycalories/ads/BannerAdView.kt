@@ -3,6 +3,8 @@ package com.pning80.watchmycalories.ads
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.viewinterop.AndroidView
@@ -28,6 +30,11 @@ private val TEST_AD_UNIT_PREFIXES = listOf("ca-app-pub-3940256099942544/")
 
 @Composable
 fun BannerAdView() {
+    // Gates mirror iOS BannerAdView (BannerAdView.swift:13):
+    // `!isUITestingMode && adManager.canRequestAds`. Without these the ad
+    // request would race ahead of the consent-gated MobileAds.initialize.
+    val canRequestAds by AdManager.canRequestAds.collectAsState()
+    if (AdManager.disableForUITesting || !canRequestAds) return
     if (TEST_AD_UNIT_PREFIXES.any { AdManager.BANNER_UNIT_ID.startsWith(it) }) return
     AndroidView(
         modifier = Modifier

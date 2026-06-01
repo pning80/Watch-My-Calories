@@ -46,6 +46,8 @@ import android.graphics.ImageDecoder
 import android.os.Build
 import android.util.Log
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -63,7 +65,17 @@ class MainActivity : ComponentActivity() {
 
         val settingsDataStore = SettingsDataStore(this)
 
-        AdManager.initialize(this)
+        // AdMob SDK is consent-gated — `enableAds()` runs UMP before
+        // `MobileAds.initialize`. Fire once the user has finished
+        // onboarding; the suspend fn is idempotent so re-launches with
+        // onboarding already done call it once and return early next time.
+        // Mirrors iOS `WatchMyCaloriesApp.task` keyed on hasCompletedOnboarding.
+        lifecycleScope.launch {
+            settingsDataStore.hasCompletedOnboardingFlow
+                .filter { it }
+                .first()
+            AdManager.enableAds(this@MainActivity)
+        }
 
         lifecycleScope.launch {
             PlayIntegrityManager.ensureAttested(this@MainActivity)
