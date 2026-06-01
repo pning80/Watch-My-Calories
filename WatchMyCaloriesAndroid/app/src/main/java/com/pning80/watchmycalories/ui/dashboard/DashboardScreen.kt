@@ -133,9 +133,11 @@ fun DashboardScreen(
             }
 
             // Banner ad — mirrors iOS Dashboard placement (between the
-            // HeroSummaryCard and the meal sections / empty state).
+            // HeroSummaryCard and the meal sections / empty state). 24dp top
+            // spacer matches iOS `VStack(spacing: 24)` (DashboardView.swift:52)
+            // so the banner doesn't crowd the hero card.
             item {
-                Spacer(modifier = Modifier.height(Spacing.s))
+                Spacer(modifier = Modifier.height(Spacing.xl))
                 BannerAdView()
             }
 

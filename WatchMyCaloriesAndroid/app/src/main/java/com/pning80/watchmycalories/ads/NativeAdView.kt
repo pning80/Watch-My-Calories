@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,12 @@ import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.nativead.NativeAdView as GmsNativeAdView
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
+// Safety net mirroring `BannerAdView.TEST_AD_UNIT_PREFIXES`. If we ever hand
+// `NATIVE_UNIT_ID` a Google test ID — either in debug or in a release built
+// without local.properties prod IDs — skip the load entirely so users never
+// see Google's literal "TEST AD" creative inside a real surface.
+private val TEST_AD_UNIT_PREFIXES = listOf("ca-app-pub-3940256099942544/")
+
 /**
  * Composable wrapper around the GMS [NativeAdView][GmsNativeAdView] that mirrors
  * iOS `NativeAdContentView` (NativeAdView.swift): media + "Ad" badge + icon +
@@ -47,6 +54,12 @@ fun NativeAdView() {
     val context = LocalContext.current
     var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
 
+    // Reactive gate — mirrors `BannerAdView`. When PR H lands consent-gated
+    // SDK init, `canRequestAds` will be false until UMP + MobileAds.initialize
+    // resolve, so the AdLoader stays parked behind this check until the
+    // recomposition triggered by the StateFlow update.
+    val canRequestAds by AdManager.canRequestAds.collectAsState()
+
     // Theme tokens captured into argb for the AndroidView factory. Reading them
     // here keeps the programmatic AdView layout in sync with light/dark theme
     // swaps without each child View pulling at runtime.
@@ -57,22 +70,42 @@ fun NativeAdView() {
     val onPrimaryArgb = MaterialTheme.colorScheme.onPrimary.toArgb()
     val outlineArgb = MaterialTheme.colorScheme.outline.toArgb()
 
-    DisposableEffect(Unit) {
-        // Mirror iOS NativeAdLoader.loadAd guards.
-        if (AdManager.disableForUITesting || !AdManager.canRequestAds.value) {
-            return@DisposableEffect onDispose { nativeAd?.destroy() }
+    DisposableEffect(canRequestAds) {
+        // Local-scope reference so the AdLoader callback and the onDispose
+        // handler can clean up the *actually-loaded* ad even if the surrounding
+        // composable has already left the tree (in which case the MutableState
+        // setter is a no-op and `nativeAd` is null). Without this, a late
+        // callback would leak the NativeAd — fixed per PR #31 review.
+        var loadedAd: NativeAd? = null
+
+        // Mirror iOS NativeAdLoader.loadAd guards plus the test-prefix guard.
+        if (
+            AdManager.disableForUITesting ||
+            !canRequestAds ||
+            TEST_AD_UNIT_PREFIXES.any { AdManager.NATIVE_UNIT_ID.startsWith(it) }
+        ) {
+            return@DisposableEffect onDispose { loadedAd?.destroy() }
         }
         val videoOptions = VideoOptions.Builder()
             .setStartMuted(true)
             .setClickToExpandRequested(true)
             .build()
-        val adOptions = NativeAdOptions.Builder().setVideoOptions(videoOptions).build()
+        val adOptions = NativeAdOptions.Builder()
+            .setVideoOptions(videoOptions)
+            // iOS pre-installs a 16:9 height constraint on the media view; ask
+            // GMS for the same aspect ratio so the card doesn't visibly "pop"
+            // as the media reflows on first frame.
+            .setMediaAspectRatio(NativeAdOptions.NATIVE_MEDIA_ASPECT_RATIO_LANDSCAPE)
+            .build()
         val adLoader = AdLoader.Builder(context, AdManager.NATIVE_UNIT_ID)
-            .forNativeAd { ad -> nativeAd = ad }
+            .forNativeAd { ad ->
+                loadedAd = ad
+                nativeAd = ad
+            }
             .withNativeAdOptions(adOptions)
             .build()
         adLoader.loadAd(AdRequest.Builder().build())
-        onDispose { nativeAd?.destroy() }
+        onDispose { loadedAd?.destroy() }
     }
 
     nativeAd?.let { ad ->
