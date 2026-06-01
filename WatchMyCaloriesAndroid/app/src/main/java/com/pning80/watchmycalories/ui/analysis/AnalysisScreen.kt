@@ -10,6 +10,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,9 +21,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.pning80.watchmycalories.R
 import com.pning80.watchmycalories.ads.NativeAdView
 import com.pning80.watchmycalories.ai.EstimationItem
 import com.pning80.watchmycalories.ai.EstimationResult
@@ -58,6 +63,8 @@ fun AnalysisScreen(
     // Incrementing this re-fires the estimation LaunchedEffect — used by the
     // error view's Try Again button to retry without leaving the screen.
     var retryTrigger by remember { mutableStateOf(0) }
+    // Reveals the raw error string in the error view (iOS "Show Details" toggle).
+    var showErrorDetails by remember { mutableStateOf(false) }
 
     LaunchedEffect(images, retryTrigger) {
         isLoading = true
@@ -188,6 +195,27 @@ fun AnalysisScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(Spacing.xxl)
                 ) {
+                    // Branded loading header — mirrors iOS EstimationReviewView.swift:40-50
+                    // (MiniAppIcon + serif "Watch My Calories" title above the spinner).
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+                        modifier = Modifier.padding(top = Spacing.l)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.app_icon),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+                        Text(
+                            "Watch My Calories",
+                            style = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Serif),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     Spacer(modifier = Modifier.weight(1f))
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     Text("Analyzing food...", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -201,27 +229,58 @@ fun AnalysisScreen(
                         .testTag(AccessibilityTags.EstimationReview.ERROR_VIEW),
                     contentAlignment = Alignment.Center,
                 ) {
+                    // Rate-limit (429) gets a distinct, softer treatment — clock
+                    // icon + "Too Many Requests" + the server's message verbatim —
+                    // mirroring iOS EstimationReviewView.swift:90-99.
+                    val isRateLimited = errorMessage?.startsWith("Too many requests") == true
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(Spacing.l),
                         modifier = Modifier.padding(32.dp)
                     ) {
                         Icon(
-                            Icons.Filled.Warning,
+                            if (isRateLimited) Icons.Filled.Schedule else Icons.Filled.Warning,
                             contentDescription = "Error",
-                            tint = MaterialTheme.colorScheme.error,
+                            // Non-rate-limit error uses accent orange (iOS Color.orange),
+                            // not the harsh Material error red; rate-limit uses primary mint.
+                            tint = if (isRateLimited) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.size(48.dp)
                         )
                         Text(
-                            "Analysis Failed",
+                            if (isRateLimited) "Too Many Requests" else "Analysis Failed",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "$errorMessage",
+                            // iOS shows the server message for rate-limits, and a
+                            // friendly generic line for everything else.
+                            if (isRateLimited) (errorMessage ?: "") else "We couldn't analyze the image. Please try again.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        // Show Details toggle — reveals the raw error in a
+                        // scrollable monospace box (iOS EstimationReviewView.swift:104-122).
+                        if (!isRateLimited) {
+                            if (showErrorDetails) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
+                                    shape = RoundedCornerShape(Spacing.s),
+                                    modifier = Modifier.heightIn(max = 120.dp)
+                                ) {
+                                    Text(
+                                        errorMessage ?: "",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            fontFamily = FontFamily.Monospace
+                                        ),
+                                        color = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.padding(Spacing.m)
+                                    )
+                                }
+                            }
+                            TextButton(onClick = { showErrorDetails = !showErrorDetails }) {
+                                Text(if (showErrorDetails) "Hide Details" else "Show Details")
+                            }
+                        }
                         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
                             // D-009: Cancel returns to the previous screen (camera or dashboard).
                             OutlinedButton(
@@ -249,14 +308,17 @@ fun AnalysisScreen(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.l)) {
                             Icon(
-                                Icons.Filled.Warning,
+                                // iOS uses fork.knife.circle for no-food — a soft
+                                // "couldn't identify" cue, not a Warning triangle.
+                                Icons.Filled.Restaurant,
                                 contentDescription = "No Food",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(64.dp)
                             )
                             Text("No Food Detected", style = MaterialTheme.typography.titleLarge)
                             Text(
-                                "We couldn't identify any food items.",
+                                // iOS: "...Try taking a clearer photo." (EstimationReviewView.swift:191)
+                                "We couldn't identify any food items in this photo. Try taking a clearer photo.",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
