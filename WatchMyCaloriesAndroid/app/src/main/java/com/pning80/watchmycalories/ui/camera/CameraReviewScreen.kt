@@ -167,7 +167,9 @@ private fun UseButton(onClick: () -> Unit) {
         modifier = Modifier.testTag(AccessibilityTags.Camera.USE_PHOTO_BUTTON),
         shape = RoundedCornerShape(50),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
+            // iOS Use button is cwAccent orange (CameraView.swift:78).
+            // `tertiary` is the themed accent token.
+            containerColor = MaterialTheme.colorScheme.tertiary,
             contentColor = Color.White,
         ),
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp),

@@ -42,7 +42,11 @@ fun MealTypePicker(
             val isSelected = type == selection
             Surface(
                 shape = RoundedCornerShape(50),
-                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.25f),
+                // iOS fills the selected capsule with cwAccent (orange) —
+                // CameraView.swift:262. `tertiary` is the themed accent token
+                // (CwAccent light / CwAccentDark dark). Orange pops on a dark
+                // photo backdrop far better than mint.
+                color = if (isSelected) MaterialTheme.colorScheme.tertiary else Color.White.copy(alpha = 0.25f),
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
                     .pointerInput(type) {
