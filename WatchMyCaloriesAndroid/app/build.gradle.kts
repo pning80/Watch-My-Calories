@@ -32,9 +32,13 @@ val admobProps = Properties().apply {
         .asFile
     if (f.exists()) load(FileInputStream(f))
 }
+// `Properties.getProperty("KEY=")` returns "" (not null), so a dev who comments
+// out their override by writing `ADMOB_BANNER_ID=` would otherwise short-circuit
+// the chain to an empty BuildConfig string and AdMob would reject at runtime.
+// `takeIf { it.isNotBlank() }` makes empty values defer to the next source.
 fun admobIdFor(key: String, fallback: String): String =
-    localProps.getProperty(key)
-        ?: admobProps.getProperty(key)
+    localProps.getProperty(key)?.takeIf { it.isNotBlank() }
+        ?: admobProps.getProperty(key)?.takeIf { it.isNotBlank() }
         ?: fallback
 val admobAppId: String = admobIdFor("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
 val admobBannerId: String = admobIdFor("ADMOB_BANNER_ID", "ca-app-pub-3940256099942544/6300978111")

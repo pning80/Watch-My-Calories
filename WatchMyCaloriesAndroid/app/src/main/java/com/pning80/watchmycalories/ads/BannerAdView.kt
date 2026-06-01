@@ -13,14 +13,17 @@ import com.pning80.watchmycalories.utils.AccessibilityTags
 
 // Safety net against Google's literal "TEST AD" creative ever reaching real
 // users. Triggers in two situations:
-//   - Debug builds, where ADMOB_BANNER_ID falls back to the test ID. The
-//     banner stays hidden in dev so the UI doesn't look broken.
-//   - Release builds where local.properties was missing the ADMOB_* keys —
-//     `app/build.gradle.kts` falls back silently to the same test ID, and
-//     this guard keeps a misconfigured release from serving test creative.
+//   - Debug builds, where `defaultConfig` in app/build.gradle.kts pins
+//     ADMOB_BANNER_ID to the test ID so dev installs + parity tests don't
+//     fire real AdMob impressions.
+//   - Release builds where both `Ads/AdMob-Android.properties` (committed
+//     prod source) and `local.properties` (per-dev override) are missing
+//     the ADMOB_* keys — the build script falls back silently to the test
+//     ID, and this guard keeps the misconfigured release from serving
+//     Google's "TEST AD" creative.
 // Mirrors the companion `AdManager.isTestUnit` check that gates the
-// interstitial flow; once production IDs are wired in local.properties for
-// release, both branches naturally render real ads.
+// interstitial flow; with the committed properties file present, release
+// builds naturally resolve to production IDs and render real ads.
 private val TEST_AD_UNIT_PREFIXES = listOf("ca-app-pub-3940256099942544/")
 
 @Composable

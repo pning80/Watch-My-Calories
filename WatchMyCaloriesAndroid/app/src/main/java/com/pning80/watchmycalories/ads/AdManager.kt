@@ -34,13 +34,16 @@ object AdManager {
     var isPrivacyOptionsRequired = MutableStateFlow(false)
         private set
 
-    // Ad unit IDs are sourced from BuildConfig. Production IDs come from
-    // `local.properties` (ADMOB_BANNER_ID / ADMOB_NATIVE_ID /
-    // ADMOB_INTERSTITIAL_ID); absent values fall back to Google's published
-    // test IDs at build time so debug / CI / fresh-checkout builds keep
-    // working. App ID lives in `AndroidManifest.xml` via the same mechanism
+    // Ad unit IDs are sourced from BuildConfig. Debug builds always resolve
+    // to Google's published test IDs (pinned in `defaultConfig` of
+    // app/build.gradle.kts), so parity tests + dev installs never fire real
+    // AdMob impressions. Release builds override with production IDs from
+    // the committed `Ads/AdMob-Android.properties` file, with
+    // `local.properties` taking precedence for per-dev overrides. App ID
+    // lives in `AndroidManifest.xml` via the same mechanism
     // (`${ADMOB_APP_ID}` manifestPlaceholder). Mirrors the iOS pattern in
-    // `AdManager.swift` (DEBUG → hardcoded test IDs, RELEASE → Info.plist).
+    // `AdManager.swift` (DEBUG → hardcoded test IDs, RELEASE → Info.plist
+    // env vars sourced from `Ads/AdMob-iOS.xcconfig`).
     val BANNER_UNIT_ID: String = BuildConfig.ADMOB_BANNER_ID
     val NATIVE_UNIT_ID: String = BuildConfig.ADMOB_NATIVE_ID
     val INTERSTITIAL_UNIT_ID: String = BuildConfig.ADMOB_INTERSTITIAL_ID
