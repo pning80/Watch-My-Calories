@@ -1,9 +1,12 @@
 package com.pning80.watchmycalories.ui.camera
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
+import android.provider.Settings
 import android.view.ViewGroup
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -14,6 +17,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -22,6 +26,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import android.view.HapticFeedbackConstants
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -116,38 +122,71 @@ fun CameraScreen(
                 }
             )
 
-            Button(
-                onClick = {
-                    // Mirror iOS UIImpactFeedbackGenerator(.heavy) on capture.
-                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                    val executor = ContextCompat.getMainExecutor(context)
-                    imageCapture?.takePicture(executor, object : ImageCapture.OnImageCapturedCallback() {
-                        override fun onCaptureSuccess(image: ImageProxy) {
-                            val buffer = image.planes[0].buffer
-                            val bytes = ByteArray(buffer.capacity())
-                            buffer.get(bytes)
-                            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
-                            capturedImages = capturedImages + bitmap
-                            image.close()
-                            // D-003b — menu mode is single-shot; route immediately.
-                            if (captureMode == CaptureMode.Menu) {
-                                onPhotosCaptured(listOf(bitmap))
-                            }
-                        }
-                        override fun onError(exception: ImageCaptureException) {
-                            exception.printStackTrace()
-                        }
-                    })
-                },
+            // Top + bottom scrim gradients so the status bar and shutter stay
+            // legible over any frame — mirrors iOS CameraView.swift:91-99
+            // (top 60%→clear 100pt, bottom clear→80% 160pt).
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)
+                            )
+                        )
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))
+                            )
+                        )
+                )
+            }
+
+            // Shutter — white ring + mint inner fill, mirroring iOS
+            // CameraView.swift:109-117 (80pt white-stroke ring, 68pt cwPrimary
+            // inner). Replaces the generic flat-white circle.
+            Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .imePadding()
                     .padding(bottom = 80.dp)
-                    .size(72.dp)
-                    .testTag(AccessibilityTags.Camera.CAPTURE_BUTTON),
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
-            ) {}
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .padding(6.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .testTag(AccessibilityTags.Camera.CAPTURE_BUTTON)
+                    .clickable {
+                        // Mirror iOS UIImpactFeedbackGenerator(.heavy) on capture.
+                        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        val executor = ContextCompat.getMainExecutor(context)
+                        imageCapture?.takePicture(executor, object : ImageCapture.OnImageCapturedCallback() {
+                            override fun onCaptureSuccess(image: ImageProxy) {
+                                val buffer = image.planes[0].buffer
+                                val bytes = ByteArray(buffer.capacity())
+                                buffer.get(bytes)
+                                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
+                                capturedImages = capturedImages + bitmap
+                                image.close()
+                                // D-003b — menu mode is single-shot; route immediately.
+                                if (captureMode == CaptureMode.Menu) {
+                                    onPhotosCaptured(listOf(bitmap))
+                                }
+                            }
+                            override fun onError(exception: ImageCaptureException) {
+                                exception.printStackTrace()
+                            }
+                        })
+                    },
+            )
 
             // Food mode shows the bundle thumbnail row + "Analyze N" CTA. Menu mode
             // skips this UI since capture routes immediately on first shot.
@@ -221,6 +260,22 @@ fun CameraScreen(
                 onClick = { permissionLauncher.launch(android.Manifest.permission.CAMERA) }
             ) {
                 Text("Grant Camera Permission")
+            }
+            // Deep-link to system app settings — covers the "Don't ask again"
+            // case where the in-app request above is a silent no-op. iOS only
+            // offers Open Settings (CameraView.swift:182-188); Android keeps
+            // both since a first denial can still be re-prompted in-app.
+            Spacer(modifier = Modifier.height(8.dp))
+            TextButton(
+                onClick = {
+                    val intent = Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.fromParts("package", context.packageName, null),
+                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                }
+            ) {
+                Text("Open Settings")
             }
         }
     }
