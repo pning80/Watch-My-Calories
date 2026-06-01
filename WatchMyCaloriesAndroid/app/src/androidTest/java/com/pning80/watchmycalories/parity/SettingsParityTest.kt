@@ -216,8 +216,8 @@ class SettingsParityTest : MainActivityComposeTest() {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("settings_cancel_button").performClick()
         composeTestRule.waitForIdle()
-        // Android dialog title is "Discard changes?" with action labels "Discard" / "Keep Editing"
-        composeTestRule.onNodeWithText("Discard changes?").assertIsDisplayed()
+        // Android dialog title is "You have unsaved changes." with action labels "Discard Changes" / "Keep Editing"
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertIsDisplayed()
     }
 
     /** Mirror of iOS `testDiscardChangesFromCancelDialog`. */
@@ -228,7 +228,7 @@ class SettingsParityTest : MainActivityComposeTest() {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("settings_cancel_button").performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Discard").performClick()
+        composeTestRule.onNodeWithText("Discard Changes").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag(AccessibilityTags.Dashboard.HERO_CARD).assertIsDisplayed()
     }

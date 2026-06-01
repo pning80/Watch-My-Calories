@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -58,7 +58,9 @@ fun CalorieDisclaimerSheet(
             verticalArrangement = Arrangement.spacedBy(Spacing.l),
         ) {
             Icon(
-                imageVector = Icons.Filled.Star,
+                // iOS uses the `sparkles` SF Symbol (AI/magic cue); AutoAwesome
+                // is the Material equivalent. A plain Star reads as Rate/Favorite.
+                imageVector = Icons.Filled.AutoAwesome,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(48.dp),

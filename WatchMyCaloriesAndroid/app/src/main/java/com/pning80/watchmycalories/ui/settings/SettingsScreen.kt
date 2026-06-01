@@ -156,10 +156,11 @@ fun SettingsScreen(
     if (showDiscardDialog) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog = false },
-            title = { Text("Discard changes?") },
-            text = { Text("You have unsaved changes. Are you sure you want to discard them?") },
+            // iOS confirmationDialog states the fact ("You have unsaved changes.")
+            // with a "Discard Changes" action — no question-form body.
+            title = { Text("You have unsaved changes.") },
             confirmButton = {
-                TextButton(onClick = { 
+                TextButton(onClick = {
                     showDiscardDialog = false
                     coroutineScope.launch {
                         settingsDataStore.setMetric(initialMetric)
@@ -167,7 +168,7 @@ fun SettingsScreen(
                         settingsDataStore.setAiConsent(initialConsent)
                     }
                     onCancel()
-                }) { Text("Discard") }
+                }) { Text("Discard Changes") }
             },
             dismissButton = {
                 TextButton(onClick = { showDiscardDialog = false }) { Text("Keep Editing") }
@@ -458,7 +459,7 @@ fun SettingsScreen(
                         )
                     }
                     Text(
-                        "When enabled, food photos are sent to Google Gemini for calorie estimation. All other data stays on-device.",
+                        "When enabled, food photos are sent to Google Gemini, a third-party AI service by Google, for calorie estimation. All other data stays on-device.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
