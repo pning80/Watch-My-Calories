@@ -45,6 +45,15 @@ object AdManager {
     val NATIVE_UNIT_ID: String = BuildConfig.ADMOB_NATIVE_ID
     val INTERSTITIAL_UNIT_ID: String = BuildConfig.ADMOB_INTERSTITIAL_ID
 
+    // Safety net — any of the three unit IDs starting with Google's test-unit
+    // prefix means either a debug build or a misconfigured release (no
+    // production IDs in `local.properties`). Surfaces that consult this flag
+    // suppress rendering / loading rather than serve Google's literal "TEST
+    // AD" creative to real users. The banner has its own copy of this guard
+    // in `BannerAdView.kt`; this companion covers the interstitial.
+    private val TEST_AD_UNIT_PREFIX = "ca-app-pub-3940256099942544/"
+    private fun isTestUnit(id: String): Boolean = id.startsWith(TEST_AD_UNIT_PREFIX)
+
     fun initialize(context: Context) {
         if (isInitialized) return
         
@@ -70,6 +79,8 @@ object AdManager {
 
     fun loadInterstitial(context: Context) {
         if (!canRequestAds.value) return
+        // Don't fetch test creative — see TEST_AD_UNIT_PREFIX above.
+        if (isTestUnit(INTERSTITIAL_UNIT_ID)) return
         val adRequest = AdRequest.Builder().build()
         InterstitialAd.load(
             context,
@@ -91,6 +102,13 @@ object AdManager {
 
     fun showInterstitialIfReady(activity: Activity, onDismissed: () -> Unit) {
         if (disableForUITesting) {
+            onDismissed()
+            return
+        }
+        // Belt-and-braces against a stale test-creative ad that somehow got
+        // loaded — if isTestUnit returns true, loadInterstitial's guard above
+        // should have already prevented this, but skip showing regardless.
+        if (isTestUnit(INTERSTITIAL_UNIT_ID)) {
             onDismissed()
             return
         }
