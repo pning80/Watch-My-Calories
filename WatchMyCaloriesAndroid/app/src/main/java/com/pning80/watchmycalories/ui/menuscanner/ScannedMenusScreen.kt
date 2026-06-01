@@ -7,8 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.remember
@@ -95,8 +95,12 @@ fun ScannedMenusScreen(
             ) {
                 EmptyStateCard(
                     title = "No scanned menus yet",
-                    subtitle = "Tap below to scan a menu and see options.",
-                    icon = Icons.AutoMirrored.Filled.MenuBook
+                    // iOS: "Use the Scan Menu tab to photograph a restaurant menu
+                    // and see calorie estimates." (ScannedMenusView.swift:38).
+                    subtitle = "Use the Scan Menu tab to photograph a restaurant menu and see calorie estimates.",
+                    // iOS uses the `menucard` glyph (a restaurant menu card), not
+                    // an open book — RestaurantMenu is the Material match.
+                    icon = Icons.Filled.RestaurantMenu
                 )
             }
         } else {

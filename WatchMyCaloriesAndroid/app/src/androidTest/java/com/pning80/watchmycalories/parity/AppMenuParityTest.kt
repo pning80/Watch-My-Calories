@@ -26,8 +26,7 @@ import org.junit.Test
  *   - iOS: gear → menu → "About" → About screen
  *   - Android: gear → Settings → "About this app" → About screen
  *
- * Known label divergence: iOS About nav-bar title is "About"; Android TopAppBar
- * title is "About Watch My Calories".
+ * Both iOS and Android now use the nav-bar title "About" (parity).
  */
 class AppMenuParityTest : MainActivityComposeTest() {
 
@@ -38,7 +37,10 @@ class AppMenuParityTest : MainActivityComposeTest() {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("About").performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("About Watch My Calories").assertIsDisplayed()
+        // Confirm the About screen loaded via its unique version-label tag.
+        // (Both the menu item and the screen title are now "About", so asserting
+        // on title text would be ambiguous.)
+        composeTestRule.onNodeWithTag(AccessibilityTags.About.VERSION_LABEL).assertIsDisplayed()
     }
 
     // MARK: - Menu Visibility
@@ -150,7 +152,9 @@ class AppMenuParityTest : MainActivityComposeTest() {
         openAbout()
         composeTestRule.onNodeWithTag(AccessibilityTags.About.VERSION_LABEL).performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("About Watch My Calories").assertIsDisplayed()
+        // The version label transiently shows "Copied!" then reverts; the
+        // screen staying intact is what we assert (via the still-present tag).
+        composeTestRule.onNodeWithTag(AccessibilityTags.About.VERSION_LABEL).assertIsDisplayed()
     }
 
     /** Mirror of iOS `testAboutHelpAndSupportLinkTaps`. */

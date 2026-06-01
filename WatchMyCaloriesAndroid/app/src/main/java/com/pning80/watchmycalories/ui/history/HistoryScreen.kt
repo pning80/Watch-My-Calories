@@ -131,7 +131,12 @@ fun HistoryDayCard(
         ) {
             Column {
                 Text(
-                    text = SimpleDateFormat("d MMMM", Locale.getDefault()).format(Date(dateMillis)),
+                    // Locale-driven skeleton (mirrors iOS .dateTime.day().month(.wide))
+                    // so en-US renders "May 31" not the hardcoded "31 May".
+                    text = SimpleDateFormat(
+                        android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "dMMMM"),
+                        Locale.getDefault()
+                    ).format(Date(dateMillis)),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
