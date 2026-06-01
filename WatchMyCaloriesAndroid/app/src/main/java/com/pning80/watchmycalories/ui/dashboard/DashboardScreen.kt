@@ -209,11 +209,21 @@ fun DashboardScreen(
                                     color = MaterialTheme.colorScheme.primary,
                                     letterSpacing = MaterialTheme.typography.labelSmall.letterSpacing
                                 )
-                                Text(
-                                    text = "${mealEntries.sumOf { it.calories }.toInt()} kcal",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                )
+                                // kcal pill — mirrors iOS MealSection (Components.swift:823-830):
+                                // a light-green (cwSecondary) capsule with primary text,
+                                // not plain low-alpha gray text.
+                                Surface(
+                                    shape = androidx.compose.foundation.shape.CircleShape,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                ) {
+                                    Text(
+                                        text = "${mealEntries.sumOf { it.calories }.toInt()} kcal",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(horizontal = Spacing.m, vertical = Spacing.xs)
+                                    )
+                                }
                             }
                         }
 
