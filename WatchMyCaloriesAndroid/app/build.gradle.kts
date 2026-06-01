@@ -24,7 +24,6 @@ val appBackendApiKey: String = localProps.getProperty("APP_BACKEND_API_KEY", "")
 //   Test app ID:        ca-app-pub-3940256099942544~3347511713
 //   Test banner:        ca-app-pub-3940256099942544/6300978111
 //   Test native:        ca-app-pub-3940256099942544/2247696110
-//   Test interstitial:  ca-app-pub-3940256099942544/1033173712
 val admobProps = Properties().apply {
     val f = rootProject.layout.projectDirectory
         .dir("../Ads")
@@ -43,7 +42,6 @@ fun admobIdFor(key: String, fallback: String): String =
 val admobAppId: String = admobIdFor("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
 val admobBannerId: String = admobIdFor("ADMOB_BANNER_ID", "ca-app-pub-3940256099942544/6300978111")
 val admobNativeId: String = admobIdFor("ADMOB_NATIVE_ID", "ca-app-pub-3940256099942544/2247696110")
-val admobInterstitialId: String = admobIdFor("ADMOB_INTERSTITIAL_ID", "ca-app-pub-3940256099942544/1033173712")
 
 // Upload-key signing config for release builds. Absent on CI / fresh checkouts —
 // we fall back to no signingConfig on release in that case, which lets ./gradlew
@@ -90,7 +88,6 @@ android {
         // production IDs from `Ads/AdMob-Android.properties`.
         buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
         buildConfigField("String", "ADMOB_NATIVE_ID", "\"ca-app-pub-3940256099942544/2247696110\"")
-        buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
 
         // App ID injected into AndroidManifest.xml via `${ADMOB_APP_ID}`.
         // defaultConfig pins the test app ID for the same reason as above.
@@ -134,7 +131,6 @@ android {
             // AdManager.swift (RELEASE → Info.plist `AdMob*AdUnitID` env vars).
             buildConfigField("String", "ADMOB_BANNER_ID", "\"$admobBannerId\"")
             buildConfigField("String", "ADMOB_NATIVE_ID", "\"$admobNativeId\"")
-            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"$admobInterstitialId\"")
             manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
 
             isMinifyEnabled = false

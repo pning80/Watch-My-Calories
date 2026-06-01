@@ -328,18 +328,18 @@ class OnboardingScreenTest {
 
         // Switch to US Customary.
         composeTestRule.onNodeWithText("US Customary").performScrollTo().performClick()
-        composeTestRule.waitForIdle()
 
-        // Defaults in US Customary: 5'8" / 150 lbs.
-        // Use unmerged tree — these labels sit inside SliderRow Composables
+        // OnboardingScreen runs the toggle write as
+        // `coroutineScope.launch { settingsDataStore.setMetric(false) }`, so
+        // the DataStore emission + recomposition can outlive `waitForIdle()`.
+        // Poll for the US Customary labels with a 2-second deadline. Use the
+        // unmerged tree because the labels sit inside SliderRow Composables
         // whose semantics merge into a parent in some Robolectric run
         // orderings (the merge boundary collapses the inner Text nodes).
-        // The two affirmative checks below confirm the toggle worked; we
-        // deliberately do NOT assert the absence of "173 cm" because Linux
-        // Robolectric retains pre-recomposition nodes in the unmerged tree
-        // briefly after the conditional flip, while Mac Robolectric does
-        // not. The behavior under test is "did US Customary become the
-        // active branch", which the positive assertions already cover.
+        composeTestRule.waitUntil(timeoutMillis = 2000) {
+            composeTestRule.onAllNodesWithText("5 ft 8 in", substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
         composeTestRule.onNodeWithText("5 ft 8 in", substring = true, useUnmergedTree = true)
             .performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("150 lbs", substring = true, useUnmergedTree = true)
