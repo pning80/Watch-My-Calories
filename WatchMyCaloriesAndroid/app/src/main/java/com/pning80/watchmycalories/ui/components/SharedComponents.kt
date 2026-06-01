@@ -171,8 +171,16 @@ fun HeroSummaryCard(targetCalories: Double, burnedCalories: Double, entries: Lis
                     label = "Goal",
                     value = "${targetCalories.toInt()}",
                     icon = Icons.Filled.Flag,
-                    badgeColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    iconTint = Color.White,
+                    // outlineVariant instead of onSurface@0.4 — the transparent
+                    // fill rendered as an ashy near-black circle on the dark
+                    // surface; outlineVariant is a solid neutral that reads
+                    // sharper (PR T dark-contrast pass). Its lightness flips
+                    // between themes (dark #3A4540 / light #CAC4D0), so the icon
+                    // tint must adapt too: onSurface is light-on-dark in dark
+                    // mode and dark-on-pale in light mode — a fixed white icon
+                    // would vanish on the pale light-theme fill.
+                    badgeColor = MaterialTheme.colorScheme.outlineVariant,
+                    iconTint = MaterialTheme.colorScheme.onSurface,
                     testTag = "dashboard_goalValue"
                 )
                 if (burnedCalories > 0) {
