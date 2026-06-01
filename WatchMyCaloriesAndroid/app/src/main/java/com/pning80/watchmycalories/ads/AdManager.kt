@@ -10,6 +10,7 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.ump.UserMessagingPlatform
+import com.pning80.watchmycalories.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 
 object AdManager {
@@ -33,10 +34,28 @@ object AdManager {
     var isPrivacyOptionsRequired = MutableStateFlow(false)
         private set
 
-    // Replace with actual AdMob App ID / Unit IDs for release
-    const val BANNER_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
-    const val NATIVE_UNIT_ID = "ca-app-pub-3940256099942544/2247696110"
-    const val INTERSTITIAL_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
+    // Ad unit IDs are sourced from BuildConfig. Debug builds always resolve
+    // to Google's published test IDs (pinned in `defaultConfig` of
+    // app/build.gradle.kts), so parity tests + dev installs never fire real
+    // AdMob impressions. Release builds override with production IDs from
+    // the committed `Ads/AdMob-Android.properties` file, with
+    // `local.properties` taking precedence for per-dev overrides. App ID
+    // lives in `AndroidManifest.xml` via the same mechanism
+    // (`${ADMOB_APP_ID}` manifestPlaceholder). Mirrors the iOS pattern in
+    // `AdManager.swift` (DEBUG → hardcoded test IDs, RELEASE → Info.plist
+    // env vars sourced from `Ads/AdMob-iOS.xcconfig`).
+    val BANNER_UNIT_ID: String = BuildConfig.ADMOB_BANNER_ID
+    val NATIVE_UNIT_ID: String = BuildConfig.ADMOB_NATIVE_ID
+    val INTERSTITIAL_UNIT_ID: String = BuildConfig.ADMOB_INTERSTITIAL_ID
+
+    // Safety net — any of the three unit IDs starting with Google's test-unit
+    // prefix means either a debug build or a misconfigured release (no
+    // production IDs in `local.properties`). Surfaces that consult this flag
+    // suppress rendering / loading rather than serve Google's literal "TEST
+    // AD" creative to real users. The banner has its own copy of this guard
+    // in `BannerAdView.kt`; this companion covers the interstitial.
+    private val TEST_AD_UNIT_PREFIX = "ca-app-pub-3940256099942544/"
+    private fun isTestUnit(id: String): Boolean = id.startsWith(TEST_AD_UNIT_PREFIX)
 
     fun initialize(context: Context) {
         if (isInitialized) return
@@ -63,6 +82,8 @@ object AdManager {
 
     fun loadInterstitial(context: Context) {
         if (!canRequestAds.value) return
+        // Don't fetch test creative — see TEST_AD_UNIT_PREFIX above.
+        if (isTestUnit(INTERSTITIAL_UNIT_ID)) return
         val adRequest = AdRequest.Builder().build()
         InterstitialAd.load(
             context,
@@ -84,6 +105,13 @@ object AdManager {
 
     fun showInterstitialIfReady(activity: Activity, onDismissed: () -> Unit) {
         if (disableForUITesting) {
+            onDismissed()
+            return
+        }
+        // Belt-and-braces against a stale test-creative ad that somehow got
+        // loaded — if isTestUnit returns true, loadInterstitial's guard above
+        // should have already prevented this, but skip showing regardless.
+        if (isTestUnit(INTERSTITIAL_UNIT_ID)) {
             onDismissed()
             return
         }
