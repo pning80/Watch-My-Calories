@@ -88,7 +88,14 @@ fun DashboardScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date()).uppercase(),
+                    // Mirror iOS `.dateTime.weekday(.wide).day().month()` — a
+                    // locale-driven skeleton so en-US renders "SATURDAY, MAY 31"
+                    // (month-before-day, abbreviated month) instead of the
+                    // previous hardcoded `EEEE, d MMMM` ("SATURDAY, 31 MAY").
+                    text = SimpleDateFormat(
+                        android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEEMMMd"),
+                        Locale.getDefault()
+                    ).format(Date()).uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
