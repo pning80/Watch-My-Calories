@@ -330,12 +330,18 @@ class OnboardingScreenTest {
         composeTestRule.waitForIdle()
 
         // Defaults in US Customary: 5'8" / 150 lbs.
-        composeTestRule.onNodeWithText("5 ft 8 in", substring = true).performScrollTo().assertIsDisplayed()
-        composeTestRule.onNodeWithText("150 lbs", substring = true).performScrollTo().assertIsDisplayed()
+        // Use unmerged tree — these labels sit inside SliderRow Composables
+        // whose semantics merge into a parent in some Robolectric run
+        // orderings (the merge boundary collapses the inner Text nodes).
+        composeTestRule.onNodeWithText("5 ft 8 in", substring = true, useUnmergedTree = true)
+            .performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("150 lbs", substring = true, useUnmergedTree = true)
+            .performScrollTo().assertIsDisplayed()
         // Metric labels no longer present.
-        composeTestRule.onAllNodesWithText("173 cm", substring = true).fetchSemanticsNodes().let {
-            assertTrue("Metric height label should be gone in US mode", it.isEmpty())
-        }
+        composeTestRule.onAllNodesWithText("173 cm", substring = true, useUnmergedTree = true)
+            .fetchSemanticsNodes().let {
+                assertTrue("Metric height label should be gone in US mode", it.isEmpty())
+            }
     }
 
     @Test
