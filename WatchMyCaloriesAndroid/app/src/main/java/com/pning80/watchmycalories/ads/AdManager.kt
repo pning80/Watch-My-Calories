@@ -3,13 +3,7 @@ package com.pning80.watchmycalories.ads
 import android.app.Activity
 import android.content.Context
 import android.util.Log
-import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
@@ -31,6 +25,10 @@ import kotlin.coroutines.resume
  *     surfaces (`BannerAdView`, `NativeAdView`) gate their load() calls
  *     on this flag — same as iOS `NativeAdLoader.loadAd` guards on
  *     `AdManager.shared.canRequestAds`.
+ *
+ * Banner + Native are the only ad surfaces. iOS has no interstitial flow,
+ * and the manual-entry-save interstitial that briefly lived on Android
+ * (D-013) was removed in PR K to match.
  */
 object AdManager {
     private const val TAG = "AdManager"
@@ -46,18 +44,10 @@ object AdManager {
     var isPrivacyOptionsRequired = MutableStateFlow(false)
         private set
 
-    private var lastInterstitialTime = 0L
-    private const val INTERSTITIAL_COOLDOWN_MS = 60_000L // 1 min cooldown
-
     // Test hook: when true, all entry points are no-ops so instrumentation
-    // doesn't trip into the real UMP flow or have a fullscreen interstitial
-    // tear down the compose tree. Set by TestSeed when EXTRA_UI_TESTING is
-    // passed; mirrors iOS `AdManager.isUITestingMode`.
+    // doesn't trip into the real UMP flow. Set by TestSeed when
+    // EXTRA_UI_TESTING is passed; mirrors iOS `AdManager.isUITestingMode`.
     var disableForUITesting = false
-
-    private var interstitialAd: InterstitialAd? = null
-    var isInterstitialReady = false
-        private set
 
     // Ad unit IDs are sourced from BuildConfig. Debug builds always resolve
     // to Google's published test IDs (pinned in `defaultConfig` of
@@ -71,16 +61,6 @@ object AdManager {
     // env vars sourced from `Ads/AdMob-iOS.xcconfig`).
     val BANNER_UNIT_ID: String = BuildConfig.ADMOB_BANNER_ID
     val NATIVE_UNIT_ID: String = BuildConfig.ADMOB_NATIVE_ID
-    val INTERSTITIAL_UNIT_ID: String = BuildConfig.ADMOB_INTERSTITIAL_ID
-
-    // Safety net — any of the three unit IDs starting with Google's test-unit
-    // prefix means either a debug build or a misconfigured release (no
-    // production IDs in `local.properties`). Surfaces that consult this flag
-    // suppress rendering / loading rather than serve Google's literal "TEST
-    // AD" creative to real users. The banner has its own copy of this guard
-    // in `BannerAdView.kt`; this companion covers the interstitial.
-    private val TEST_AD_UNIT_PREFIX = "ca-app-pub-3940256099942544/"
-    private fun isTestUnit(id: String): Boolean = id.startsWith(TEST_AD_UNIT_PREFIX)
 
     /**
      * Gathers UMP consent and starts the SDK. Idempotent — repeat calls
@@ -142,7 +122,6 @@ object AdManager {
         MobileAds.initialize(context) {
             isInitialized = true
             canRequestAds.value = true
-            loadInterstitial(context)
         }
     }
 
@@ -165,64 +144,6 @@ object AdManager {
             if (canRequest && !isInitialized) {
                 startSDK(activity)
             }
-        }
-    }
-
-    fun loadInterstitial(context: Context) {
-        if (!canRequestAds.value) return
-        // Don't fetch test creative — see TEST_AD_UNIT_PREFIX above.
-        if (isTestUnit(INTERSTITIAL_UNIT_ID)) return
-        val adRequest = AdRequest.Builder().build()
-        InterstitialAd.load(
-            context,
-            INTERSTITIAL_UNIT_ID,
-            adRequest,
-            object : InterstitialAdLoadCallback() {
-                override fun onAdLoaded(ad: InterstitialAd) {
-                    interstitialAd = ad
-                    isInterstitialReady = true
-                }
-
-                override fun onAdFailedToLoad(error: LoadAdError) {
-                    interstitialAd = null
-                    isInterstitialReady = false
-                }
-            }
-        )
-    }
-
-    fun showInterstitialIfReady(activity: Activity, onDismissed: () -> Unit) {
-        if (disableForUITesting) {
-            onDismissed()
-            return
-        }
-        // Belt-and-braces against a stale test-creative ad that somehow got
-        // loaded — if isTestUnit returns true, loadInterstitial's guard above
-        // should have already prevented this, but skip showing regardless.
-        if (isTestUnit(INTERSTITIAL_UNIT_ID)) {
-            onDismissed()
-            return
-        }
-        val now = System.currentTimeMillis()
-        if (interstitialAd != null && isInterstitialReady && (now - lastInterstitialTime > INTERSTITIAL_COOLDOWN_MS)) {
-            interstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
-                override fun onAdDismissedFullScreenContent() {
-                    interstitialAd = null
-                    isInterstitialReady = false
-                    lastInterstitialTime = System.currentTimeMillis()
-                    loadInterstitial(activity) // reload
-                    onDismissed()
-                }
-
-                override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                    interstitialAd = null
-                    isInterstitialReady = false
-                    onDismissed()
-                }
-            }
-            interstitialAd?.show(activity)
-        } else {
-            onDismissed()
         }
     }
 }

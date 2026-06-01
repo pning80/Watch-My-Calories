@@ -566,10 +566,8 @@ private fun MainAppContent(
                         } else {
                             viewModel.addEntry(entry)
                         }
-                        AdManager.showInterstitialIfReady(context as android.app.Activity) {
-                            navController.navigate("dashboard") {
-                                popUpTo("dashboard") { inclusive = true }
-                            }
+                        navController.navigate("dashboard") {
+                            popUpTo("dashboard") { inclusive = true }
                         }
                     },
                     onCancel = { navController.popBackStack() }
