@@ -89,9 +89,12 @@ object TestSeed {
     fun applyIfTesting(context: Context, intent: Intent?) {
         if (!isUiTesting(intent)) return
 
-        // Suppress AdMob interstitials in test mode — an interstitial fullscreen
-        // takeover destroys the compose tree mid-test and surfaces as
-        // "No compose hierarchies found" on the next assertion.
+        // Suppress AdMob entry points in test mode — keeps the UMP consent
+        // flow from firing during instrumented runs and prevents any future
+        // fullscreen ad surface from tearing down the compose tree mid-test.
+        // (The Android-only manual-entry-save interstitial that originally
+        // motivated this flag was removed in PR K; the flag itself stays as
+        // the canonical disable-ads-in-test hook.)
         AdManager.disableForUITesting = true
 
         val db = AppDatabase.getDatabase(context)
