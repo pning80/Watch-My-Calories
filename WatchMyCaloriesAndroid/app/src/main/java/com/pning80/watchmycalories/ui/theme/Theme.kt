@@ -48,7 +48,16 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = CwTextPrimaryLight,
     onSecondary = CwTextPrimaryLight,
     onBackground = CwTextPrimaryLight,
-    onSurface = CwTextPrimaryLight
+    onSurface = CwTextPrimaryLight,
+    // Neutral surface ladder + green tint so light-mode cards render white
+    // (iOS parity), not M3's default lavender. Mirrors the dark scheme.
+    surfaceTint = CwSurfaceTintLight,
+    surfaceVariant = CwSurfaceVariantLight,
+    surfaceContainerLowest = CwSurfaceContainerLowestLight,
+    surfaceContainerLow = CwSurfaceContainerLowLight,
+    surfaceContainer = CwSurfaceContainerLight,
+    surfaceContainerHigh = CwSurfaceContainerHighLight,
+    surfaceContainerHighest = CwSurfaceContainerHighestLight,
 )
 
 @Composable
