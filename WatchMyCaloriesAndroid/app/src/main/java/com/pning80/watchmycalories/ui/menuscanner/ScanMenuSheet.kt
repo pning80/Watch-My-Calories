@@ -81,8 +81,9 @@ fun ScanMenuSheet(
                 testTag = AccessibilityTags.ScanMenuSheet.STORED_MENUS_BUTTON,
             )
 
-            // Banner ad — mirrors iOS ScanMenuSheet.swift:52.
-            BannerAdView()
+            // Banner ad — mirrors iOS ScanMenuSheet.swift:52. insetHorizontal=false:
+            // the sheet Column already applies pageHorizontal padding.
+            BannerAdView(insetHorizontal = false)
         }
     }
 }
