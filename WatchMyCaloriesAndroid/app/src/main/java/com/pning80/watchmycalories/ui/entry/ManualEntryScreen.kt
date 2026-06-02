@@ -19,6 +19,12 @@ import com.pning80.watchmycalories.utils.AccessibilityTags
 import com.pning80.watchmycalories.ads.BannerAdView
 import java.util.UUID
 
+// Mirrors iOS's `String(format: "%g", value)` used to pre-populate the edit
+// fields (Components.swift:893-898): drops the trailing ".0" on whole numbers
+// so calories/macros show "300" not "300.0".
+private fun Double.formatClean(): String =
+    if (this % 1.0 == 0.0) toLong().toString() else toString()
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ManualEntryScreen(
@@ -28,13 +34,13 @@ fun ManualEntryScreen(
     onCancel: () -> Unit
 ) {
     var name by remember { mutableStateOf(initialEntry?.name ?: "") }
-    var caloriesText by remember { mutableStateOf(initialEntry?.calories?.let { if (it > 0) it.toString() else "" } ?: "") }
+    var caloriesText by remember { mutableStateOf(initialEntry?.calories?.let { if (it > 0) it.formatClean() else "" } ?: "") }
     var quantity by remember { mutableStateOf(initialEntry?.quantity ?: "") }
     var mealType by remember { mutableStateOf(initialEntry?.mealTypeRaw?.let { MealType.fromRaw(it) } ?: MealType.fromTimestamp(System.currentTimeMillis())) }
     var showNutrition by remember { mutableStateOf(initialEntry?.protein != null || initialEntry?.carbs != null || initialEntry?.fat != null) }
-    var proteinText by remember { mutableStateOf(initialEntry?.protein?.toString() ?: "") }
-    var carbsText by remember { mutableStateOf(initialEntry?.carbs?.toString() ?: "") }
-    var fatText by remember { mutableStateOf(initialEntry?.fat?.toString() ?: "") }
+    var proteinText by remember { mutableStateOf(initialEntry?.protein?.formatClean() ?: "") }
+    var carbsText by remember { mutableStateOf(initialEntry?.carbs?.formatClean() ?: "") }
+    var fatText by remember { mutableStateOf(initialEntry?.fat?.formatClean() ?: "") }
 
     val canSave = name.isNotBlank()
         && caloriesText.isNotBlank()
