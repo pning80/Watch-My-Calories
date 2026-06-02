@@ -12,51 +12,35 @@ import org.junit.Test
 /**
  * Parity mirror of iOS `WatchMyCaloriesUITests/EstimationReviewTests.swift`.
  *
- * Updated for the D-008 + D-009 feature work:
- *  - `SUCCESS_VIEW` now means the post-save confirmation screen
- *    ("Logged Successfully!" + "Total Added"), matching iOS semantics
- *  - `EDIT_VIEW` is the pre-save Review & Edit screen (Android-specific extra)
- *  - `SAVE_BUTTON` is on Review & Edit; `DONE_BUTTON` is on the success screen
- *  - Error and no-food views now expose CANCEL_BUTTON (D-009)
+ * The analysis success path now mirrors iOS exactly: the estimation auto-saves
+ * and the screen goes straight to the read-only `SUCCESS_VIEW` ("Logged
+ * Successfully!" + per-item cards + "Total Added"). The earlier Android-only
+ * pre-save Review & Edit step (EDIT_VIEW / review SAVE_BUTTON) was dropped for
+ * parity, so there is no Save tap — `DONE_BUTTON` returns to the dashboard.
+ * Error and no-food views expose CANCEL_BUTTON (D-009).
  *
  * Bypasses the camera flow with `EXTRA_START_AT_ANALYSIS` — the activity boots
  * directly into the analysis route with a stub bitmap.
  */
 class EstimationReviewParityTest : MainActivityComposeTest() {
 
-    // --- Review & Edit (pre-save) ---
+    // --- Post-save success summary (auto-saved, read-only — strict iOS mirror) ---
 
-    /** Android extra: pre-save Review & Edit screen exposes editable items. */
+    /** Success summary lists the estimated items (read-only). */
     @Test
-    fun testReviewAndEditScreenShowsItems() {
+    fun testSuccessScreenShowsItems() {
         launchStartAtAnalysisSuccess()
         composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW).fetchSemanticsNodes().isNotEmpty()
         }
-        // SUCCESS fixture returns 3 items totalling 690 kcal; food names appear in editable rows.
+        // SUCCESS fixture returns 3 items totalling 690 kcal; food names appear as cards.
         composeTestRule.onNodeWithText("Brown Rice", substring = true).assertIsDisplayed()
     }
-
-    /** Android extra: Save button is visible and clickable on Review & Edit. */
-    @Test
-    fun testSaveButtonVisibleOnReviewAndEdit() {
-        launchStartAtAnalysisSuccess()
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.SAVE_BUTTON).assertIsDisplayed()
-    }
-
-    // --- Post-save success confirmation (D-008 — strict iOS mirrors) ---
 
     /** Mirror of iOS `testSuccessScreenShowsLoggedMessage`. */
     @Test
     fun testSuccessScreenShowsLoggedMessage() {
         launchStartAtAnalysisSuccess()
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.SAVE_BUTTON).performClick()
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW).fetchSemanticsNodes().isNotEmpty()
         }
@@ -67,10 +51,6 @@ class EstimationReviewParityTest : MainActivityComposeTest() {
     @Test
     fun testSuccessScreenShowsTotalAdded() {
         launchStartAtAnalysisSuccess()
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.SAVE_BUTTON).performClick()
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW).fetchSemanticsNodes().isNotEmpty()
         }
@@ -84,10 +64,6 @@ class EstimationReviewParityTest : MainActivityComposeTest() {
     fun testSuccessScreenShowsDoneButton() {
         launchStartAtAnalysisSuccess()
         composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.SAVE_BUTTON).performClick()
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW).fetchSemanticsNodes().isNotEmpty()
         }
         composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.DONE_BUTTON).assertIsDisplayed()
@@ -97,10 +73,6 @@ class EstimationReviewParityTest : MainActivityComposeTest() {
     @Test
     fun testDoneButtonReturnsToDashboard() {
         launchStartAtAnalysisSuccess()
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.EDIT_VIEW).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeTestRule.onNodeWithTag(AccessibilityTags.EstimationReview.SAVE_BUTTON).performClick()
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule.onAllNodesWithTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW).fetchSemanticsNodes().isNotEmpty()
         }

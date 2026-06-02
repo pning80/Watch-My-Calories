@@ -67,17 +67,18 @@ persistence) in a single flow.
 
 1. Tap the Log Food button (bottom nav, plus icon).
 2. Tap **Scan Food**. Grant camera permission if prompted.
-3. Frame any food item and tap the shutter.
-4. Tap **Analyze N** (where N is the number of photos captured — should be 1
-   if you didn't take multiples).
+3. Frame any food item and tap the shutter — capture routes straight to the
+   review screen (single-shot, mirrors iOS; no "Analyze N" button).
+4. On the review screen, pick a meal type if needed and tap **Use**.
 5. Wait for the Loading state to clear (≤30s under normal Gemini latency).
-6. Review the estimation card. Tap **Save to Log**.
+6. The estimation auto-saves and shows the **Logged Successfully!** summary
+   (item cards + "Total Added"). Tap **Done**.
 7. Verify you land on the Dashboard with the new entry visible under the
    correct meal section (Breakfast / Lunch / Dinner / Snack per the entry's
    hour-of-day).
 
 **Pass criteria:**
-- Step 5 produces a populated review card (food name, calories, macros).
+- Step 6 produces the Logged Successfully! summary (food name, calories, macros).
 - Step 7 shows the entry on the Dashboard.
 - Logcat shows a successful POST to `/v1beta/models/default:generateContent`
   with `X-Android-Key-Id`, `X-Android-Counter`, `X-Android-Assertion` headers
