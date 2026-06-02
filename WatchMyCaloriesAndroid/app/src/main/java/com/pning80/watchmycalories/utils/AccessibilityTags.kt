@@ -129,11 +129,9 @@ object AccessibilityTags {
     object EstimationReview {
         const val LOADING_VIEW = "review_loading"
         const val ERROR_VIEW = "review_error"
-        const val SUCCESS_VIEW = "review_success"        // post-save confirmation
-        const val EDIT_VIEW = "review_editView"          // pre-save Review & Edit (Android extra)
+        const val SUCCESS_VIEW = "review_success"        // auto-saved read-only summary
         const val NO_FOOD_VIEW = "review_noFood"
-        const val DONE_BUTTON = "review_doneButton"      // on success confirmation
-        const val SAVE_BUTTON = "review_saveButton"      // on Review & Edit (Android extra)
+        const val DONE_BUTTON = "review_doneButton"      // on success summary
         const val TRY_AGAIN_BUTTON = "review_tryAgainButton"
         const val CANCEL_BUTTON = "review_cancelButton"
     }

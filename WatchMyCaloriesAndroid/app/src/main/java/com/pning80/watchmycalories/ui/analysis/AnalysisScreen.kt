@@ -5,9 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Restaurant
@@ -18,21 +17,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.pning80.watchmycalories.R
 import com.pning80.watchmycalories.ads.NativeAdView
 import com.pning80.watchmycalories.ai.EstimationItem
 import com.pning80.watchmycalories.ai.EstimationResult
 import com.pning80.watchmycalories.ai.GeminiRepository
+import com.pning80.watchmycalories.ai.totalCalories
+import com.pning80.watchmycalories.ai.totalProtein
+import com.pning80.watchmycalories.ai.totalCarbs
+import com.pning80.watchmycalories.ai.totalFat
 import com.pning80.watchmycalories.data.MealType
-import com.pning80.watchmycalories.ui.photolib.MealTypePicker
+import com.pning80.watchmycalories.ui.components.MacroBreakdownRow
+import com.pning80.watchmycalories.ui.components.MacroProportionalBar
+import com.pning80.watchmycalories.ui.theme.CwAccent
 import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
@@ -49,16 +51,9 @@ fun AnalysisScreen(
     var isLoading by remember { mutableStateOf(true) }
     var rawResult by remember { mutableStateOf<EstimationResult?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    // hasSaved switches the screen from Review & Edit to the post-save
-    // confirmation view (D-008 — mirrors iOS "Logged Successfully!" + Done flow).
-    var hasSaved by remember { mutableStateOf(false) }
-    var savedTotalCalories by remember { mutableStateOf(0) }
-    var savedItemCount by remember { mutableStateOf(0) }
-
-    // Editable state mapping
-    var editableMealName by remember { mutableStateOf("") }
-    val editableItems = remember { mutableStateListOf<EditableEstimationItem>() }
-    var selectedMealType by remember { mutableStateOf(initialMealType) }
+    // Guards the auto-save so a successful estimation is committed exactly once
+    // (mirrors iOS, which saves in estimate() before showing the summary).
+    var savedOnce by remember { mutableStateOf(false) }
 
     // Incrementing this re-fires the estimation LaunchedEffect — used by the
     // error view's Try Again button to retry without leaving the screen.
@@ -73,64 +68,55 @@ fun AnalysisScreen(
         response.fold(
             onSuccess = { res ->
                 rawResult = res
-                editableMealName = res.mealName ?: "Meal"
-                editableItems.clear()
-                editableItems.addAll(res.items.map { EditableEstimationItem(it) })
+                // Auto-save on success, then show a read-only summary — mirrors
+                // iOS EstimationReviewView (saveToHistory runs inside estimate(),
+                // and the result screen is a confirmation, not an editor).
+                if (res.items.isNotEmpty() && !savedOnce) {
+                    onSaveLog(res, initialMealType)
+                    savedOnce = true
+                }
                 isLoading = false
             },
             onFailure = { err ->
-                errorMessage = err.message
+                // Never leave this null: the error view is gated on
+                // `errorMessage != null`, and some failures (e.g. an
+                // attestation/keystore exception) carry a null `message`,
+                // which would otherwise fall through to a blank screen.
+                errorMessage = err.message?.takeIf { it.isNotBlank() }
+                    ?: "We couldn't analyze the image. Please try again."
                 isLoading = false
             }
         )
     }
 
     Scaffold(
-        topBar = {
-            @OptIn(ExperimentalMaterial3Api::class)
-            TopAppBar(
-                title = { Text("Analysis", fontWeight = FontWeight.SemiBold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
+        // iOS hides the nav bar on this screen (EstimationReviewView.swift:312-313) —
+        // there is no "Analysis" title; the branded header / checkmark is the topmost
+        // element. The background carries through the status-bar inset region.
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            when {
-                // Post-save confirmation: Done returns to dashboard.
-                hasSaved -> {
+            // The success summary is auto-saved; a compact, centered Done with a
+            // divider above mirrors iOS EstimationReviewView.swift:296-304. The
+            // error / no-food states carry their own inline buttons.
+            if (!isLoading && errorMessage == null && rawResult?.items?.isNotEmpty() == true) {
+                Column(
+                    // navigationBarsPadding keeps the button clear of the gesture /
+                    // nav bar (the Scaffold doesn't inset a custom bottomBar) — iOS's
+                    // Done sits above the safe area; Android was flush to the edge.
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                ) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Button(
                         onClick = onDoneAfterSave,
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .align(Alignment.CenterHorizontally)
                             .padding(Spacing.l)
                             .testTag(AccessibilityTags.EstimationReview.DONE_BUTTON),
                         shape = RoundedCornerShape(Spacing.m)
                     ) {
-                        Text("Done", modifier = Modifier.padding(vertical = Spacing.xs))
-                    }
-                }
-                // Review & Edit: Save commits to DB and switches to confirmation.
-                !isLoading && rawResult != null && editableItems.isNotEmpty() -> {
-                    Button(
-                        onClick = {
-                            val finalResult = EstimationResult(
-                                mealName = editableMealName,
-                                items = editableItems.map { it.toEstimationItem() }
-                            )
-                            savedTotalCalories = finalResult.items.sumOf { it.calories }.toInt()
-                            savedItemCount = finalResult.items.size
-                            onSaveLog(finalResult, selectedMealType)
-                            hasSaved = true
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .imePadding()
-                            .padding(Spacing.l)
-                            .testTag(AccessibilityTags.EstimationReview.SAVE_BUTTON),
-                        shape = RoundedCornerShape(Spacing.m)
-                    ) {
-                        Text("Save to Log", modifier = Modifier.padding(vertical = Spacing.xs))
+                        Text("Done", modifier = Modifier.padding(horizontal = Spacing.l, vertical = Spacing.xs))
                     }
                 }
             }
@@ -142,65 +128,23 @@ fun AnalysisScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (hasSaved) {
-                // Post-save confirmation (D-008 — mirrors iOS "Logged Successfully!" + Total Added flow).
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .testTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(Spacing.l),
-                        modifier = Modifier.padding(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.CheckCircle,
-                            contentDescription = "Logged",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(64.dp)
-                        )
-                        Text(
-                            "Logged Successfully!",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                "Total Added",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                "$savedTotalCalories kcal",
-                                style = MaterialTheme.typography.displaySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                "$savedItemCount ${if (savedItemCount == 1) "item" else "items"}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            } else if (isLoading) {
+            if (isLoading) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(Spacing.l)
+                        .padding(horizontal = Spacing.l)
                         .testTag(AccessibilityTags.EstimationReview.LOADING_VIEW),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(Spacing.xxl)
                 ) {
-                    // Branded loading header — mirrors iOS EstimationReviewView.swift:40-50
-                    // (MiniAppIcon + serif "Watch My Calories" title above the spinner).
+                    // Layout mirrors iOS EstimationReviewView.swift:38-165 — branded
+                    // header at the top, the native ad directly beneath it (upper-
+                    // middle), then a Spacer pushing the spinner + status text to the
+                    // bottom. Android previously centered the spinner and dropped the
+                    // ad at the very bottom, inverting the iOS arrangement.
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(Spacing.s),
-                        modifier = Modifier.padding(top = Spacing.l)
+                        modifier = Modifier.padding(top = Spacing.xxl, bottom = Spacing.xl)
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.app_icon),
@@ -216,11 +160,25 @@ fun AnalysisScreen(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    Spacer(modifier = Modifier.weight(1f))
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    Text("Analyzing food...", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(modifier = Modifier.weight(1f))
+
+                    // Native ad sits in the upper-middle, just under the header.
                     NativeAdView()
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // Spinner + status pinned near the bottom (iOS bottom block).
+                    // iOS uses a large ProgressView + .headline text (EstimationReviewView.swift:81-86).
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(48.dp),
+                    )
+                    Spacer(modifier = Modifier.height(Spacing.m))
+                    Text(
+                        "Analyzing food...",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(Spacing.xxl))
                 }
             } else if (errorMessage != null) {
                 Box(
@@ -299,7 +257,8 @@ fun AnalysisScreen(
                     }
                 }
             } else if (rawResult != null) {
-                if (editableItems.isEmpty()) {
+                val result = rawResult!!
+                if (result.items.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -339,138 +298,112 @@ fun AnalysisScreen(
                         }
                     }
                 } else {
+                    // Read-only, auto-saved summary — mirrors iOS EstimationReviewView
+                    // success view (checkmark + "Logged Successfully!" + a card per item
+                    // + a "Total Added" macro-breakdown card). The editable Review & Edit
+                    // step was dropped in favor of iOS parity (was the D-008 extra).
                     LazyColumn(
-                        contentPadding = PaddingValues(Spacing.pageHorizontal),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.l),
+                        // 24 between sections matches iOS VStack(spacing: 24); the cards
+                        // get an extra horizontal inset (iOS .padding() + .padding(.horizontal))
+                        // applied per-item below, so they sit narrower than the title.
+                        contentPadding = PaddingValues(
+                            horizontal = Spacing.l,
+                            vertical = Spacing.l,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.xxl),
                         modifier = Modifier
                             .fillMaxSize()
-                            .testTag(AccessibilityTags.EstimationReview.EDIT_VIEW),
+                            .testTag(AccessibilityTags.EstimationReview.SUCCESS_VIEW),
                     ) {
                         item {
-                            // Thumbnail header
-                            Row(
+                            Column(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.s)
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(Spacing.m),
                             ) {
-                                images.take(3).forEach { bitmap ->
-                                    Image(
-                                        bitmap = bitmap.asImageBitmap(),
-                                        contentDescription = "Captured Image",
-                                        modifier = Modifier
-                                            .size(80.dp)
-                                            .clip(RoundedCornerShape(Spacing.s)),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
-                            }
-                        }
-
-                        item {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
                                 Icon(
                                     Icons.Filled.CheckCircle,
-                                    contentDescription = "Success",
+                                    contentDescription = "Logged",
                                     tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier
+                                        .padding(top = Spacing.s)
+                                        .size(64.dp)
                                 )
                                 Text(
-                                    "Review & Edit",
-                                    style = MaterialTheme.typography.titleLarge,
+                                    "Logged Successfully!",
+                                    style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onBackground
+                                    color = MaterialTheme.colorScheme.onBackground,
                                 )
                             }
-                            Text(
-                                "Make sure the estimated quantities and macros are correct.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = Spacing.xs)
-                            )
                         }
 
-                        item {
-                            OutlinedTextField(
-                                value = editableMealName,
-                                onValueChange = { editableMealName = it },
-                                label = { Text("Meal Context") },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        item {
-                            Column(verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
-                                Text(
-                                    "Meal Type",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                                Surface(
-                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                                    shape = RoundedCornerShape(50),
-                                    modifier = Modifier.padding(vertical = Spacing.xs),
-                                ) {
-                                    MealTypePicker(
-                                        selection = selectedMealType,
-                                        onSelect = { selectedMealType = it },
-                                        // 6.dp is off-token and intentional — tighter MealTypePicker inner padding
-                                        modifier = Modifier.padding(vertical = 6.dp),
+                        items(result.items) { item ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = Spacing.l)
+                                    .clip(RoundedCornerShape(Spacing.m))
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .padding(Spacing.l),
+                                verticalArrangement = Arrangement.spacedBy(Spacing.s),
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        item.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    Spacer(Modifier.width(Spacing.s))
+                                    Text(
+                                        "${item.calories.toInt()} kcal",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
                                     )
                                 }
+                                CompactMacroRow(item.protein, item.carbs, item.fat)
                             }
                         }
 
-                        itemsIndexed(editableItems) { _, itemState ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(Spacing.l),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        item {
+                            // "Total Added" card — secondaryContainer is the dark-green
+                            // surface (iOS uses cwSecondary) with light onSecondaryContainer
+                            // text; the total is accent orange, then the macro breakdown.
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = Spacing.l)
+                                    .clip(RoundedCornerShape(Spacing.l))
+                                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                                    .padding(Spacing.l),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(Spacing.s),
                             ) {
-                                Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                                    OutlinedTextField(
-                                        value = itemState.name,
-                                        onValueChange = { itemState.name = it },
-                                        label = { Text("Food Name") },
-                                        modifier = Modifier.fillMaxWidth()
+                                Text(
+                                    "Total Added",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                )
+                                Text(
+                                    "${result.totalCalories.toInt()} kcal",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                )
+                                if (result.totalProtein > 0 || result.totalCarbs > 0 || result.totalFat > 0) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(vertical = Spacing.xs),
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f),
                                     )
-                                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                                        OutlinedTextField(
-                                            value = itemState.quantity,
-                                            onValueChange = { itemState.quantity = it },
-                                            label = { Text("Quantity") },
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        OutlinedTextField(
-                                            value = itemState.calories,
-                                            onValueChange = { itemState.calories = it },
-                                            label = { Text("Calories") },
-                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                                        OutlinedTextField(
-                                            value = itemState.protein,
-                                            onValueChange = { itemState.protein = it },
-                                            label = { Text("Protein (g)") },
-                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        OutlinedTextField(
-                                            value = itemState.carbs,
-                                            onValueChange = { itemState.carbs = it },
-                                            label = { Text("Carbs (g)") },
-                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        OutlinedTextField(
-                                            value = itemState.fat,
-                                            onValueChange = { itemState.fat = it },
-                                            label = { Text("Fat (g)") },
-                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
+                                    MacroBreakdownRow(
+                                        result.totalProtein,
+                                        result.totalCarbs,
+                                        result.totalFat,
+                                    )
                                 }
                             }
                         }
@@ -500,5 +433,68 @@ class EditableEstimationItem(initial: EstimationItem) {
             fat = fat.toDoubleOrNull(),
             confidence = confidence
         )
+    }
+}
+
+/**
+ * Per-item macro row for the result summary — mirrors iOS `CompactMacroRow`
+ * (Components.swift:300): a thin proportional bar beside compact P/C/F grams + %.
+ * Renders nothing when the item has no macro data.
+ */
+@Composable
+private fun CompactMacroRow(protein: Double?, carbs: Double?, fat: Double?) {
+    val p = protein ?: 0.0
+    val c = carbs ?: 0.0
+    val f = fat ?: 0.0
+    if (p <= 0.0 && c <= 0.0 && f <= 0.0) return
+
+    val proteinCals = p * 4
+    val carbsCals = c * 4
+    val fatCals = f * 9
+    val total = (proteinCals + carbsCals + fatCals).coerceAtLeast(1.0)
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.m),
+    ) {
+        Box(modifier = Modifier.weight(1f)) {
+            MacroProportionalBar(proteinCals, carbsCals, fatCals, height = 6)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
+            CompactMacroLabel("P", p, ((proteinCals / total) * 100).toInt(), MaterialTheme.colorScheme.primary)
+            CompactMacroLabel("C", c, ((carbsCals / total) * 100).toInt(), CwAccent)
+            CompactMacroLabel("F", f, ((fatCals / total) * 100).toInt(), MaterialTheme.colorScheme.secondary)
+        }
+    }
+}
+
+@Composable
+private fun CompactMacroLabel(
+    label: String,
+    grams: Double,
+    pct: Int,
+    color: androidx.compose.ui.graphics.Color,
+) {
+    Row(
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+    ) {
+        Surface(
+            shape = androidx.compose.foundation.shape.CircleShape,
+            color = color,
+            modifier = Modifier.padding(top = 3.dp).size(6.dp),
+        ) {}
+        Column {
+            Text(
+                "$label: ${grams.toInt()}g",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
+            Text(
+                "$pct%",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+            )
+        }
     }
 }
