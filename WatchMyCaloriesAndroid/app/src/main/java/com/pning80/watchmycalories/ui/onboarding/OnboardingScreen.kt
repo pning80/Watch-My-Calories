@@ -248,6 +248,16 @@ private fun PrivacyStep(
             color = MaterialTheme.colorScheme.primary
         )
 
+        // Scrollable content region (weight 1f) so the pinned ProgressDots +
+        // Next button below never get clipped when content (e.g. the health
+        // caption) makes the step taller than the viewport.
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(Spacing.xl)
+        ) {
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
             Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
                 Row(
@@ -312,7 +322,14 @@ private fun PrivacyStep(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+            // Mirror of iOS permissionsStep health caption (OnboardingView.swift:258).
+            // "Apple Health" → "Health Connect" for the Android platform.
+            Text(
+                "Syncs active calories burned from Health Connect to adjust your daily goal.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
 
         ProgressDots(current = 1, total = 2)
 
