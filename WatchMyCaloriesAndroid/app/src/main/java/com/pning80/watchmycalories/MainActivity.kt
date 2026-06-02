@@ -313,7 +313,10 @@ private fun MainAppContent(
                 val navItemColors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
                     selectedTextColor = MaterialTheme.colorScheme.primary,
-                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                    // iOS TabView has no active-indicator pill — the selected tab is
+                    // shown by the green icon+label tint alone. Transparent indicator
+                    // mirrors that (was primary @ 0.18α, an un-iOS Material pill).
+                    indicatorColor = androidx.compose.ui.graphics.Color.Transparent,
                     unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 )
