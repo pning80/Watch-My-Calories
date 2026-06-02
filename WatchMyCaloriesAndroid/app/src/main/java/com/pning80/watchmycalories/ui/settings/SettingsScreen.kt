@@ -351,18 +351,47 @@ fun SettingsScreen(
                         onValueChange = { age = it }
                     )
 
-                    // Gender
+                    // Gender — dropdown menu picker mirroring iOS's `.pickerStyle(.menu)`
+                    // and matching the Activity Level control below. (Replaced an
+                    // earlier Material segmented control: iOS uses a default `.menu`
+                    // Picker for Gender just like Theme/Unit/Activity, so the faithful
+                    // Android mirror is a dropdown, not segmented buttons.)
                     Text("Gender", style = MaterialTheme.typography.bodyMedium)
-                    SingleChoiceSegmentedButtonRow(
-                        modifier = Modifier.fillMaxWidth().testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.GENDER_PICKER)
+                    var genderExpanded by remember { mutableStateOf(false) }
+                    ExposedDropdownMenuBox(
+                        expanded = genderExpanded,
+                        onExpandedChange = { genderExpanded = it }
                     ) {
-                        Gender.entries.forEachIndexed { index, g ->
-                            SegmentedButton(
-                                selected = gender == g,
-                                onClick = { gender = g },
-                                shape = SegmentedButtonDefaults.itemShape(index = index, count = Gender.entries.size),
-                                modifier = Modifier.testTag("settings_gender_${g.displayName}")
-                            ) { Text(g.displayName) }
+                        OutlinedTextField(
+                            value = gender.displayName,
+                            onValueChange = {},
+                            readOnly = true,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedTextColor = MaterialTheme.colorScheme.primary,
+                                focusedTextColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                                .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.GENDER_PICKER)
+                        )
+                        ExposedDropdownMenu(
+                            expanded = genderExpanded,
+                            onDismissRequest = { genderExpanded = false }
+                        ) {
+                            Gender.entries.forEach { g ->
+                                DropdownMenuItem(
+                                    text = { Text(g.displayName) },
+                                    onClick = {
+                                        gender = g
+                                        genderExpanded = false
+                                    },
+                                    modifier = Modifier.testTag("settings_gender_${g.displayName}")
+                                )
+                            }
                         }
                     }
 
