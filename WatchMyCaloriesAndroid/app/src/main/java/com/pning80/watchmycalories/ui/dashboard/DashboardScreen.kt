@@ -349,6 +349,14 @@ private fun MealGroupItem(
                     )
                 }
             }
+            // Group macro bar — mirrors iOS grouped summaryRow (Components.swift:614):
+            // the collapsed group summary shows the group-total macro proportions.
+            val gpCals = entries.sumOf { it.protein ?: 0.0 } * 4
+            val gcCals = entries.sumOf { it.carbs ?: 0.0 } * 4
+            val gfCals = entries.sumOf { it.fat ?: 0.0 } * 9
+            if (gpCals + gcCals + gfCals > 0) {
+                MacroProportionalBar(proteinCals = gpCals, carbsCals = gcCals, fatCals = gfCals, height = 4)
+            }
             if (expanded) {
                 entries.forEach { entry ->
                     Text(
