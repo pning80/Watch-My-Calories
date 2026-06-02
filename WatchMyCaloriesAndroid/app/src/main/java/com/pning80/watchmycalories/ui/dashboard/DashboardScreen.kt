@@ -151,7 +151,7 @@ fun DashboardScreen(
             // so the banner doesn't crowd the hero card.
             item {
                 Spacer(modifier = Modifier.height(Spacing.xl))
-                BannerAdView()
+                BannerAdView(insetHorizontal = false)
             }
 
             if (todayEntries.isEmpty()) {

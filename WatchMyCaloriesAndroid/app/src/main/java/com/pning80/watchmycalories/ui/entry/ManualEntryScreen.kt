@@ -99,7 +99,7 @@ fun ManualEntryScreen(
                 .padding(Spacing.pageHorizontal),
             verticalArrangement = Arrangement.spacedBy(Spacing.xl)
         ) {
-            BannerAdView()
+            BannerAdView(insetHorizontal = false)
 
             // Food Details Card
             Card(
