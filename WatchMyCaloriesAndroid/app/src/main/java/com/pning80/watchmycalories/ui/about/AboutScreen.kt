@@ -219,9 +219,12 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 )
 
                 Text(
+                    // iOS styles this as .secondary (gray), same as the disclaimer
+                    // above — NOT the accent. M3 `tertiary` is the orange accent
+                    // (#FF9E1C), which was rendering this line orange; match iOS gray.
                     "Powered by Google Gemini",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.tertiary
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
 
                 // Copyright footer — matches iOS "© 2026 Watch My Calories".
