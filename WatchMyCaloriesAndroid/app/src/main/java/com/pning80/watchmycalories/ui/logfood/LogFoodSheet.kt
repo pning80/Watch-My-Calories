@@ -75,8 +75,9 @@ fun LogFoodSheet(
             )
 
             // Banner ad — mirrors iOS LogFoodSheet.swift:56 (BannerAdView at the
-            // bottom of the sheet). Self-hides under test IDs / no-consent.
-            BannerAdView()
+            // bottom of the sheet). insetHorizontal=false: the sheet Column
+            // already applies pageHorizontal padding.
+            BannerAdView(insetHorizontal = false)
         }
     }
 }

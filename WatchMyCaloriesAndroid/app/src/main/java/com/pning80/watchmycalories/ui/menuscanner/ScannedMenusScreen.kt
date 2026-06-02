@@ -110,7 +110,7 @@ fun ScannedMenusScreen(
                 modifier = Modifier.fillMaxSize().padding(padding)
             ) {
                 item {
-                    BannerAdView()
+                    BannerAdView(insetHorizontal = false)
                 }
 
                 items(scans, key = { it.id }) { scan ->

@@ -235,7 +235,7 @@ fun SettingsScreen(
             // BannerAdView is conditionally rendered inside BannerAdView() based on
             // whether a real (non-Google-test) ad unit ID is wired; in debug builds with
             // the placeholder test unit it returns Unit, avoiding the "Test Ad" banner.
-            BannerAdView()
+            BannerAdView(insetHorizontal = false)
 
             // ── App Appearance ──
             Card(
