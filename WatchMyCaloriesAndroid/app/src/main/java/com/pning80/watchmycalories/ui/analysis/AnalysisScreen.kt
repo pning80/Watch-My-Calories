@@ -79,7 +79,12 @@ fun AnalysisScreen(
                 isLoading = false
             },
             onFailure = { err ->
-                errorMessage = err.message
+                // Never leave this null: the error view is gated on
+                // `errorMessage != null`, and some failures (e.g. an
+                // attestation/keystore exception) carry a null `message`,
+                // which would otherwise fall through to a blank screen.
+                errorMessage = err.message?.takeIf { it.isNotBlank() }
+                    ?: "We couldn't analyze the image. Please try again."
                 isLoading = false
             }
         )

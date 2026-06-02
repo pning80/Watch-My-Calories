@@ -15,12 +15,9 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import android.view.HapticFeedbackConstants
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
@@ -83,7 +79,6 @@ fun CameraScreen(
     }
 
     var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
-    var capturedImages by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
 
     if (hasCameraPermission) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -174,12 +169,15 @@ fun CameraScreen(
                                 val bytes = ByteArray(buffer.capacity())
                                 buffer.get(bytes)
                                 val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
-                                capturedImages = capturedImages + bitmap
                                 image.close()
-                                // D-003b — menu mode is single-shot; route immediately.
-                                if (captureMode == CaptureMode.Menu) {
-                                    onPhotosCaptured(listOf(bitmap))
-                                }
+                                // Single-shot for BOTH modes — mirrors iOS, which
+                                // captures one photo per session and routes straight
+                                // to review (CameraView.swift onChange of
+                                // capturedImages.count). Food mode previously
+                                // accumulated a bundle behind an "Analyze N" button;
+                                // that was an Android-only divergence (D-003) and is
+                                // removed for parity.
+                                onPhotosCaptured(listOf(bitmap))
                             }
                             override fun onError(exception: ImageCaptureException) {
                                 exception.printStackTrace()
@@ -187,37 +185,6 @@ fun CameraScreen(
                         })
                     },
             )
-
-            // Food mode shows the bundle thumbnail row + "Analyze N" CTA. Menu mode
-            // skips this UI since capture routes immediately on first shot.
-            if (capturedImages.isNotEmpty() && captureMode == CaptureMode.Food) {
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(16.dp)
-                ) {
-                    Button(
-                        onClick = { onPhotosCaptured(capturedImages) },
-                        modifier = Modifier.testTag(AccessibilityTags.Camera.USE_PHOTO_BUTTON)
-                    ) {
-                        Text("Analyze ${capturedImages.size}")
-                    }
-                }
-                
-                LazyRow(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(16.dp)
-                ) {
-                    items(capturedImages) { bitmap ->
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "thumbnail",
-                            modifier = Modifier.size(64.dp).padding(4.dp)
-                        )
-                    }
-                }
-            }
 
             if (captureMode == CaptureMode.Menu) {
                 // OCR-friendly hint overlay (D-003b — single-photo menu capture).

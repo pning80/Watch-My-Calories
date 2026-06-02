@@ -87,7 +87,12 @@ fun MenuAnalysisScreen(
                 }
             },
             onFailure = { err ->
-                errorMessage = err.message
+                // Never null — the error views are gated on errorMessage, and a
+                // null-message failure (e.g. attestation/keystore) would
+                // otherwise render a blank screen. The "not_a_menu" sentinel is
+                // thrown with an explicit message so its branch still matches.
+                errorMessage = err.message?.takeIf { it.isNotBlank() }
+                    ?: "We couldn't analyze the menu. Please try again."
                 isLoading = false
             }
         )
