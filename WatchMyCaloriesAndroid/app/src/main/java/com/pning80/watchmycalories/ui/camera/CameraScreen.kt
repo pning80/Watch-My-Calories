@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import android.provider.Settings
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
+import androidx.camera.core.UseCaseGroup
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
@@ -95,22 +97,36 @@ fun CameraScreen(
                     val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
                     cameraProviderFuture.addListener({
                         val cameraProvider = cameraProviderFuture.get()
-                        val preview = Preview.Builder().build().also {
-                            it.setSurfaceProvider(previewView.surfaceProvider)
-                        }
+                        // Bind after the PreviewView is laid out so its ViewPort
+                        // (size + FILL_CENTER scale type) is available.
+                        previewView.post {
+                            val preview = Preview.Builder().build().also {
+                                it.setSurfaceProvider(previewView.surfaceProvider)
+                            }
 
-                        imageCapture = ImageCapture.Builder().build()
+                            imageCapture = ImageCapture.Builder().build()
 
-                        try {
-                            cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
-                                lifecycleOwner,
-                                CameraSelector.DEFAULT_BACK_CAMERA,
-                                preview,
-                                imageCapture
-                            )
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                            // Group Preview + ImageCapture under the preview's ViewPort
+                            // so the captured frame is cropped to exactly what's visible
+                            // on screen (WYSIWYG). Without this, ImageCapture returns the
+                            // full 4:3 sensor frame while the preview center-crops to fill
+                            // the tall screen — so the review showed a much wider shot than
+                            // the user framed. The resulting crop arrives as image.cropRect.
+                            val groupBuilder = UseCaseGroup.Builder()
+                                .addUseCase(preview)
+                                .addUseCase(imageCapture!!)
+                            previewView.viewPort?.let { groupBuilder.setViewPort(it) }
+
+                            try {
+                                cameraProvider.unbindAll()
+                                cameraProvider.bindToLifecycle(
+                                    lifecycleOwner,
+                                    CameraSelector.DEFAULT_BACK_CAMERA,
+                                    groupBuilder.build()
+                                )
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
                     }, ContextCompat.getMainExecutor(ctx))
                     previewView
@@ -168,8 +184,36 @@ fun CameraScreen(
                                 val buffer = image.planes[0].buffer
                                 val bytes = ByteArray(buffer.capacity())
                                 buffer.get(bytes)
-                                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
+                                val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, null)
+                                // CameraX delivers the full sensor JPEG plus (a) a cropRect
+                                // from the ViewPort marking the on-screen region and (b) the
+                                // clockwise rotation to bring it upright. The bitmap is consumed
+                                // in-memory (cameraReview → analysis) with no EXIF round-trip,
+                                // so we must apply both here, in sensor space then rotation —
+                                // otherwise the photo is wider than framed and/or sideways.
+                                val crop = image.cropRect
+                                val rotation = image.imageInfo.rotationDegrees
                                 image.close()
+
+                                val framed = if (
+                                    crop.left >= 0 && crop.top >= 0 &&
+                                    crop.width() in 1..decoded.width &&
+                                    crop.height() in 1..decoded.height &&
+                                    (crop.width() != decoded.width || crop.height() != decoded.height)
+                                ) {
+                                    Bitmap.createBitmap(decoded, crop.left, crop.top, crop.width(), crop.height())
+                                } else {
+                                    decoded
+                                }
+
+                                val bitmap = if (rotation != 0) {
+                                    val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
+                                    Bitmap.createBitmap(
+                                        framed, 0, 0, framed.width, framed.height, matrix, true
+                                    )
+                                } else {
+                                    framed
+                                }
                                 // Single-shot for BOTH modes — mirrors iOS, which
                                 // captures one photo per session and routes straight
                                 // to review (CameraView.swift onChange of
