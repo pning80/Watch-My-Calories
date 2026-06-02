@@ -13,29 +13,17 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
-// Safety net against Google's literal "TEST AD" creative ever reaching real
-// users. Triggers in two situations:
-//   - Debug builds, where `defaultConfig` in app/build.gradle.kts pins
-//     ADMOB_BANNER_ID to the test ID so dev installs + parity tests don't
-//     fire real AdMob impressions.
-//   - Release builds where both `Ads/AdMob-Android.properties` (committed
-//     prod source) and `local.properties` (per-dev override) are missing
-//     the ADMOB_* keys — the build script falls back silently to the test
-//     ID, and this guard keeps the misconfigured release from serving
-//     Google's "TEST AD" creative.
-// Mirrors the companion `AdManager.isTestUnit` check that gates the
-// interstitial flow; with the committed properties file present, release
-// builds naturally resolve to production IDs and render real ads.
-private val TEST_AD_UNIT_PREFIXES = listOf("ca-app-pub-3940256099942544/")
-
 @Composable
 fun BannerAdView() {
-    // Gates mirror iOS BannerAdView (BannerAdView.swift:13):
-    // `!isUITestingMode && adManager.canRequestAds`. Without these the ad
-    // request would race ahead of the consent-gated MobileAds.initialize.
+    // Gates mirror iOS BannerAdView (BannerAdView.swift:12) exactly:
+    // `!isUITestingMode && adManager.canRequestAds`. No test-ID suppression —
+    // iOS renders Google's test creative in DEBUG, and so does Android, so the
+    // ad slot is verifiable in dev. Release resolves ADMOB_BANNER_ID to the
+    // production ID via the committed `Ads/AdMob-Android.properties` +
+    // release-buildType override, so real users get real ads. (The earlier
+    // test-prefix guard was an Android-only divergence — removed for parity.)
     val canRequestAds by AdManager.canRequestAds.collectAsState()
     if (AdManager.disableForUITesting || !canRequestAds) return
-    if (TEST_AD_UNIT_PREFIXES.any { AdManager.BANNER_UNIT_ID.startsWith(it) }) return
     AndroidView(
         modifier = Modifier
             .fillMaxWidth()

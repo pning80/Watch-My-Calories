@@ -35,12 +35,6 @@ import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.nativead.NativeAdView as GmsNativeAdView
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
-// Safety net mirroring `BannerAdView.TEST_AD_UNIT_PREFIXES`. If we ever hand
-// `NATIVE_UNIT_ID` a Google test ID — either in debug or in a release built
-// without local.properties prod IDs — skip the load entirely so users never
-// see Google's literal "TEST AD" creative inside a real surface.
-private val TEST_AD_UNIT_PREFIXES = listOf("ca-app-pub-3940256099942544/")
-
 /**
  * Composable wrapper around the GMS [NativeAdView][GmsNativeAdView] that mirrors
  * iOS `NativeAdContentView` (NativeAdView.swift): media + "Ad" badge + icon +
@@ -78,12 +72,12 @@ fun NativeAdView() {
         // callback would leak the NativeAd — fixed per PR #31 review.
         var loadedAd: NativeAd? = null
 
-        // Mirror iOS NativeAdLoader.loadAd guards plus the test-prefix guard.
-        if (
-            AdManager.disableForUITesting ||
-            !canRequestAds ||
-            TEST_AD_UNIT_PREFIXES.any { AdManager.NATIVE_UNIT_ID.startsWith(it) }
-        ) {
+        // Mirror iOS NativeAdLoader.loadAd guards exactly: skip only under
+        // UI-testing or before consent. No test-ID suppression — iOS shows
+        // test native ads in DEBUG, so Android does too (removed Android-only
+        // prefix guard for parity; release uses prod IDs via the committed
+        // properties file).
+        if (AdManager.disableForUITesting || !canRequestAds) {
             return@DisposableEffect onDispose { loadedAd?.destroy() }
         }
         val videoOptions = VideoOptions.Builder()
