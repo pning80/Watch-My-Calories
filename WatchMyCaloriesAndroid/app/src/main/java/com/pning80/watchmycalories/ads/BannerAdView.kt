@@ -31,7 +31,16 @@ fun BannerAdView() {
             .testTag(AccessibilityTags.Ads.BANNER),
         factory = { context ->
             AdView(context).apply {
-                setAdSize(AdSize.BANNER)
+                // Full-width adaptive anchored banner — mirrors iOS
+                // `currentOrientationAnchoredAdaptiveBanner(width:)`
+                // (BannerAdView.swift:112). The previous fixed AdSize.BANNER
+                // (320x50dp) rendered narrow and centered with side margins on
+                // phones wider than 320dp. Adaptive sizes to the device width.
+                val density = context.resources.displayMetrics.density
+                val adWidthDp = (context.resources.displayMetrics.widthPixels / density).toInt()
+                setAdSize(
+                    AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, adWidthDp)
+                )
                 adUnitId = AdManager.BANNER_UNIT_ID
                 loadAd(AdRequest.Builder().build())
             }
