@@ -6,6 +6,11 @@ import androidx.compose.ui.graphics.Color
 val CwPrimaryLight = Color(0xFF2E6B4F)
 val CwSecondaryLight = Color(0xFFD9F2DB)
 val CwAccent = Color(0xFFFF9E1C)
+// Fat macro color — iOS uses `Color.secondary` (the system GRAY label color),
+// NOT the brand sage. Ported as colorScheme.secondary (sage) by mistake, which
+// made Fat green instead of gray everywhere (hero breakdown, macro bars, History
+// chips). iOS systemGray works in both themes. Shared light/dark.
+val CwMacroFat = Color(0xFF8E8E93)
 val CwBackgroundLight = Color(0xFFFAFAFA)
 val CwSurfaceLight = Color(0xFFFFFFFF)
 val CwTextPrimaryLight = Color(0xFF1A1A1A)
