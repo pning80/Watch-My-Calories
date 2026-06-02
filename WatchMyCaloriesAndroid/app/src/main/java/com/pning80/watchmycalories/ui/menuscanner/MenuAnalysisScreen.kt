@@ -262,7 +262,9 @@ fun MenuAnalysisScreen(
 
                         item {
                             Text(
-                                result?.restaurantName ?: "Unknown Restaurant",
+                                // iOS shows "Looks like {name}" (MenuAnalysisView.swift:149),
+                                // not the bare restaurant name.
+                                "Looks like ${result?.restaurantName ?: "Unknown Restaurant"}",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(top = Spacing.l, bottom = Spacing.s)
