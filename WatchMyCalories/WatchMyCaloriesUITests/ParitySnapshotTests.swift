@@ -89,4 +89,30 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 5))
         snap("07-about")
     }
+
+    /// Analysis / EstimationReview success summary (auto-saved read-only state).
+    /// Drives the capture→Use flow like EstimationReviewTests; the default
+    /// MockEstimationService (no --mock-estimation-* arg) returns a success result.
+    func testSnapAnalysisSuccess() {
+        launchWithAIConsentAccepted()
+        app.tabBars.buttons["Log Food"].tap()
+        let scanFood = app.staticTexts["Scan Food"]
+        XCTAssertTrue(scanFood.waitForExistence(timeout: 5))
+        scanFood.tap()
+        let capture = app.buttons["camera_captureButton"]
+        XCTAssertTrue(capture.waitForExistence(timeout: 5))
+        capture.tap()
+        let disclaimerContinue = app.buttons["disclaimer_continueButton"]
+        if disclaimerContinue.waitForExistence(timeout: 3) { disclaimerContinue.tap() }
+        let use = app.buttons["camera_usePhotoButton"]
+        XCTAssertTrue(use.waitForExistence(timeout: 5))
+        use.tap()
+        // After estimation an "Analysis complete! / View Results" gate appears
+        // (the ad surface, suppressed under --uitesting but the CTA remains).
+        // Tap it by label to reach the read-only success summary.
+        let viewResults = app.buttons["View Results"]
+        if viewResults.waitForExistence(timeout: 15) { viewResults.tap() }
+        _ = app.staticTexts["Logged Successfully!"].waitForExistence(timeout: 12)
+        snap("08-analysis-success")
+    }
 }
