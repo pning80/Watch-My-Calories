@@ -185,6 +185,21 @@ object TestSeed {
             imageID = null, mealName = null,
             mealTypeRaw = MealType.DINNER.displayName,
         ))
+        // Second yesterday entry — iOS seeds a Latte here too (WatchMyCaloriesApp.swift:185),
+        // making yesterday total 750 / P33·C82·F26. Android was missing it, so the
+        // History day-card paired diff diverged (600 vs 750) on every run.
+        val yesterdayMorning = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, -1); set(Calendar.HOUR_OF_DAY, 8); set(Calendar.MINUTE, 30)
+        }.timeInMillis
+        foodDao.insertEntry(FoodEntry(
+            id = UUID.randomUUID().toString(),
+            name = "Latte",
+            calories = 150.0, quantity = "1 cup",
+            timestamp = yesterdayMorning,
+            protein = 8.0, carbs = 12.0, fat = 6.0,
+            imageID = null, mealName = null,
+            mealTypeRaw = MealType.BREAKFAST.displayName,
+        ))
         val twoDaysAgo = Calendar.getInstance().apply {
             add(Calendar.DAY_OF_YEAR, -2); set(Calendar.HOUR_OF_DAY, 12); set(Calendar.MINUTE, 0)
         }.timeInMillis
