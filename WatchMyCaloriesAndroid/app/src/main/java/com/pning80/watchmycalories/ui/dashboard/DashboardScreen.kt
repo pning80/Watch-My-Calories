@@ -207,11 +207,14 @@ fun DashboardScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = mealType.displayName.uppercase(),
-                                    style = MaterialTheme.typography.labelSmall,
+                                    // iOS MealSection header (Components.swift:816-819):
+                                    // title-case displayName, .title3 bold, cwTextPrimary.
+                                    // Prominent heading — not the former tiny uppercase
+                                    // green label (D-006 resolved 2026-06-02).
+                                    text = mealType.displayName,
+                                    style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    letterSpacing = MaterialTheme.typography.labelSmall.letterSpacing
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 // kcal pill — mirrors iOS MealSection (Components.swift:823-830):
                                 // a light-green (cwSecondary) capsule with primary text,
@@ -416,21 +419,27 @@ private fun FoodEntryCard(
         val imageFile = remember(entry.imageID) {
             entry.imageID?.let { com.pning80.watchmycalories.data.ImageStorage.getImageFile(context, it) }
         }
-        if (imageFile != null && imageFile.exists()) {
-            coil.compose.AsyncImage(
-                model = imageFile,
-                contentDescription = null,
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-            )
-        } else Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.size(48.dp)
+        // iOS draws a 48dp cwSecondary rounded-rect tile (corner 12) and, when a
+        // photo exists, a 40dp Circle-clipped image centered on it; otherwise the
+        // initial letter (Components.swift:457-477/580-599). Mirror that: the tile
+        // is always the sage rounded-rect, the photo is a circle inside it (F2).
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.secondary),
+            contentAlignment = Alignment.Center
         ) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            if (imageFile != null && imageFile.exists()) {
+                coil.compose.AsyncImage(
+                    model = imageFile,
+                    contentDescription = null,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                )
+            } else {
                 Text(
                     text = entry.name.take(1).uppercase(),
                     style = MaterialTheme.typography.titleMedium,
