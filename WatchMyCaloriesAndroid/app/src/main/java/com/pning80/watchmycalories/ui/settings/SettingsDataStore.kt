@@ -25,7 +25,11 @@ class SettingsDataStore(private val context: Context) {
     // --- Unit System ---
     val isMetricFlow: Flow<Boolean> = context.dataStore.data
         .map { preferences ->
-            preferences[IS_METRIC] ?: true // Default to metric
+            // Default follows locale, mirroring iOS SettingsStore.localeDefault
+            // (region == "US" ? .us : .metric, SettingsStore.swift:11). Android
+            // previously hardcoded metric, so US-locale users defaulted to cm/kg
+            // while iOS defaulted to ft/lbs.
+            preferences[IS_METRIC] ?: (java.util.Locale.getDefault().country != "US")
         }
 
     suspend fun setMetric(isMetric: Boolean) {

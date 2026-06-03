@@ -29,9 +29,13 @@ class SettingsScreenTest : BaseComposeTest() {
     @Before
     fun setup() {
         settingsDataStore = SettingsDataStore(RuntimeEnvironment.getApplication())
-        // Clear any DataStore values from previous test classes to prevent pollution
+        // Clear any DataStore values from previous test classes to prevent pollution,
+        // then pin metric so these tests are deterministic regardless of the
+        // locale-based unit default (US locale → imperial would otherwise change the
+        // rendered profile controls + goal-calc rounding and break value assertions).
         kotlinx.coroutines.runBlocking {
             RuntimeEnvironment.getApplication().dataStore.edit { it.clear() }
+            settingsDataStore.setMetric(true)
         }
     }
 
