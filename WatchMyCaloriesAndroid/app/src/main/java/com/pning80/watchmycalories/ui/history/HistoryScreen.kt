@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import kotlin.math.roundToInt
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -173,19 +174,37 @@ fun HistoryDayCard(
             }
         }
 
-        // Compact macro row in header
+        // Compact macro row in header — mirrors iOS CompactMacroRow
+        // (Components.swift:327-363): a MacroProportionalBar on the left plus each
+        // macro shown as grams over its % of macro-calories.
         if (hasMacros) {
+            val proteinCals = totalProtein * 4
+            val carbsCals = totalCarbs * 4
+            val fatCals = totalFat * 9
+            val macroCals = proteinCals + carbsCals + fatCals
+            fun pct(cals: Double) = if (macroCals > 0) ((cals / macroCals) * 100).roundToInt() else 0
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 12.dp)
                     .testTag(AccessibilityTags.History.DAY_CARD_MACROS),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                MacroChip("P", totalProtein, MaterialTheme.colorScheme.primary)
-                MacroChip("C", totalCarbs, MaterialTheme.colorScheme.tertiary)
-                MacroChip("F", totalFat, CwMacroFat)
+                Box(modifier = Modifier.weight(1f)) {
+                    com.pning80.watchmycalories.ui.components.MacroProportionalBar(
+                        proteinCals = proteinCals,
+                        carbsCals = carbsCals,
+                        fatCals = fatCals,
+                        height = 6
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MacroChip("P", totalProtein, pct(proteinCals), MaterialTheme.colorScheme.primary)
+                    MacroChip("C", totalCarbs, pct(carbsCals), MaterialTheme.colorScheme.tertiary)
+                    MacroChip("F", totalFat, pct(fatCals), CwMacroFat)
+                }
             }
         }
 
@@ -451,17 +470,26 @@ private fun SwipeToDeleteRow(
 }
 
 @Composable
-private fun MacroChip(label: String, grams: Double, color: androidx.compose.ui.graphics.Color) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+private fun MacroChip(label: String, grams: Double, pct: Int, color: androidx.compose.ui.graphics.Color) {
+    // Dot + "P: 45g" over "27%", mirroring iOS CompactMacroRow.compactMacro
+    // (top-aligned dot, grams in secondary, percentage in tertiary).
+    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
         Surface(
             shape = RoundedCornerShape(50),
             color = color,
-            modifier = Modifier.size(6.dp)
+            modifier = Modifier.padding(top = 3.dp).size(6.dp)
         ) {}
-        Text(
-            "$label: ${grams.toInt()}g",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
+        Column {
+            Text(
+                "$label: ${grams.toInt()}g",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+            Text(
+                "$pct%",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+            )
+        }
     }
 }
