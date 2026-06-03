@@ -32,6 +32,7 @@ import com.pning80.watchmycalories.data.MealType
 import com.pning80.watchmycalories.ads.BannerAdView
 import com.pning80.watchmycalories.ui.components.EmptyStateCard
 import com.pning80.watchmycalories.ui.components.HeroSummaryCard
+import com.pning80.watchmycalories.ui.components.MacroProportionalBar
 import com.pning80.watchmycalories.ui.theme.Spacing
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -348,6 +349,14 @@ private fun MealGroupItem(
                     )
                 }
             }
+            // Group macro bar — mirrors iOS grouped summaryRow (Components.swift:614):
+            // the collapsed group summary shows the group-total macro proportions.
+            val gpCals = entries.sumOf { it.protein ?: 0.0 } * 4
+            val gcCals = entries.sumOf { it.carbs ?: 0.0 } * 4
+            val gfCals = entries.sumOf { it.fat ?: 0.0 } * 9
+            if (gpCals + gcCals + gfCals > 0) {
+                MacroProportionalBar(proteinCals = gpCals, carbsCals = gcCals, fatCals = gfCals, height = 4)
+            }
             if (expanded) {
                 entries.forEach { entry ->
                     Text(
@@ -436,19 +445,21 @@ private fun FoodEntryCard(
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(entry.timestamp)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                )
-                if (entry.quantity.isNotBlank()) {
-                    Text(
-                        "• ${entry.quantity}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    )
-                }
+            Text(
+                SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(entry.timestamp)),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+            // Macro proportional bar — mirrors iOS FoodEntryGroupCard.summaryRow
+            // (Components.swift:614): shown under name/time when the entry has
+            // macro data. iOS shows no inline quantity on this card (it lives in
+            // the Edit screen), so the "• quantity" text was dropped for parity.
+            val pCals = (entry.protein ?: 0.0) * 4
+            val cCals = (entry.carbs ?: 0.0) * 4
+            val fCals = (entry.fat ?: 0.0) * 9
+            if (pCals + cCals + fCals > 0) {
+                Spacer(Modifier.height(4.dp))
+                MacroProportionalBar(proteinCals = pCals, carbsCals = cCals, fatCals = fCals, height = 4)
             }
         }
 
