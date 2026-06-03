@@ -326,7 +326,10 @@ private fun MealGroupItem(
                         title,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.secondary
+                        // iOS group-card title is cwTextPrimary (Components.swift:606),
+                        // not the secondary accent — onSurface matches and stays
+                        // legible now that secondary is forest (D-011).
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         "${entries.size} items",
@@ -408,7 +411,7 @@ private fun FoodEntryCard(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Photo thumbnail when available; otherwise initial badge with
-        // onSecondary text on secondary fill (PR B contrast fix).
+        // a cwPrimary letter on the cwSecondary tile, mirroring iOS.
         val context = androidx.compose.ui.platform.LocalContext.current
         val imageFile = remember(entry.imageID) {
             entry.imageID?.let { com.pning80.watchmycalories.data.ImageStorage.getImageFile(context, it) }
@@ -432,7 +435,10 @@ private fun FoodEntryCard(
                     text = entry.name.take(1).uppercase(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSecondary
+                    // iOS avatar letter is cwPrimary on the cwSecondary tile
+                    // (Components.swift:475/598) — mint on forest in dark,
+                    // dark-green on pale in light, legible in both (F5/D-011).
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
