@@ -479,7 +479,11 @@ private fun FoodEntryCard(
         }
 
         Text(
-            "${entry.calories.toInt()}",
+            // iOS dashboard rows are FoodEntryGroupCards that render the trailing
+            // calorie as "{n} kcal" (Components.swift:628); the single-entry card
+            // here was missing the "kcal" suffix. The group card (MealGroupItem)
+            // already includes it.
+            "${entry.calories.toInt()} kcal",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
