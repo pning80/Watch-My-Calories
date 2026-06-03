@@ -370,15 +370,18 @@ fun AnalysisScreen(
                         }
 
                         item {
-                            // "Total Added" card — secondaryContainer is the dark-green
-                            // surface (iOS uses cwSecondary) with light onSecondaryContainer
-                            // text; the total is accent orange, then the macro breakdown.
+                            // "Total Added" card — iOS uses `Color.cwSecondary`
+                            // (EstimationReviewView.swift:288): pale green in light,
+                            // forest in dark. colorScheme.secondary now matches that
+                            // exactly (D-011). secondaryContainer was wrong — it fell
+                            // back to M3's lavender in light mode. Title text uses
+                            // onSurface (= iOS cwTextPrimary); total is accent orange.
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = Spacing.l)
                                     .clip(RoundedCornerShape(Spacing.l))
-                                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                                    .background(MaterialTheme.colorScheme.secondary)
                                     .padding(Spacing.l),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(Spacing.s),
@@ -387,7 +390,7 @@ fun AnalysisScreen(
                                     "Total Added",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                                 Text(
                                     "${result.totalCalories.toInt()} kcal",
@@ -398,7 +401,7 @@ fun AnalysisScreen(
                                 if (result.totalProtein > 0 || result.totalCarbs > 0 || result.totalFat > 0) {
                                     HorizontalDivider(
                                         modifier = Modifier.padding(vertical = Spacing.xs),
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f),
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
                                     )
                                     MacroBreakdownRow(
                                         result.totalProtein,
