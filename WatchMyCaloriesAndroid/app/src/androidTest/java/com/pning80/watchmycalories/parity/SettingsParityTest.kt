@@ -17,10 +17,14 @@ import org.junit.Test
  * daily goals + calculate-goal flow, AI consent toggle, discard-dialog flow,
  * and seed-data preload.
  *
+ * Profile body-metric inputs now mirror iOS (D-004 resolved 2026-06-02):
+ *   - Metric Height, Weight (both units), and Age use a collapsible
+ *     disclosure row that expands to a platform NumberPicker tumbler wheel,
+ *     matching iOS's DisclosureGroup + .wheel (one open at a time).
+ *   - US Height keeps the inline ft/in dropdowns, matching iOS's US-mode menu
+ *     pickers (SettingsView.swift:79-95 are .menu, not .wheel).
+ *
  * Skipped — parity divergences in PORTING_DEVIATIONS.md:
- *   - testHeightDisclosureGroupExpandsInMetricMode / testWeight* / testAgeDisclosureGroupExpands /
- *     testHeightFeetAndInchesPickersExistInUSMode — Android uses Slider widgets (D-004),
- *     not DisclosureGroup-with-wheel-picker like iOS
  *   - testThemePickerCanChangeSelection / testUnitPickerCanChangeSelection /
  *     testActivityPickerCanChangeSelection — Android uses ExposedDropdownMenu;
  *     selection round-trip works but the dropdown semantics are different from

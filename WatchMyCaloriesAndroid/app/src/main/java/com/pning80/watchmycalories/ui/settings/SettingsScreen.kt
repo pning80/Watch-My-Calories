@@ -1,8 +1,12 @@
 package com.pning80.watchmycalories.ui.settings
 
+import android.view.ContextThemeWrapper
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -291,25 +295,36 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
                     Text("Profile", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
+                    // iOS wraps each wheel field in a DisclosureGroup and keeps one
+                    // open at a time (SettingsView.swift:98-194). Track which body-
+                    // metric wheel is expanded; tapping a row toggles it and collapses
+                    // the others. (D-004 resolved 2026-06-02: was Material Sliders.)
+                    var expandedProfileField by remember { mutableStateOf<String?>(null) }
+
                     if (localIsMetric) {
-                        // Height (cm)
-                        ProfileSliderRow(
+                        // Height (cm) — DisclosureGroup + wheel, mirroring iOS.
+                        ProfileWheelRow(
                             label = "Height",
                             value = heightCm,
                             range = 100..250,
                             unit = "cm",
+                            expanded = expandedProfileField == "height",
+                            onToggle = { expandedProfileField = if (expandedProfileField == "height") null else "height" },
                             onValueChange = { heightCm = it }
                         )
                         // Weight (kg)
-                        ProfileSliderRow(
+                        ProfileWheelRow(
                             label = "Weight",
                             value = weightKg,
                             range = 20..200,
                             unit = "kg",
+                            expanded = expandedProfileField == "weight",
+                            onToggle = { expandedProfileField = if (expandedProfileField == "weight") null else "weight" },
                             onValueChange = { weightKg = it }
                         )
                     } else {
-                        // Height (ft/in)
+                        // Height (ft/in) — iOS US mode uses inline menu pickers here
+                        // (SettingsView.swift:79-95), not wheels; these dropdowns match.
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -332,22 +347,26 @@ fun SettingsScreen(
                                 )
                             }
                         }
-                        // Weight (lbs)
-                        ProfileSliderRow(
+                        // Weight (lbs) — DisclosureGroup + wheel, mirroring iOS.
+                        ProfileWheelRow(
                             label = "Weight",
                             value = weightLbs,
                             range = 50..400,
                             unit = "lbs",
+                            expanded = expandedProfileField == "weight",
+                            onToggle = { expandedProfileField = if (expandedProfileField == "weight") null else "weight" },
                             onValueChange = { weightLbs = it }
                         )
                     }
 
-                    // Age
-                    ProfileSliderRow(
+                    // Age — DisclosureGroup + wheel, mirroring iOS.
+                    ProfileWheelRow(
                         label = "Age",
                         value = age,
                         range = 1..100,
                         unit = "",
+                        expanded = expandedProfileField == "age",
+                        onToggle = { expandedProfileField = if (expandedProfileField == "age") null else "age" },
                         onValueChange = { age = it }
                     )
 
@@ -525,33 +544,105 @@ fun SettingsScreen(
     }
 }
 
+/**
+ * Collapsible profile field mirroring iOS's `DisclosureGroup` + `.wheel`
+ * (SettingsView.swift:98-194): a tappable "Label …… value unit" row whose
+ * value is accent-colored when open and muted when closed, expanding to a
+ * 150dp tumbler wheel. Replaces the former Material `Slider` (D-004).
+ */
 @Composable
-private fun ProfileSliderRow(
+private fun ProfileWheelRow(
     label: String,
     value: Int,
     range: IntRange,
     unit: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
     onValueChange: (Int) -> Unit
 ) {
     Column {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onToggle() }
+                .padding(vertical = Spacing.s),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(label, style = MaterialTheme.typography.bodyMedium)
             Text(
                 if (unit.isNotEmpty()) "$value $unit" else "$value",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
+                // iOS: accentColor when the disclosure is open, secondary when closed.
+                color = if (expanded) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Slider(
-            value = value.toFloat(),
-            onValueChange = { onValueChange(it.roundToInt()) },
-            valueRange = range.first.toFloat()..range.last.toFloat(),
-            steps = range.last - range.first - 1
-        )
+        AnimatedVisibility(visible = expanded) {
+            WheelNumberPicker(
+                value = value,
+                range = range,
+                unit = unit,
+                onValueChange = onValueChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+            )
+        }
     }
+}
+
+/**
+ * A true tumbler wheel via the platform `NumberPicker`, the closest 1:1 to
+ * iOS's `.wheel` picker. Wrapped in a DayNight `ContextThemeWrapper` so the
+ * selected/adjacent value text follows light/dark (the View hierarchy doesn't
+ * inherit the Compose theme). `displayedValues` renders the unit suffix inline
+ * ("170 cm"), matching the iOS wheel rows.
+ */
+@Composable
+private fun WheelNumberPicker(
+    value: Int,
+    range: IntRange,
+    unit: String,
+    onValueChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dark = isSystemInDarkTheme()
+    val labels = remember(range, unit) {
+        Array(range.last - range.first + 1) { i ->
+            val v = range.first + i
+            if (unit.isNotEmpty()) "$v $unit" else "$v"
+        }
+    }
+    AndroidView(
+        modifier = modifier,
+        factory = { ctx ->
+            val themed = ContextThemeWrapper(
+                ctx,
+                if (dark) android.R.style.Theme_DeviceDefault
+                else android.R.style.Theme_DeviceDefault_Light
+            )
+            android.widget.NumberPicker(themed).apply {
+                wrapSelectorWheel = false
+                descendantFocusability = android.widget.NumberPicker.FOCUS_BLOCK_DESCENDANTS
+                minValue = range.first
+                maxValue = range.last
+                displayedValues = labels
+                setOnValueChangedListener { _, _, newVal -> onValueChange(newVal) }
+            }
+        },
+        update = { picker ->
+            if (picker.minValue != range.first || picker.maxValue != range.last) {
+                // displayedValues must be cleared before shrinking the range,
+                // else NumberPicker indexes past the old array and crashes.
+                picker.displayedValues = null
+                picker.minValue = range.first
+                picker.maxValue = range.last
+                picker.displayedValues = labels
+            }
+            if (picker.value != value) picker.value = value
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
