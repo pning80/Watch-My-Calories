@@ -15,11 +15,6 @@ import org.junit.Test
 /**
  * Parity mirror of iOS `WatchMyCaloriesUITests/ScanMenuTests.swift`.
  *
- * Most iOS tests target the `ScanMenuSheet` 3-option modal that Android does
- * not have (deviation D-002 — Android tab navigates straight to
- * `ScannedMenusScreen` whose only mutation entry point is a FAB → photo
- * library picker). Tests that depend on that sheet are skipped here.
- *
  * D-002 + D-003 closed in PR #22 — ScanMenuSheet now exists and a Menu-mode
  * camera path is wired via CaptureMode.Menu. Sheet-related iOS tests now
  * have strict Android mirrors below.

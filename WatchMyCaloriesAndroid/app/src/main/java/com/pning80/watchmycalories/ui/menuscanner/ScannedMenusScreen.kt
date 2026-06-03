@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.remember
@@ -70,20 +69,12 @@ fun ScannedMenusScreen(
     scans: List<MenuScan>,
     @Suppress("UNUSED_PARAMETER") onNavigateBack: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
-    onScanNewMenu: () -> Unit,
     onDeleteScan: (String) -> Unit = {},
 ) {
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onScanNewMenu,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(androidx.compose.material.icons.Icons.Default.Add, contentDescription = "Scan New Menu")
-            }
-        }
-    ) { padding ->
+    // No FAB — iOS ScannedMenusView has no add affordance here; you add a scan
+    // via the Scan Menu sheet (Camera / Choose from Library / Stored Menus).
+    // The earlier green FAB was an un-iOS Material shortcut (F3, removed 2026-06-02).
+    Scaffold { padding ->
         if (scans.isEmpty()) {
             Box(
                 modifier = Modifier
