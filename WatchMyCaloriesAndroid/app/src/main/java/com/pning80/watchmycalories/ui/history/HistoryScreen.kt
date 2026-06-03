@@ -369,7 +369,10 @@ private fun MealGroupCard(
                     title,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.secondary
+                    // iOS group-card title is cwTextPrimary, not the secondary
+                    // accent — onSurface matches and stays legible now that
+                    // secondary is forest (D-011). Mirrors DashboardScreen.
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     "${entries.size} items",

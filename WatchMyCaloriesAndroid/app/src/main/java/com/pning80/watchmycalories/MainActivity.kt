@@ -320,7 +320,10 @@ private fun MainAppContent(
                     unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 )
-                NavigationBar {
+                // iOS tab bar background is the plain surface (white in light,
+                // #1C1C1E in dark), not M3's faintly sage-tinted surfaceContainer
+                // default (F7) — pin it to colorScheme.surface for parity.
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     NavigationBarItem(
                     // iOS uses Label("Today", systemImage: "flame.fill"); mirror that.
                     icon = { Icon(Icons.Filled.LocalFireDepartment, contentDescription = "Today") },

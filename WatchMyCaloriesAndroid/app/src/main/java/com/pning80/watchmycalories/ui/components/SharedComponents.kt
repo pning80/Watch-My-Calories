@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -86,6 +87,10 @@ fun HeroSummaryCard(targetCalories: Double, burnedCalories: Double, entries: Lis
 
     val primaryColor = MaterialTheme.colorScheme.primary
     val secondaryColor = MaterialTheme.colorScheme.secondary
+    // Remaining-stat badge: pale chip in dark so it doesn't vanish on black;
+    // iOS's pale `secondary` already matches in light (D-011). The ring track
+    // and every other secondary surface stay forest `secondary` for iOS parity.
+    val remainingBadgeColor = if (isSystemInDarkTheme()) CwRemainingBadgeDark else secondaryColor
     val accentColor = CwAccent
 
     Column(
@@ -171,16 +176,15 @@ fun HeroSummaryCard(targetCalories: Double, burnedCalories: Double, entries: Lis
                     label = "Goal",
                     value = "${targetCalories.toInt()}",
                     icon = Icons.Filled.Flag,
-                    // outlineVariant instead of onSurface@0.4 — the transparent
-                    // fill rendered as an ashy near-black circle on the dark
-                    // surface; outlineVariant is a solid neutral that reads
-                    // sharper (PR T dark-contrast pass). Its lightness flips
-                    // between themes (dark #3A4540 / light #CAC4D0), so the icon
-                    // tint must adapt too: onSurface is light-on-dark in dark
-                    // mode and dark-on-pale in light mode — a fixed white icon
-                    // would vanish on the pale light-theme fill.
-                    badgeColor = MaterialTheme.colorScheme.outlineVariant,
-                    iconTint = MaterialTheme.colorScheme.onSurface,
+                    // iOS draws the Goal badge as a solid `.gray` circle + white
+                    // flag in both themes (Components.swift:201, StatRow:430).
+                    // CwMacroFat (#8E8E93, iOS systemGray) is that solid mid-gray
+                    // — it also satisfies the PR-T concern that drove the earlier
+                    // outlineVariant variant (no "ashy near-black" fill, since a
+                    // solid #8E8E93 reads sharply on both the black dark surface
+                    // and the white light surface).
+                    badgeColor = CwMacroFat,
+                    iconTint = Color.White,
                     testTag = "dashboard_goalValue"
                 )
                 if (burnedCalories > 0) {
@@ -196,7 +200,7 @@ fun HeroSummaryCard(targetCalories: Double, burnedCalories: Double, entries: Lis
                     label = "Remaining",
                     value = "${remaining.toInt()}",
                     icon = Icons.AutoMirrored.Filled.ShowChart,
-                    badgeColor = secondaryColor,
+                    badgeColor = remainingBadgeColor,
                     iconTint = primaryColor,
                     testTag = "dashboard_remainingValue"
                 )

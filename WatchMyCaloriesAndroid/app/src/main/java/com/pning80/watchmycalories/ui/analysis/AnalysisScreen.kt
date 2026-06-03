@@ -35,6 +35,7 @@ import com.pning80.watchmycalories.data.MealType
 import com.pning80.watchmycalories.ui.components.MacroBreakdownRow
 import com.pning80.watchmycalories.ui.components.MacroProportionalBar
 import com.pning80.watchmycalories.ui.theme.CwAccent
+import com.pning80.watchmycalories.ui.theme.CwMacroFat
 import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 
@@ -463,7 +464,7 @@ private fun CompactMacroRow(protein: Double?, carbs: Double?, fat: Double?) {
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
             CompactMacroLabel("P", p, ((proteinCals / total) * 100).toInt(), MaterialTheme.colorScheme.primary)
             CompactMacroLabel("C", c, ((carbsCals / total) * 100).toInt(), CwAccent)
-            CompactMacroLabel("F", f, ((fatCals / total) * 100).toInt(), MaterialTheme.colorScheme.secondary)
+            CompactMacroLabel("F", f, ((fatCals / total) * 100).toInt(), CwMacroFat)
         }
     }
 }
