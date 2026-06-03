@@ -115,4 +115,18 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         _ = app.staticTexts["Logged Successfully!"].waitForExistence(timeout: 12)
         snap("08-analysis-success")
     }
+
+    /// Onboarding Welcome + Privacy steps. Onboarding is gated out under
+    /// --uitesting (WatchMyCaloriesApp.swift:92 short-circuits to ContentView),
+    /// so launch a FRESH instance with only --reset-onboarding to render it.
+    func testSnapOnboarding() {
+        let ob = XCUIApplication()
+        ob.launchArguments = ["--reset-onboarding"]
+        ob.launch()
+        XCTAssertTrue(ob.buttons["onboarding_getStartedButton"].waitForExistence(timeout: 10))
+        snap("09-onboarding-welcome")
+        ob.buttons["onboarding_getStartedButton"].tap()
+        XCTAssertTrue(ob.buttons["onboarding_connectHealth"].waitForExistence(timeout: 5))
+        snap("09b-onboarding-privacy")
+    }
 }
