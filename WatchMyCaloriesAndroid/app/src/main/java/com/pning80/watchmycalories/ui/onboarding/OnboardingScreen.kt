@@ -245,7 +245,12 @@ private fun PrivacyStep(
             "Your Privacy",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
+            // iOS centers step titles (OnboardingView VStack default alignment);
+            // the Privacy/Goal Columns here default to Start. Center to match iOS
+            // and the Welcome step (which already centers).
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
 
         // Scrollable content region (weight 1f) so the pinned ProgressDots +
@@ -382,7 +387,10 @@ private fun GoalStep(
             "Your Goal",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
+            // Centered to match iOS (OnboardingView VStack) + the Welcome step.
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
 
         // About You
