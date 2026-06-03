@@ -96,7 +96,10 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 Text(
                     "Watch My Calories",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    // iOS AboutView.swift:30-32 styles the app name cwPrimary (brand
+                    // green); Android was defaulting to white onSurface.
+                    color = MaterialTheme.colorScheme.primary
                 )
 
                 val clipboard = LocalClipboardManager.current
