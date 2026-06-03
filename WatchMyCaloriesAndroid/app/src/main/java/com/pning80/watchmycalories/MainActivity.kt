@@ -409,13 +409,6 @@ private fun MainAppContent(
                     scans = allMenuScans,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToDetail = { id -> navController.navigate("scannedMenuDetail/$id") },
-                    onScanNewMenu = {
-                        menuPhotoPickerLauncher.launch(
-                            androidx.activity.result.PickVisualMediaRequest(
-                                ActivityResultContracts.PickVisualMedia.ImageOnly
-                            )
-                        )
-                    },
                     onDeleteScan = { id -> viewModel.deleteMenuScan(id) },
                 )
             }
