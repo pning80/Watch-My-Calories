@@ -272,7 +272,7 @@ fun MacroBreakdownRow(protein: Double, carbs: Double, fat: Double) {
     ) {
         MacroLabel("Protein", protein, proteinCals, totalMacroCals, MaterialTheme.colorScheme.primary)
         MacroLabel("Carbs", carbs, carbsCals, totalMacroCals, CwAccent)
-        MacroLabel("Fat", fat, fatCals, totalMacroCals, MaterialTheme.colorScheme.secondary)
+        MacroLabel("Fat", fat, fatCals, totalMacroCals, CwMacroFat)
     }
 
     // Proportional bar
@@ -321,7 +321,9 @@ fun MacroProportionalBar(
     val fFraction = (fatCals / total).toFloat()
 
     val primaryColor = MaterialTheme.colorScheme.primary
-    val secondaryColor = MaterialTheme.colorScheme.secondary
+    // Fat segment = gray, mirroring iOS MacroProportionalBar (Components.swift:289
+    // uses Color.secondary = system gray), not the brand sage.
+    val fatColor = CwMacroFat
 
     Row(
         modifier = Modifier.fillMaxWidth().height(height.dp).clip(RoundedCornerShape(4.dp)),
@@ -351,7 +353,7 @@ fun MacroProportionalBar(
                     .weight(fFraction)
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(3.dp))
-                    .background(secondaryColor)
+                    .background(fatColor)
             )
         }
     }
