@@ -9,6 +9,17 @@ val CwAccent = Color(0xFFFF9E1C)
 val CwBackgroundLight = Color(0xFFFAFAFA)
 val CwSurfaceLight = Color(0xFFFFFFFF)
 val CwTextPrimaryLight = Color(0xFF1A1A1A)
+// Neutral light surface ladder + green tint — mirrors the dark scheme's
+// anti-M3-purple guard (D-011) which the light scheme was missing. Without
+// these, light-mode cards (which use colorScheme.surfaceContainer) fell back
+// to M3's default lavender (~#F1ECF1) instead of iOS's neutral white.
+val CwSurfaceTintLight = Color(0xFF66CC99)
+val CwSurfaceContainerLowestLight = Color(0xFFFFFFFF)
+val CwSurfaceContainerLowLight = Color(0xFFFFFFFF)
+val CwSurfaceContainerLight = Color(0xFFFFFFFF)
+val CwSurfaceContainerHighLight = Color(0xFFF2F2F7)
+val CwSurfaceContainerHighestLight = Color(0xFFEDEDF2)
+val CwSurfaceVariantLight = Color(0xFFF2F2F7)
 
 // ── Dark scheme — mirrors iOS dark mode (D-011) ────────────────────────────
 // Aligned to iOS's two-tone neutral dark for visual parity:
