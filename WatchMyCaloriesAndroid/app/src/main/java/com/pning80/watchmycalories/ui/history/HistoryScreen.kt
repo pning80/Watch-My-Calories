@@ -27,6 +27,7 @@ import com.pning80.watchmycalories.ads.BannerAdView
 import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.data.MealType
 import com.pning80.watchmycalories.ui.components.EmptyStateCard
+import com.pning80.watchmycalories.ui.theme.CwMacroFat
 import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import java.text.SimpleDateFormat
@@ -184,7 +185,7 @@ fun HistoryDayCard(
             ) {
                 MacroChip("P", totalProtein, MaterialTheme.colorScheme.primary)
                 MacroChip("C", totalCarbs, MaterialTheme.colorScheme.tertiary)
-                MacroChip("F", totalFat, MaterialTheme.colorScheme.secondary)
+                MacroChip("F", totalFat, CwMacroFat)
             }
         }
 
