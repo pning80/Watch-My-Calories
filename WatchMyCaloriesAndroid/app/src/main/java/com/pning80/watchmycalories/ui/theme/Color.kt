@@ -34,9 +34,14 @@ val CwSurfaceVariantLight = Color(0xFFF2F2F7)
 //   - Primary mint and tertiary orange match iOS exactly (#66CC99 / #FF9E1C),
 //     restoring the vivid "energetic orange" the softened tone had drained.
 //   - Text is pure white (#FFFFFF) like iOS `label` for crisp contrast.
-//   - Secondary keeps the pale sage #B8D5C2: iOS reuses a too-dark light-theme
-//     container (#264D33) in dark mode, which reads poorly as a badge fill —
-//     this is the one intentional improvement retained over iOS.
+//   - Secondary is iOS forest #264D33 (matches `cwSecondary` dark exactly).
+//     This is the fill behind the kcal pill, the meal/avatar tile, the hero
+//     ring track, and the dashboard empty-state glyph — all of which iOS draws
+//     in forest, so converging the token brings every one of them into parity
+//     in a single stroke (D-011 revised 2026-06-02). The earlier pale-sage
+//     #B8D5C2 leaked into all five surfaces under a sign-off that only covered
+//     the Remaining badge; that readability tweak now lives in the dedicated,
+//     badge-only `CwRemainingBadgeDark` below instead of bending the shared token.
 //   - surfaceTint stays brand mint so any tonal-elevation fallback picks up a
 //     whisper of green rather than M3's default purple; the visible surfaces
 //     all resolve from the explicit neutral surfaceContainer slots below.
@@ -45,8 +50,17 @@ val CwOnPrimaryDark = Color(0xFF003822)
 val CwPrimaryContainerDark = Color(0xFF1F4A35)
 val CwOnPrimaryContainerDark = Color(0xFFA8EFC8)
 
-val CwSecondaryDark = Color(0xFFB8D5C2)
-val CwOnSecondaryDark = Color(0xFF22382A)
+val CwSecondaryDark = Color(0xFF264D33)
+val CwOnSecondaryDark = Color(0xFFB8D5C2)
+
+// Remaining-stat badge fill (dark only). iOS draws this badge in forest
+// `cwSecondary` (#264D33), but on the true-black dark surface a forest circle
+// nearly vanishes; the pale sage reads as a distinct chip. This is the sole
+// retained departure from iOS's dark secondary — scoped to the one badge so it
+// no longer leaks into the ring track, pills, tiles, or empty-state glyph
+// (D-011 revised 2026-06-02). Light mode uses `colorScheme.secondary` directly
+// (iOS's pale `#D9F2DB` already matches), so no light counterpart is needed.
+val CwRemainingBadgeDark = Color(0xFFB8D5C2)
 val CwSecondaryContainerDark = Color(0xFF2F4A39)
 val CwOnSecondaryContainerDark = Color(0xFFCFEAD8)
 
