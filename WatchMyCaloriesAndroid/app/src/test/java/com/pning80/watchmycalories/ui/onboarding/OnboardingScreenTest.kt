@@ -332,15 +332,17 @@ class OnboardingScreenTest {
         // OnboardingScreen runs the toggle write as
         // `coroutineScope.launch { settingsDataStore.setMetric(false) }`, so
         // the DataStore emission + recomposition can outlive `waitForIdle()`.
-        // Poll for the US Customary labels with a 2-second deadline. Use the
-        // unmerged tree because the labels sit inside SliderRow Composables
-        // whose semantics merge into a parent in some Robolectric run
-        // orderings (the merge boundary collapses the inner Text nodes).
+        // Poll for the US Customary labels with a 2-second deadline. US Height
+        // is now two ProfileDropdowns ("5 ft" + "8 in", matching the Settings
+        // profile, D-004) and Weight is a ProfileWheelRow ("150 lbs"); use the
+        // unmerged tree since these labels sit inside merging Composables.
         composeTestRule.waitUntil(timeoutMillis = 2000) {
-            composeTestRule.onAllNodesWithText("5 ft 8 in", substring = true, useUnmergedTree = true)
+            composeTestRule.onAllNodesWithText("5 ft", substring = true, useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithText("5 ft 8 in", substring = true, useUnmergedTree = true)
+        composeTestRule.onNodeWithText("5 ft", substring = true, useUnmergedTree = true)
+            .performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("8 in", substring = true, useUnmergedTree = true)
             .performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("150 lbs", substring = true, useUnmergedTree = true)
             .performScrollTo().assertIsDisplayed()

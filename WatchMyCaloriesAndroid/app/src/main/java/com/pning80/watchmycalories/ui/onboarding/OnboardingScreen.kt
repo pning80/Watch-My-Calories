@@ -33,12 +33,13 @@ import com.pning80.watchmycalories.R
 import com.pning80.watchmycalories.data.CalorieCalculator
 import com.pning80.watchmycalories.data.CalorieCalculator.ActivityLevel
 import com.pning80.watchmycalories.data.CalorieCalculator.Gender
+import com.pning80.watchmycalories.ui.settings.ProfileWheelRow
+import com.pning80.watchmycalories.ui.settings.ProfileDropdown
 import com.pning80.watchmycalories.data.UserProfile
 import com.pning80.watchmycalories.ui.settings.SettingsDataStore
 import com.pning80.watchmycalories.ui.theme.Spacing
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 @Composable
 fun OnboardingScreen(
@@ -421,46 +422,71 @@ private fun GoalStep(
                     }
                 }
 
-                // Height — separate native inputs per unit system so values
-                // are exactly representable in the active system. iOS does the
-                // same (ft / in pickers vs cm slider).
+                // Profile inputs reuse the Settings profile controls (D-004):
+                // tumbler wheels for Height(metric)/Weight/Age + ft-in dropdowns for
+                // US Height + a Gender dropdown. Replaces the prior Sliders +
+                // segmented Gender so onboarding matches the Settings profile
+                // (D-004 rationale: a Slider can't reliably hit an exact value).
+                // One wheel open at a time, like Settings.
+                var expandedProfileField by remember { mutableStateOf<String?>(null) }
+
                 if (isMetric) {
-                    SliderRow("Height", heightCmUI, 100..250, "$heightCmUI cm", onHeightCmChanged)
+                    ProfileWheelRow(
+                        label = "Height", value = heightCmUI, range = 100..250, unit = "cm",
+                        expanded = expandedProfileField == "height",
+                        onToggle = { expandedProfileField = if (expandedProfileField == "height") null else "height" },
+                        onValueChange = onHeightCmChanged
+                    )
+                    ProfileWheelRow(
+                        label = "Weight", value = weightKgUI, range = 20..200, unit = "kg",
+                        expanded = expandedProfileField == "weight",
+                        onToggle = { expandedProfileField = if (expandedProfileField == "weight") null else "weight" },
+                        onValueChange = onWeightKgChanged
+                    )
                 } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Height", style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                "$heightFeet ft $heightInchesPart in",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Height", style = MaterialTheme.typography.bodyMedium)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            ProfileDropdown(value = heightFeet, options = (4..7).toList(), suffix = "ft", onValueChange = onHeightFeetChanged)
+                            Spacer(modifier = Modifier.width(Spacing.s))
+                            ProfileDropdown(value = heightInchesPart, options = (0..11).toList(), suffix = "in", onValueChange = onHeightInchesChanged)
                         }
-                        SliderRow("Feet", heightFeet, 4..8, "$heightFeet ft", onHeightFeetChanged)
-                        SliderRow("Inches", heightInchesPart, 0..11, "$heightInchesPart in", onHeightInchesChanged)
                     }
+                    ProfileWheelRow(
+                        label = "Weight", value = weightLbs, range = 50..400, unit = "lbs",
+                        expanded = expandedProfileField == "weight",
+                        onToggle = { expandedProfileField = if (expandedProfileField == "weight") null else "weight" },
+                        onValueChange = onWeightLbsChanged
+                    )
                 }
 
-                // Weight
-                if (isMetric) {
-                    SliderRow("Weight", weightKgUI, 20..200, "$weightKgUI kg", onWeightKgChanged)
-                } else {
-                    SliderRow("Weight", weightLbs, 50..400, "$weightLbs lbs", onWeightLbsChanged)
-                }
+                // Age
+                ProfileWheelRow(
+                    label = "Age", value = age, range = 1..100, unit = "",
+                    expanded = expandedProfileField == "age",
+                    onToggle = { expandedProfileField = if (expandedProfileField == "age") null else "age" },
+                    onValueChange = onAgeChanged
+                )
 
-                // Age slider (unitless)
-                SliderRow("Age", age, 1..100, "$age", onAgeChanged)
-
-                // Gender
+                // Gender — dropdown menu picker (mirrors Settings + iOS .menu Picker).
                 Text("Gender", style = MaterialTheme.typography.bodyMedium)
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    Gender.entries.forEachIndexed { index, g ->
-                        SegmentedButton(
-                            selected = gender == g,
-                            onClick = { onGenderChanged(g) },
-                            shape = SegmentedButtonDefaults.itemShape(index = index, count = Gender.entries.size)
-                        ) { Text(g.displayName, style = MaterialTheme.typography.labelSmall) }
+                var genderExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(expanded = genderExpanded, onExpandedChange = { genderExpanded = it }) {
+                    OutlinedTextField(
+                        value = gender.displayName,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                    )
+                    ExposedDropdownMenu(expanded = genderExpanded, onDismissRequest = { genderExpanded = false }) {
+                        Gender.entries.forEach { g ->
+                            DropdownMenuItem(text = { Text(g.displayName) }, onClick = { onGenderChanged(g); genderExpanded = false })
+                        }
                     }
                 }
 
@@ -521,26 +547,6 @@ private fun GoalStep(
         }
 
         Spacer(modifier = Modifier.height(40.dp))
-    }
-}
-
-@Composable
-private fun SliderRow(label: String, value: Int, range: IntRange, displayValue: String, onChange: (Int) -> Unit) {
-    Column {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, style = MaterialTheme.typography.bodyMedium)
-            Text(
-                displayValue,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-        Slider(
-            value = value.toFloat(),
-            onValueChange = { onChange(it.roundToInt()) },
-            valueRange = range.first.toFloat()..range.last.toFloat()
-        )
     }
 }
 
