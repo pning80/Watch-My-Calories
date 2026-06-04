@@ -219,4 +219,20 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.staticTexts["Margherita Pizza"].waitForExistence(timeout: 5))
         snap("14-menu-detail")
     }
+    /// Camera post-capture review (Log Food → Scan Food → capture → meal picker + Retake/Use).
+    func testSnapCameraReview() {
+        launchWithAIConsentAccepted()
+        app.tabBars.buttons["Log Food"].tap()
+        let scanFood = app.staticTexts["Scan Food"]
+        XCTAssertTrue(scanFood.waitForExistence(timeout: 5))
+        scanFood.tap()
+        let capture = app.buttons["camera_captureButton"]
+        XCTAssertTrue(capture.waitForExistence(timeout: 5))
+        capture.tap()
+        let disclaimerContinue = app.buttons["disclaimer_continueButton"]
+        if disclaimerContinue.waitForExistence(timeout: 3) { disclaimerContinue.tap() }
+        // Post-capture review: photo + meal picker + Retake/Use Photo.
+        XCTAssertTrue(app.buttons["camera_usePhotoButton"].waitForExistence(timeout: 5))
+        snap("15-camera-review")
+    }
 }

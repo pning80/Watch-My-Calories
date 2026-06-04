@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -63,6 +65,7 @@ fun CameraReviewScreen(
     settingsDataStore: SettingsDataStore,
     onRetake: () -> Unit,
     onUse: (MealType) -> Unit,
+    onCancel: () -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val hasSeenDisclaimer by settingsDataStore.hasSeenEstimateDisclaimerFlow.collectAsState(initial = true)
@@ -105,6 +108,40 @@ fun CameraReviewScreen(
                     ),
                 ),
         )
+
+        // Top scrim so the Cancel button stays legible over a bright photo
+        // (mirrors the iOS camera preview top gradient, CameraView.swift:91).
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(120.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent),
+                    ),
+                ),
+        )
+
+        // Cancel — dismisses the whole capture flow. iOS shows this persistently
+        // as the NavigationStack toolbar's leading "Cancel" (ContentView.swift:204)
+        // throughout both the preview and this review state, tinted cwPrimary
+        // (the root .tint, ContentView.swift:62). Android had no way out of the
+        // review except Retake; this restores the parity exit.
+        TextButton(
+            onClick = onCancel,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .statusBarsPadding()
+                .padding(horizontal = 8.dp)
+                .testTag(AccessibilityTags.Camera.CANCEL_BUTTON),
+        ) {
+            Text(
+                "Cancel",
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
 
         if (bitmaps.size > 1) {
             Surface(

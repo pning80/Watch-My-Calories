@@ -54,6 +54,7 @@ enum class CaptureMode { Food, Menu }
 fun CameraScreen(
     onPhotosCaptured: (List<Bitmap>) -> Unit,
     captureMode: CaptureMode = CaptureMode.Food,
+    onCancel: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -157,6 +158,25 @@ fun CameraScreen(
                                 listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))
                             )
                         )
+                )
+            }
+
+            // Cancel — dismisses the whole capture flow. iOS shows this
+            // persistently as the NavigationStack toolbar's leading "Cancel"
+            // (ContentView.swift:204) tinted cwPrimary (root .tint,
+            // ContentView.swift:62). Sits over the existing top scrim.
+            TextButton(
+                onClick = onCancel,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(horizontal = 8.dp)
+                    .testTag(AccessibilityTags.Camera.CANCEL_BUTTON),
+            ) {
+                Text(
+                    "Cancel",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
 

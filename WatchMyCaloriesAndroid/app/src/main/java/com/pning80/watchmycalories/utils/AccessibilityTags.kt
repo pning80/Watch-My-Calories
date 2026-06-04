@@ -75,6 +75,7 @@ object AccessibilityTags {
     object Camera {
         const val CAPTURE_BUTTON = "camera_captureButton"
         const val TOGGLE_FLASH = "camera_toggleFlash"        // Android extra
+        const val CANCEL_BUTTON = "camera_cancelButton"      // Android extra (iOS uses the NavigationStack toolbar Cancel)
         const val RETAKE_BUTTON = "camera_retakeButton"
         const val USE_PHOTO_BUTTON = "camera_usePhotoButton"
     }

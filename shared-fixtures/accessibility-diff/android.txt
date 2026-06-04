@@ -6,6 +6,7 @@ ads_banner
 ads_native
 ads_viewResultsButton
 appMenu_button
+camera_cancelButton
 camera_captureButton
 camera_retakeButton
 camera_toggleFlash
