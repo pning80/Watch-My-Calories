@@ -78,6 +78,9 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         let stored = app.descendants(matching: .any)["scanMenuSheet_storedMenus"].firstMatch
         XCTAssertTrue(stored.waitForExistence(timeout: 5))
         stored.tap()
+        // Stored Menus presents over the dashboard; wait for its Done button so
+        // the snap doesn't catch the dashboard mid-transition.
+        _ = app.buttons["Done"].waitForExistence(timeout: 5)
         snap("06-scanned-menus")
     }
 
