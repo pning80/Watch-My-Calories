@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.pning80.watchmycalories.data.FoodEntry
 import com.pning80.watchmycalories.ui.theme.*
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * Card surface treatment — shadow, rounded clip, themed background, and
@@ -292,7 +293,9 @@ private fun MacroLabel(
     totalCals: Double,
     color: Color
 ) {
-    val pct = if (totalCals > 0) ((cals / totalCals) * 100).toInt() else 0
+    // iOS rounds macro percentages (Int((cals/total*100).rounded()), Components.swift:244);
+    // .toInt() truncated, e.g. Fat 31.95% → 31 vs iOS 32, and they summed to 98% not 100%.
+    val pct = if (totalCals > 0) ((cals / totalCals) * 100).roundToInt() else 0
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Surface(shape = CircleShape, color = color, modifier = Modifier.size(8.dp)) {}
