@@ -169,4 +169,14 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         _ = app.staticTexts["No Food Detected"].waitForExistence(timeout: 12)
         snap("11-analysis-nofood")
     }
+
+    /// History with the first day card expanded (per-entry meal-grouped rows).
+    func testSnapHistoryExpanded() {
+        launchWithHistoryData()
+        app.tabBars.buttons["History"].tap()
+        let card = app.descendants(matching: .any)["history_dayCard"].firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.tap()
+        snap("12-history-expanded")
+    }
 }
