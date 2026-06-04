@@ -235,6 +235,40 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.buttons["camera_usePhotoButton"].waitForExistence(timeout: 5))
         snap("15-camera-review")
     }
+    /// Multi-item meal GROUP edit (analysis-success saves a shared-imageID group
+    /// → Dashboard grouped card → long-press → Edit group → EditMealGroupView).
+    /// The mock estimation saves "Mock Chicken and Rice" (Mock Chicken + Mock Rice)
+    /// with one shared imageID (EstimationReviewView.swift:396-413), so the
+    /// dashboard renders a grouped card titled by that mealName.
+    func testSnapEditMealGroup() {
+        launchWithAIConsentAccepted()
+        app.tabBars.buttons["Log Food"].tap()
+        let scanFood = app.staticTexts["Scan Food"]
+        XCTAssertTrue(scanFood.waitForExistence(timeout: 5))
+        scanFood.tap()
+        let capture = app.buttons["camera_captureButton"]
+        XCTAssertTrue(capture.waitForExistence(timeout: 5))
+        capture.tap()
+        let disclaimerContinue = app.buttons["disclaimer_continueButton"]
+        if disclaimerContinue.waitForExistence(timeout: 3) { disclaimerContinue.tap() }
+        let use = app.buttons["camera_usePhotoButton"]
+        XCTAssertTrue(use.waitForExistence(timeout: 5))
+        use.tap()
+        let viewResults = app.buttons["View Results"]
+        if viewResults.waitForExistence(timeout: 15) { viewResults.tap() }
+        let done = app.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 12))
+        done.tap()
+        // Dashboard now shows the grouped "Mock Chicken and Rice" card.
+        let group = app.staticTexts["Mock Chicken and Rice"]
+        XCTAssertTrue(group.waitForExistence(timeout: 5))
+        group.press(forDuration: 1.1)
+        let edit = app.buttons["Edit"]
+        if edit.waitForExistence(timeout: 3) { edit.tap() }
+        // EditMealGroupView exposes the editable "Meal Name" field.
+        _ = app.staticTexts["Meal Name"].waitForExistence(timeout: 5)
+        snap("19-edit-meal-group")
+    }
     /// Empty Dashboard state (no entries) — EmptyStateCard + "or log manually".
     func testSnapDashboardEmpty() {
         launchEmpty()
