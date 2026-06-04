@@ -5,6 +5,13 @@ import androidx.compose.ui.graphics.Color
 // ── Light scheme (unchanged) ───────────────────────────────────────────────
 val CwPrimaryLight = Color(0xFF2E6B4F)
 val CwSecondaryLight = Color(0xFFD9F2DB)
+// Selected-segment / secondaryContainer fill for LIGHT. The light scheme never
+// set secondaryContainer, so M3 derived its default lavender — which surfaced as
+// purple selected SegmentedButtons (ManualEntry meal picker, onboarding) in light
+// while dark used CwSecondaryContainerDark green. Pale green + dark-green text
+// mirrors the dark scheme's brand intent.
+val CwSecondaryContainerLight = Color(0xFFD9F2DB)
+val CwOnSecondaryContainerLight = Color(0xFF1F4A35)
 val CwAccent = Color(0xFFFF9E1C)
 // Fat macro color — iOS uses `Color.secondary` (the system GRAY label color),
 // NOT the brand sage. Ported as colorScheme.secondary (sage) by mistake, which
