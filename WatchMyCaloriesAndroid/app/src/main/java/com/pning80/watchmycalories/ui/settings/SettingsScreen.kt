@@ -247,7 +247,7 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                    Text("App Appearance", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Text("App Appearance".uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                     // Theme picker — inline trailing-value menu (mirror of iOS .pickerStyle(.menu))
                     InlineMenuPickerRow(
@@ -293,7 +293,7 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                    Text("Profile", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Text("Profile".uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                     // iOS wraps each wheel field in a DisclosureGroup and keeps one
                     // open at a time (SettingsView.swift:98-194). Track which body-
@@ -465,7 +465,7 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                    Text("Daily Goals", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Text("Daily Goals".uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                     OutlinedTextField(
                         value = targetCaloriesText,
@@ -496,7 +496,7 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
-                    Text("Privacy", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Text("Privacy".uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),

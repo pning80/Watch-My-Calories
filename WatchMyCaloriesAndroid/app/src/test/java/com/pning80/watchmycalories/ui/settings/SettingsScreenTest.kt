@@ -54,13 +54,14 @@ class SettingsScreenTest : BaseComposeTest() {
         // Topbar Title
         composeTestRule.onNodeWithTag("SettingsTitle").assertIsDisplayed()
 
-        // Sections - Use assertExists since they might be in a scrollable column off-screen
-        composeTestRule.onNodeWithText("App Appearance").assertExists()
+        // Sections - Use assertExists since they might be in a scrollable column off-screen.
+        // ignoreCase: section headers render UPPERCASE to match iOS Form headers.
+        composeTestRule.onNodeWithText("App Appearance", ignoreCase = true).assertExists()
         composeTestRule.onNodeWithText("Theme").assertExists()
         composeTestRule.onNodeWithText("Unit System").assertExists()
-        composeTestRule.onNodeWithText("Profile").assertExists()
-        composeTestRule.onNodeWithText("Daily Goals").assertExists()
-        composeTestRule.onNodeWithText("Privacy").assertExists()
+        composeTestRule.onNodeWithText("Profile", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("Daily Goals", ignoreCase = true).assertExists()
+        composeTestRule.onNodeWithText("Privacy", ignoreCase = true).assertExists()
         // "About & Support" section removed in PR C — About reached via Dashboard menu.
     }
 

@@ -162,9 +162,11 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
 
                 // Legal & Support Hub
                 Text(
-                    "Support & Legal",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    // Gray UPPERCASE to match iOS Form section headers
+                    // (SettingsView/AboutView Section(header:)), not bold title-case.
+                    "Support & Legal".uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth().padding(top = Spacing.s)
                 )
 
@@ -192,9 +194,9 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
 
                 // Device Attestation
                 Text(
-                    "Device Attestation",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    "Device Attestation".uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth().padding(top = Spacing.s)
                 )
 
