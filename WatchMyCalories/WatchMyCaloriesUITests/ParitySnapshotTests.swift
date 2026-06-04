@@ -193,4 +193,14 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(ob.buttons["onboarding_finishButton"].waitForExistence(timeout: 5))
         snap("09c-onboarding-goal")
     }
+    /// Manual food entry form (Log Food → Log Manually).
+    func testSnapManualEntry() {
+        launchEmpty()
+        app.tabBars.buttons["Log Food"].tap()
+        let logManually = app.staticTexts["Log Manually"]
+        XCTAssertTrue(logManually.waitForExistence(timeout: 5))
+        logManually.tap()
+        XCTAssertTrue(app.textFields["manualEntry_foodName"].waitForExistence(timeout: 5))
+        snap("13-manual-entry")
+    }
 }
