@@ -295,6 +295,10 @@ private fun groupEntriesByImage(entries: List<FoodEntry>): List<List<FoodEntry>>
 @Composable
 private fun FoodEntryItem(entry: FoodEntry, onEdit: () -> Unit, onDelete: () -> Unit = {}) {
     var menuOpen by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val imageFile = remember(entry.imageID) {
+        entry.imageID?.let { com.pning80.watchmycalories.data.ImageStorage.getImageFile(context, it) }
+    }
     Box {
     Row(
         modifier = Modifier
@@ -309,31 +313,51 @@ private fun FoodEntryItem(entry: FoodEntry, onEdit: () -> Unit, onDelete: () -> 
                 onLongClick = { menuOpen = true },
             )
             .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Avatar tile — iOS renders History expanded entries as FoodEntryGroupCards
+        // (Components.swift:580-599): a 48dp cwSecondary rounded-rect with a 40dp
+        // Circle photo when present, else the initial letter in cwPrimary. Mirrors
+        // the dashboard food card.
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.secondary),
+            contentAlignment = Alignment.Center
+        ) {
+            if (imageFile != null && imageFile.exists()) {
+                coil.compose.AsyncImage(
+                    model = imageFile,
+                    contentDescription = null,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                )
+            } else {
+                Text(
+                    text = entry.name.take(1).uppercase(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 entry.name,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(entry.timestamp)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                )
-                if (entry.quantity.isNotBlank()) {
-                    Text(
-                        "• ${entry.quantity}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    )
-                }
-            }
-            // D-007: proportional macro bar (no literal "P: 10g" text).
-            // Replaces the per-entry MacroChip row to match iOS UX.
+            Text(
+                SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(entry.timestamp)),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+            // D-007 macro bar (no literal "P: 10g" text). iOS FoodEntryGroupCard
+            // shows no inline quantity here, so the "• quantity" text is omitted.
             val p = entry.protein ?: 0.0
             val c = entry.carbs ?: 0.0
             val f = entry.fat ?: 0.0
@@ -343,15 +367,17 @@ private fun FoodEntryItem(entry: FoodEntry, onEdit: () -> Unit, onDelete: () -> 
                     proteinCals = p * 4,
                     carbsCals = c * 4,
                     fatCals = f * 9,
-                    height = 6
+                    height = 4
                 )
             }
         }
         Text(
-            "${entry.calories.toInt()}",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            // iOS FoodEntryGroupCard trailing calorie = "{n} kcal" in cwPrimary
+            // (Components.swift:628), not a bare gray number.
+            "${entry.calories.toInt()} kcal",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
         )
     }
     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
