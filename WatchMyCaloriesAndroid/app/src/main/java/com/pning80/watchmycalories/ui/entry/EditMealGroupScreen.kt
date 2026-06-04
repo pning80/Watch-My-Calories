@@ -84,7 +84,10 @@ fun EditMealGroupScreen(
                 OutlinedTextField(
                     value = mealName,
                     onValueChange = { mealName = it },
-                    label = { Text("Meal Context") },
+                    // iOS EditMealGroupView labels this field "Meal Name"
+                    // (Components.swift:926); "Meal Context" was an unclear,
+                    // un-iOS Android-ism.
+                    label = { Text("Meal Name") },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
