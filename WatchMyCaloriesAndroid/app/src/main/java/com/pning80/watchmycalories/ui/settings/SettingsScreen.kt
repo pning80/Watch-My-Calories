@@ -10,7 +10,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.rotate
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -574,13 +576,28 @@ private fun ProfileWheelRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(label, style = MaterialTheme.typography.bodyMedium)
-            Text(
-                if (unit.isNotEmpty()) "$value $unit" else "$value",
-                style = MaterialTheme.typography.bodyMedium,
-                // iOS: accentColor when the disclosure is open, secondary when closed.
-                color = if (expanded) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val tint = if (expanded) MaterialTheme.colorScheme.primary
+                           else MaterialTheme.colorScheme.onSurfaceVariant
+                Text(
+                    if (unit.isNotEmpty()) "$value $unit" else "$value",
+                    style = MaterialTheme.typography.bodyMedium,
+                    // iOS: accentColor when the disclosure is open, secondary when closed.
+                    color = tint
+                )
+                Spacer(Modifier.width(Spacing.xs))
+                // iOS DisclosureGroup shows a chevron ("175 cm >") that rotates down
+                // when expanded; Android's wheel rows had no affordance, reading as
+                // static text. Mirror the rotating chevron.
+                Icon(
+                    Icons.Filled.ChevronRight,
+                    contentDescription = null,
+                    tint = tint,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .rotate(if (expanded) 90f else 0f)
+                )
+            }
         }
         AnimatedVisibility(visible = expanded) {
             WheelNumberPicker(
