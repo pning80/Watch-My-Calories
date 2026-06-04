@@ -557,7 +557,7 @@ fun SettingsScreen(
  * 150dp tumbler wheel. Replaces the former Material `Slider` (D-004).
  */
 @Composable
-private fun ProfileWheelRow(
+internal fun ProfileWheelRow(
     label: String,
     value: Int,
     range: IntRange,
@@ -668,7 +668,7 @@ private fun WheelNumberPicker(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ProfileDropdown(
+internal fun ProfileDropdown(
     value: Int,
     options: List<Int>,
     suffix: String,
