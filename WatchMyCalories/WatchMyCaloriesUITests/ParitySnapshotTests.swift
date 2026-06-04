@@ -235,6 +235,12 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.buttons["camera_usePhotoButton"].waitForExistence(timeout: 5))
         snap("15-camera-review")
     }
+    /// Empty Dashboard state (no entries) — EmptyStateCard + "or log manually".
+    func testSnapDashboardEmpty() {
+        launchEmpty()
+        XCTAssertTrue(app.buttons["dashboard_emptyStateCard"].waitForExistence(timeout: 5))
+        snap("18-dashboard-empty")
+    }
     /// Single-entry edit sheet (Dashboard → long-press a food entry → Edit →
     /// EditFoodEntryView). The context menu is the same affordance Android uses
     /// (combinedClickable long-press → Edit). Seeded "today" entries are
