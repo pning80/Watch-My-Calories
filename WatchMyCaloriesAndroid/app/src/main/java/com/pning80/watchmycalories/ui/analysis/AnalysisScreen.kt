@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pning80.watchmycalories.R
+import kotlin.math.roundToInt
 import com.pning80.watchmycalories.ads.NativeAdView
 import com.pning80.watchmycalories.ai.EstimationItem
 import com.pning80.watchmycalories.ai.EstimationResult
@@ -465,9 +466,10 @@ private fun CompactMacroRow(protein: Double?, carbs: Double?, fat: Double?) {
             MacroProportionalBar(proteinCals, carbsCals, fatCals, height = 6)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-            CompactMacroLabel("P", p, ((proteinCals / total) * 100).toInt(), MaterialTheme.colorScheme.primary)
-            CompactMacroLabel("C", c, ((carbsCals / total) * 100).toInt(), CwAccent)
-            CompactMacroLabel("F", f, ((fatCals / total) * 100).toInt(), CwMacroFat)
+            // Round (not truncate) to match iOS (Components.swift:244) + History.
+            CompactMacroLabel("P", p, ((proteinCals / total) * 100).roundToInt(), MaterialTheme.colorScheme.primary)
+            CompactMacroLabel("C", c, ((carbsCals / total) * 100).roundToInt(), CwAccent)
+            CompactMacroLabel("F", f, ((fatCals / total) * 100).roundToInt(), CwMacroFat)
         }
     }
 }
