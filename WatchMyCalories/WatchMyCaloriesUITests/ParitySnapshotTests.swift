@@ -235,6 +235,22 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.buttons["camera_usePhotoButton"].waitForExistence(timeout: 5))
         snap("15-camera-review")
     }
+    /// Single-entry edit sheet (Dashboard → long-press a food entry → Edit →
+    /// EditFoodEntryView). The context menu is the same affordance Android uses
+    /// (combinedClickable long-press → Edit). Seeded "today" entries are
+    /// "Oatmeal with Berries" + "Chicken Salad" (WatchMyCaloriesApp seedData).
+    func testSnapEditFoodEntry() {
+        launchWithSeedData()
+        XCTAssertTrue(app.staticTexts["Watch My Calories"].waitForExistence(timeout: 5))
+        let entry = app.staticTexts["Oatmeal with Berries"]
+        XCTAssertTrue(entry.waitForExistence(timeout: 5))
+        entry.press(forDuration: 1.1)
+        let edit = app.buttons["Edit"]
+        if edit.waitForExistence(timeout: 3) { edit.tap() }
+        // EditFoodEntryView settles on its "Item Name" field.
+        _ = app.staticTexts["Item Name"].waitForExistence(timeout: 5)
+        snap("17-edit-food-entry")
+    }
     // NOTE: a live Menu Analysis snapshot (Scan Menu → menu camera → Analyze Menu →
     // MenuAnalysisView) is NOT viable on the simulator. The menu camera's
     // simulator stub (MenuCameraView.swift:219, simulatorPhotos = ["MenuPhoto1",
