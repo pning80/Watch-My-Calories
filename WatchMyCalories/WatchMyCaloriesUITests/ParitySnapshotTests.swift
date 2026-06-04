@@ -179,4 +179,18 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         card.tap()
         snap("12-history-expanded")
     }
+
+    /// Onboarding Goal step (step 3) — Welcome → Get Started → Privacy → Next → Goal.
+    func testSnapOnboardingGoal() {
+        let ob = XCUIApplication()
+        ob.launchArguments = ["--reset-onboarding"]
+        ob.launch()
+        XCTAssertTrue(ob.buttons["onboarding_getStartedButton"].waitForExistence(timeout: 10))
+        ob.buttons["onboarding_getStartedButton"].tap()
+        let next = ob.buttons["onboarding_nextButton"]
+        XCTAssertTrue(next.waitForExistence(timeout: 5))
+        next.tap()
+        XCTAssertTrue(ob.buttons["onboarding_finishButton"].waitForExistence(timeout: 5))
+        snap("09c-onboarding-goal")
+    }
 }
