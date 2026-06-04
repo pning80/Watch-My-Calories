@@ -46,6 +46,9 @@ private fun SwipeToDeleteScanRow(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    // Clip to the card's rounded shape so the red delete bg doesn't
+                    // peek past the rounded corners at rest (M3 Card = 12dp corners).
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.error)
                     .padding(horizontal = 24.dp),
                 contentAlignment = Alignment.CenterEnd,
