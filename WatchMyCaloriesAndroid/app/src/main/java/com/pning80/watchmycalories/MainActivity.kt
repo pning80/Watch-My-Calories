@@ -473,7 +473,14 @@ private fun MainAppContent(
                                 navController.navigate("cameraReview")
                             }
                         }
-                    }
+                    },
+                    onCancel = {
+                        // Mirror iOS's persistent toolbar Cancel — bail out of the
+                        // whole capture flow back to the dashboard. Reset the mode
+                        // flag so the next camera entry defaults to Food.
+                        menuCaptureMode = com.pning80.watchmycalories.ui.camera.CaptureMode.Food
+                        navController.popBackStack("dashboard", inclusive = false)
+                    },
                 )
             }
             composable("cameraReview") {
@@ -495,6 +502,12 @@ private fun MainAppContent(
                             navController.navigate("analysis") {
                                 popUpTo("dashboard")
                             }
+                        },
+                        onCancel = {
+                            // iOS toolbar Cancel exits the entire flow (not just
+                            // back to the camera, which is what Retake does).
+                            analysisImages = null
+                            navController.popBackStack("dashboard", inclusive = false)
                         },
                     )
                 }
