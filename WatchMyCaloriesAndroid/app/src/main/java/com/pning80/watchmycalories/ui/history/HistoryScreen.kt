@@ -299,6 +299,11 @@ private fun FoodEntryItem(entry: FoodEntry, onEdit: () -> Unit, onDelete: () -> 
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            // Opaque background: this row is the content of a SwipeToDeleteRow
+            // (SwipeToDismissBox), whose red delete backgroundContent is drawn
+            // behind it and would show through at rest if the row were
+            // transparent. surfaceContainer matches the enclosing day card.
+            .background(MaterialTheme.colorScheme.surfaceContainer)
             .combinedClickable(
                 onClick = { onEdit() },
                 onLongClick = { menuOpen = true },
