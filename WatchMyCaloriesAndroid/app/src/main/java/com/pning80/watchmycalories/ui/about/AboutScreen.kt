@@ -141,10 +141,22 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(Spacing.l),
             ) {
+                // iOS renders the actionable rows (Rate / Help / Privacy) in the
+                // brand green — Rate is a Button whose Label inherits the root
+                // .tint(cwPrimary) and Help/Privacy are Links (accent-colored)
+                // (AboutView.swift:67-87). Android's bare ListItems defaulted to
+                // onSurface black text + onSurfaceVariant gray icons; tint both to
+                // primary to match.
+                val actionRowColors = ListItemDefaults.colors(
+                    headlineColor = MaterialTheme.colorScheme.primary,
+                    leadingIconColor = MaterialTheme.colorScheme.primary,
+                )
+
                 // Rating
                 ListItem(
                     headlineContent = { Text("Rate on Play Store") },
                     leadingContent = { Icon(Icons.Filled.Star, contentDescription = "Rate") },
+                    colors = actionRowColors,
                     modifier = Modifier
                         .testTag(AccessibilityTags.About.RATE_ON_APP_STORE)
                         .clickable {
@@ -173,6 +185,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 ListItem(
                     headlineContent = { Text("Help & Support") },
                     leadingContent = { Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = "Help") },
+                    colors = actionRowColors,
                     modifier = Modifier
                         .testTag(AccessibilityTags.About.HELP_AND_SUPPORT)
                         .clickable {
@@ -184,6 +197,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 ListItem(
                     headlineContent = { Text("Privacy Policy") },
                     leadingContent = { Icon(Icons.Filled.PrivacyTip, contentDescription = "Privacy") },
+                    colors = actionRowColors,
                     modifier = Modifier
                         .testTag(AccessibilityTags.About.PRIVACY_POLICY)
                         .clickable {
@@ -200,16 +214,24 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().padding(top = Spacing.s)
                 )
 
+                // iOS colors the WHOLE Label (icon + text): Verified = green,
+                // Not Verified = .secondary gray (AboutView.swift:96-100). Android
+                // previously tinted only the icon, leaving the text onSurface black.
+                val attestColor = if (isVerified) MaterialTheme.colorScheme.primary
+                                  else MaterialTheme.colorScheme.onSurfaceVariant
                 ListItem(
                     headlineContent = { Text(if (isVerified) "Verified" else "Not Verified") },
+                    colors = ListItemDefaults.colors(
+                        headlineColor = attestColor,
+                        leadingIconColor = attestColor,
+                    ),
                     leadingContent = {
                         // Not-verified is informational, not an error — iOS uses
-                        // shield.slash in .secondary, not a red alarm. GppMaybe +
-                        // onSurfaceVariant is the Material equivalent.
+                        // shield.slash in .secondary, not a red alarm. GppMaybe is
+                        // the Material equivalent.
                         Icon(
                             if (isVerified) Icons.Filled.CheckCircle else Icons.Filled.GppMaybe,
                             contentDescription = "Status",
-                            tint = if (isVerified) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 )
