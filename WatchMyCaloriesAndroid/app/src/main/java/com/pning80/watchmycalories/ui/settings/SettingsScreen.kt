@@ -217,7 +217,11 @@ fun SettingsScreen(
                             )
                             onSaveProfile?.invoke(profile)
                         },
-                        enabled = hasUnsavedChanges,
+                        // iOS keeps the toolbar Save always enabled (green) — tapping
+                        // it always saves + dismisses, even with no edits (SettingsView.swift:279,
+                        // no .disabled()). Android previously greyed it out until dirty
+                        // (enabled = hasUnsavedChanges), an un-iOS divergence. The unsaved-
+                        // changes state still drives the Cancel/back discard dialog above.
                         modifier = Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.SAVE_BUTTON)
                     ) {
                         Text("Save")
