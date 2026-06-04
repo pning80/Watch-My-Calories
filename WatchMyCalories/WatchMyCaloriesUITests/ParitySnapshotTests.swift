@@ -206,4 +206,17 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.textFields["manualEntry_foodName"].waitForExistence(timeout: 5))
         snap("13-manual-entry")
     }
+    /// Menu Scan detail (ScannedMenus → tap a menu → MenuScanDetailView).
+    func testSnapMenuScanDetail() {
+        launchWithMenuScans()
+        app.tabBars.buttons["Scan Menu"].tap()
+        let stored = app.descendants(matching: .any)["scanMenuSheet_storedMenus"].firstMatch
+        XCTAssertTrue(stored.waitForExistence(timeout: 5))
+        stored.tap()
+        let row = app.staticTexts["Mock Italian Place"]
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.tap()
+        XCTAssertTrue(app.staticTexts["Margherita Pizza"].waitForExistence(timeout: 5))
+        snap("14-menu-detail")
+    }
 }
