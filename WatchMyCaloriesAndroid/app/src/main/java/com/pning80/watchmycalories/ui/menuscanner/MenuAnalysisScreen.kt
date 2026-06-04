@@ -1,7 +1,6 @@
 package com.pning80.watchmycalories.ui.menuscanner
 
 import android.graphics.Bitmap
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,9 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -248,18 +244,11 @@ fun MenuAnalysisScreen(
                         verticalArrangement = Arrangement.spacedBy(Spacing.cardGap),
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        item {
-                            Image(
-                                bitmap = image.asImageBitmap(),
-                                contentDescription = "Menu Image",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                                    .clip(RoundedCornerShape(Spacing.m)),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-
+                        // iOS's MenuAnalysisView success result (MenuAnalysisView.swift:132-162)
+                        // shows NO scanned-photo thumbnail — it goes straight from the header to
+                        // "Looks like {name}" to the item cards. Android previously led with a
+                        // 200dp menu Image, an undocumented Android-only addition; dropped to match
+                        // iOS (same call as the iter-6 ScannedMenus FAB removal).
                         item {
                             Text(
                                 // iOS shows "Looks like {name}" (MenuAnalysisView.swift:149),

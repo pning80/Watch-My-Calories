@@ -235,4 +235,12 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.buttons["camera_usePhotoButton"].waitForExistence(timeout: 5))
         snap("15-camera-review")
     }
+    // NOTE: a live Menu Analysis snapshot (Scan Menu → menu camera → Analyze Menu →
+    // MenuAnalysisView) is NOT viable on the simulator. The menu camera's
+    // simulator stub (MenuCameraView.swift:219, simulatorPhotos = ["MenuPhoto1",
+    // "MenuPhoto2"]) fails — takePhoto() raises a "Camera Error" alert instead of
+    // returning a stub frame (the food camera's stub works, the menu one doesn't).
+    // So the live result can't be paired-pixel-diffed from the sim; compare the
+    // Android render against MenuAnalysisView.swift as the source spec, or capture
+    // iOS on a physical device. The saved-scan equivalent is testSnapMenuScanDetail.
 }
