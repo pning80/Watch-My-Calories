@@ -172,8 +172,9 @@ class SettingsScreenTest : BaseComposeTest() {
             )
         }
 
-        // Initially Save is disabled because no changes exist
-        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsNotEnabled()
+        // Save is always enabled (iOS parity — the toolbar Save never disables;
+        // SettingsView.swift:279 has no .disabled()).
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
 
         // Make change
         composeTestRule.onNodeWithTag(AccessibilityTags.Settings.CALCULATE_GOAL).performScrollTo().performClick()
@@ -210,13 +211,13 @@ class SettingsScreenTest : BaseComposeTest() {
             )
         }
 
-        // Initially Save is disabled because no changes exist
-        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsNotEnabled()
+        // Save is always enabled (iOS parity — SettingsView.swift:279, no .disabled()).
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
 
         // Click Calculate Goal to trigger a change in target calories
         composeTestRule.onNodeWithTag(AccessibilityTags.Settings.CALCULATE_GOAL).performScrollTo().performClick()
 
-        // Verify Save is now enabled
+        // Save stays enabled; tapping it persists the profile.
         val saveButton = composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON)
         saveButton.assertIsEnabled()
         saveButton.performClick()
@@ -371,8 +372,11 @@ class SettingsScreenTest : BaseComposeTest() {
     // testAboutAndSupportSectionExists removed in PR C — About is now
     // reached via the Dashboard overflow menu, not from inside Settings.
 
+    // Save is always enabled now (iOS parity), so dirty-tracking is verified via
+    // the Cancel discard dialog instead of the Save button's enabled state.
+
     @Test
-    fun testChangingThemeEnablesSaveButton() {
+    fun testChangingThemeMarksUnsavedChanges() {
         composeTestRule.setContent {
             SettingsScreen(
                 settingsDataStore = settingsDataStore,
@@ -391,8 +395,9 @@ class SettingsScreenTest : BaseComposeTest() {
             )
         }
 
-        // Initially Save is disabled
-        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsNotEnabled()
+        // Save is always enabled; no discard dialog before any edit.
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertDoesNotExist()
 
         // Open InlineMenuPickerRow (theme), then tap a non-default option.
         composeTestRule.onNodeWithTag(AccessibilityTags.Settings.THEME_PICKER).performClick()
@@ -400,12 +405,13 @@ class SettingsScreenTest : BaseComposeTest() {
         composeTestRule.onNodeWithText("Light").performClick()
         composeTestRule.waitForIdle()
 
-        // Save should now be enabled
-        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+        // The change marks the form dirty → Cancel surfaces the discard dialog.
+        composeTestRule.onNodeWithTag("settings_cancel_button").performClick()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertIsDisplayed()
     }
 
     @Test
-    fun testChangingUnitSystemEnablesSaveButton() {
+    fun testChangingUnitSystemMarksUnsavedChanges() {
         composeTestRule.setContent {
             SettingsScreen(
                 settingsDataStore = settingsDataStore,
@@ -424,8 +430,8 @@ class SettingsScreenTest : BaseComposeTest() {
             )
         }
 
-        // Initially Save is disabled
-        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsNotEnabled()
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertDoesNotExist()
 
         // Open InlineMenuPickerRow (unit system), then tap US Customary.
         composeTestRule.onNodeWithTag(AccessibilityTags.Settings.UNIT_PICKER).performClick()
@@ -433,12 +439,12 @@ class SettingsScreenTest : BaseComposeTest() {
         composeTestRule.onNodeWithText("US Customary").performClick()
         composeTestRule.waitForIdle()
 
-        // Save should now be enabled
-        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+        composeTestRule.onNodeWithTag("settings_cancel_button").performClick()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertIsDisplayed()
     }
 
     @Test
-    fun testChangingAiConsentEnablesSaveButton() {
+    fun testChangingAiConsentMarksUnsavedChanges() {
         composeTestRule.setContent {
             SettingsScreen(
                 settingsDataStore = settingsDataStore,
@@ -457,8 +463,8 @@ class SettingsScreenTest : BaseComposeTest() {
             )
         }
 
-        // Initially Save is disabled
-        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsNotEnabled()
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertDoesNotExist()
 
         // Tap AI consent toggle
         composeTestRule.onNodeWithTag(AccessibilityTags.Settings.AI_CONSENT_TOGGLE)
@@ -466,8 +472,8 @@ class SettingsScreenTest : BaseComposeTest() {
             .performClick()
         composeTestRule.waitForIdle()
 
-        // Save should now be enabled
-        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
+        composeTestRule.onNodeWithTag("settings_cancel_button").performClick()
+        composeTestRule.onNodeWithText("You have unsaved changes.").assertIsDisplayed()
     }
 }
 
