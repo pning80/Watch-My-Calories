@@ -125,7 +125,8 @@ class AppMenuParityTest : MainActivityComposeTest() {
     @Test
     fun testAboutScreenShowsDeviceAttestation() {
         openAbout()
-        composeTestRule.onNodeWithText("Device Attestation").assertIsDisplayed()
+        // ignoreCase: section header renders UPPERCASE to match iOS Form headers.
+        composeTestRule.onNodeWithText("Device Attestation", ignoreCase = true).assertIsDisplayed()
         // Android renders one of "Verified" / "Not Verified" depending on Play Integrity state.
         val attestationStateVisible =
             composeTestRule.onAllNodesWithText("Verified").fetchSemanticsNodes().isNotEmpty() ||
