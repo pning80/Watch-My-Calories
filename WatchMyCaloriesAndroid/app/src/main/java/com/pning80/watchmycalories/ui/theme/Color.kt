@@ -4,6 +4,12 @@ import androidx.compose.ui.graphics.Color
 
 // ── Light scheme (unchanged) ───────────────────────────────────────────────
 val CwPrimaryLight = Color(0xFF2E6B4F)
+// Text/icon color ON the dark forest-green `primary` (e.g. the prominent Done
+// button, the native-ad "Ad" badge). The light scheme had `onPrimary` pointing
+// at CwTextPrimaryLight (#1A1A1A, near-black) → dark-on-dark-green, while iOS
+// renders WHITE on cwPrimary (.borderedProminent). White restores the contrast
+// + matches iOS. (Same M3-unset-light-token class as surfaceContainer/secondaryContainer.)
+val CwOnPrimaryLight = Color(0xFFFFFFFF)
 val CwSecondaryLight = Color(0xFFD9F2DB)
 // Selected-segment / secondaryContainer fill for LIGHT. The light scheme never
 // set secondaryContainer, so M3 derived its default lavender — which surfaced as
