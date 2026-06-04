@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -323,6 +324,15 @@ private fun PrivacyStep(
                 Spacer(Modifier.width(8.dp))
                 Text("Health Connect Requested")
             } else {
+                // iOS shows a green heart.fill before the request
+                // (OnboardingView.swift:249-250); Android was missing the leading
+                // icon in this initial state (it only had the post-request check).
+                Icon(
+                    Icons.Filled.Favorite,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
                 Text("Connect Health (active calories)")
             }
         }
