@@ -63,6 +63,21 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         snap("04b-settings-profile")
     }
 
+    /// Settings in METRIC mode (Unit System → Metric): metric Height/Weight wheels
+    /// + cm/kg units, vs the default US-customary ft-in/lbs. Switches the unit
+    /// picker (a .menu Picker, settings_unitPicker) then snaps top + profile.
+    func testSnapSettingsMetric() {
+        launchWithSeedData()
+        app.buttons["appMenu_button"].tap()
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        app.buttons["settings_unitPicker"].tap()
+        let metric = app.buttons["Metric"]
+        if metric.waitForExistence(timeout: 3) { metric.tap() }
+        snap("04c-settings-metric-top")
+        app.swipeUp()
+        snap("04d-settings-metric-profile")
+    }
     /// Scan Menu sheet — the 3-option modal.
     func testSnapScanMenuSheet() {
         launchEmpty()
