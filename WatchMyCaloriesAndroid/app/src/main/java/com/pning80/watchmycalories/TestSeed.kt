@@ -255,14 +255,14 @@ object TestSeed {
             restaurantName = "Mock Italian Place",
             imageID = null,
             timestamp = System.currentTimeMillis(),
-            itemsData = """[{"name":"Margherita Pizza","description":"Classic tomato + mozzarella","calories":800,"protein":30,"carbs":90,"fat":30}]""",
+            itemsData = """[{"name":"Margherita Pizza","description":"Classic tomato + mozzarella","calories":800,"protein":30,"carbs":90,"fat":30},{"name":"Caesar Salad","description":null,"calories":350,"protein":15,"carbs":12,"fat":25}]""",
         ))
         menuScanDao.insertScan(MenuScan(
             id = UUID.randomUUID().toString(),
             restaurantName = "Mock Sushi Bar",
             imageID = null,
             timestamp = System.currentTimeMillis() - 86_400_000L,
-            itemsData = """[{"name":"Salmon Roll","description":null,"calories":320,"protein":18,"carbs":38,"fat":10}]""",
+            itemsData = """[{"name":"Salmon Roll","description":null,"calories":320,"protein":18,"carbs":38,"fat":10},{"name":"Tuna Sashimi","description":"6 pieces","calories":180,"protein":28,"carbs":0,"fat":6}]""",
         ))
     }
 }
