@@ -42,6 +42,10 @@ private val DarkColorScheme = darkColorScheme(
 private val LightColorScheme = lightColorScheme(
     primary = CwPrimaryLight,
     secondary = CwSecondaryLight,
+    // Mirror the dark scheme's secondaryContainer (was unset → M3 lavender in
+    // light, e.g. purple selected SegmentedButtons). Pale green + dark-green text.
+    secondaryContainer = CwSecondaryContainerLight,
+    onSecondaryContainer = CwOnSecondaryContainerLight,
     tertiary = CwAccent,
     background = CwBackgroundLight,
     surface = CwSurfaceLight,
