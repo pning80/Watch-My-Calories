@@ -129,4 +129,44 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(ob.buttons["onboarding_connectHealth"].waitForExistence(timeout: 5))
         snap("09b-onboarding-privacy")
     }
+
+    /// Drives Log Food → Scan Food → capture → Use to kick off estimation.
+    private func goToEstimation() {
+        app.tabBars.buttons["Log Food"].tap()
+        let scanFood = app.staticTexts["Scan Food"]
+        XCTAssertTrue(scanFood.waitForExistence(timeout: 5))
+        scanFood.tap()
+        let capture = app.buttons["camera_captureButton"]
+        XCTAssertTrue(capture.waitForExistence(timeout: 5))
+        capture.tap()
+        let disclaimerContinue = app.buttons["disclaimer_continueButton"]
+        if disclaimerContinue.waitForExistence(timeout: 3) { disclaimerContinue.tap() }
+        let use = app.buttons["camera_usePhotoButton"]
+        XCTAssertTrue(use.waitForExistence(timeout: 5))
+        use.tap()
+    }
+
+    /// Analysis error state (--mock-estimation-error).
+    func testSnapAnalysisError() {
+        app.launchArguments.append("--ai-consent-accepted")
+        app.launchArguments.append("--mock-estimation-error")
+        app.launch()
+        goToEstimation()
+        // Error view settles on a Try Again button (soft wait, then snap).
+        _ = app.buttons["review_tryAgainButton"].waitForExistence(timeout: 15)
+        snap("10-analysis-error")
+    }
+
+    /// Analysis no-food state (--mock-estimation-no-food). Like success, iOS
+    /// interposes the "View Results" ad gate before the no-food message.
+    func testSnapAnalysisNoFood() {
+        app.launchArguments.append("--ai-consent-accepted")
+        app.launchArguments.append("--mock-estimation-no-food")
+        app.launch()
+        goToEstimation()
+        let viewResults = app.buttons["View Results"]
+        if viewResults.waitForExistence(timeout: 15) { viewResults.tap() }
+        _ = app.staticTexts["No Food Detected"].waitForExistence(timeout: 12)
+        snap("11-analysis-nofood")
+    }
 }
