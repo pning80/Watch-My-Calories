@@ -396,7 +396,7 @@ private fun GoalStep(
         // About You
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
             Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                Text("About You", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Text("About You".uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 // Unit System toggle — wired to the app-wide DataStore so it
                 // persists and stays in sync with the Settings screen.
@@ -480,7 +480,7 @@ private fun GoalStep(
         // Daily Goal
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
             Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                Text("Daily Goal", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Text("Daily Goal".uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 OutlinedTextField(
                     value = targetCaloriesText,
