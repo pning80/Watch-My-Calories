@@ -8,12 +8,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.pning80.watchmycalories.data.FoodEntry
+import com.pning80.watchmycalories.data.MealType
 import com.pning80.watchmycalories.ui.analysis.EditableEstimationItem
 import com.pning80.watchmycalories.ui.theme.Spacing
 
@@ -25,7 +27,11 @@ fun EditMealGroupScreen(
     onCancel: () -> Unit
 ) {
     var mealName by remember { mutableStateOf(entries.firstOrNull()?.mealName ?: "") }
-    val editableItems = remember { 
+    // iOS EditMealGroupView's "Meal Info" section includes a meal-type segmented
+    // picker (Components.swift:1053) so the whole meal can be re-bucketed; Android
+    // was missing it (D-019). Track the group's meal type and write it to all items.
+    var mealType by remember { mutableStateOf(MealType.fromRaw(entries.firstOrNull()?.mealTypeRaw)) }
+    val editableItems = remember {
         mutableStateListOf<EditableEstimationItem>().apply {
             addAll(entries.map { entry ->
                 EditableEstimationItem(com.pning80.watchmycalories.ai.EstimationItem(
@@ -60,7 +66,8 @@ fun EditMealGroupScreen(
                             protein = edited.protein,
                             carbs = edited.carbs,
                             fat = edited.fat,
-                            mealName = mealName
+                            mealName = mealName,
+                            mealTypeRaw = mealType.displayName
                         )
                     }
                     onSave(updatedEntries)
@@ -81,15 +88,34 @@ fun EditMealGroupScreen(
             verticalArrangement = Arrangement.spacedBy(Spacing.l)
         ) {
             item {
-                OutlinedTextField(
-                    value = mealName,
-                    onValueChange = { mealName = it },
-                    // iOS EditMealGroupView labels this field "Meal Name"
-                    // (Components.swift:926); "Meal Context" was an unclear,
-                    // un-iOS Android-ism.
-                    label = { Text("Meal Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
+                    OutlinedTextField(
+                        value = mealName,
+                        onValueChange = { mealName = it },
+                        // iOS EditMealGroupView labels this field "Meal Name"
+                        // (Components.swift:926); "Meal Context" was an unclear,
+                        // un-iOS Android-ism.
+                        label = { Text("Meal Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    // Meal-type segmented — mirrors iOS Meal Info (D-019). No
+                    // selected-checkmark, matching iOS + the other segmented controls.
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        MealType.displayOrder.forEachIndexed { index, type ->
+                            SegmentedButton(
+                                selected = mealType == type,
+                                onClick = { mealType = type },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = index,
+                                    count = MealType.displayOrder.size
+                                ),
+                                icon = {},
+                            ) {
+                                Text(type.displayName, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
             }
 
             itemsIndexed(editableItems) { _, itemState ->
@@ -147,6 +173,25 @@ fun EditMealGroupScreen(
                 }
             }
             
+            // Total Calories footer — mirrors iOS EditMealGroupView (D-019). Live
+            // sum of the editable per-item calories; value in cwPrimary green.
+            item {
+                val totalCals = editableItems.sumOf { it.calories.toDoubleOrNull() ?: 0.0 }
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.s),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Total Calories", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        "${totalCals.toInt()} kcal",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+
             item {
                 TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
                     Text("Cancel", color = MaterialTheme.colorScheme.error)
