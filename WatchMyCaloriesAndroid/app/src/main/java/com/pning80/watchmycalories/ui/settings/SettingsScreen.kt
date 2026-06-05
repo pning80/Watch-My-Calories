@@ -376,92 +376,26 @@ fun SettingsScreen(
                         onValueChange = { age = it }
                     )
 
-                    // Gender — dropdown menu picker mirroring iOS's `.pickerStyle(.menu)`
-                    // and matching the Activity Level control below. (Replaced an
-                    // earlier Material segmented control: iOS uses a default `.menu`
-                    // Picker for Gender just like Theme/Unit/Activity, so the faithful
-                    // Android mirror is a dropdown, not segmented buttons.)
-                    Text("Gender", style = MaterialTheme.typography.bodyMedium)
-                    var genderExpanded by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(
-                        expanded = genderExpanded,
-                        onExpandedChange = { genderExpanded = it }
-                    ) {
-                        OutlinedTextField(
-                            value = gender.displayName,
-                            onValueChange = {},
-                            readOnly = true,
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedTextColor = MaterialTheme.colorScheme.primary,
-                                focusedTextColor = MaterialTheme.colorScheme.primary,
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor()
-                                .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.GENDER_PICKER)
-                        )
-                        ExposedDropdownMenu(
-                            expanded = genderExpanded,
-                            onDismissRequest = { genderExpanded = false }
-                        ) {
-                            Gender.entries.forEach { g ->
-                                DropdownMenuItem(
-                                    text = { Text(g.displayName) },
-                                    onClick = {
-                                        gender = g
-                                        genderExpanded = false
-                                    },
-                                    modifier = Modifier.testTag("settings_gender_${g.displayName}")
-                                )
-                            }
-                        }
-                    }
+                    // Gender — compact inline menu-picker row, mirroring iOS's
+                    // `.pickerStyle(.menu)` Form row (label left, green value + ↕
+                    // chevron right). Was a full-width boxed OutlinedTextField, which
+                    // diverged from both iOS and Android's own Theme/Unit/Height rows.
+                    InlineMenuPickerRow(
+                        label = "Gender",
+                        options = Gender.entries.map { it.displayName },
+                        selectedLabel = gender.displayName,
+                        onSelect = { sel -> Gender.entries.firstOrNull { it.displayName == sel }?.let { gender = it } },
+                        testTag = com.pning80.watchmycalories.utils.AccessibilityTags.Settings.GENDER_PICKER,
+                    )
 
-                    // Activity Level
-                    Text("Activity Level", style = MaterialTheme.typography.bodyMedium)
-                    var activityExpanded by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(
-                        expanded = activityExpanded,
-                        onExpandedChange = { activityExpanded = it }
-                    ) {
-                        OutlinedTextField(
-                            value = activityLevel.displayName,
-                            onValueChange = {},
-                            readOnly = true,
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = activityExpanded) },
-                            // Default M3 outline (`outline`) is near-invisible on
-                            // the dark `#1A211C` surface; pin the border + value
-                            // text to primary mint so the picker reads clearly
-                            // and echoes iOS's mint picker value (PR T).
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedTextColor = MaterialTheme.colorScheme.primary,
-                                focusedTextColor = MaterialTheme.colorScheme.primary,
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor()
-                                .testTag(com.pning80.watchmycalories.utils.AccessibilityTags.Settings.ACTIVITY_PICKER)
-                        )
-                        ExposedDropdownMenu(
-                            expanded = activityExpanded,
-                            onDismissRequest = { activityExpanded = false }
-                        ) {
-                            ActivityLevel.entries.forEach { level ->
-                                DropdownMenuItem(
-                                    text = { Text(level.displayName) },
-                                    onClick = {
-                                        activityLevel = level
-                                        activityExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+                    // Activity Level — compact inline menu-picker row (see Gender).
+                    InlineMenuPickerRow(
+                        label = "Activity Level",
+                        options = ActivityLevel.entries.map { it.displayName },
+                        selectedLabel = activityLevel.displayName,
+                        onSelect = { sel -> ActivityLevel.entries.firstOrNull { it.displayName == sel }?.let { activityLevel = it } },
+                        testTag = com.pning80.watchmycalories.utils.AccessibilityTags.Settings.ACTIVITY_PICKER,
+                    )
                 }
             }
 
@@ -734,12 +668,15 @@ private fun InlineMenuPickerRow(
                 Text(
                     selectedLabel,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    // iOS Form `.menu` Picker values render in the accent (cwPrimary
+                    // green) — Theme/Unit/Gender/Activity are all green on iOS.
+                    // Android was onSurfaceVariant gray. Match iOS.
+                    color = MaterialTheme.colorScheme.primary,
                 )
                 Icon(
                     androidx.compose.material.icons.Icons.Filled.UnfoldMore,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp),
                 )
             }
