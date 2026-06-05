@@ -167,8 +167,10 @@ private fun WelcomeStep(onNext: () -> Unit) {
         Spacer(modifier = Modifier.weight(1f))
 
         // Brand mark — mirrors iOS Onboarding welcome
-        // (OnboardingView.swift:60-63 → `AppIconView()`). Shares the same
-        // 1024.png source as the launcher icon.
+        // (OnboardingView.swift:60-63 → `AppIconView()` → `Image("MiniAppIcon")`).
+        // `app_icon` is the in-app brand mark (iOS MiniAppIcon artwork), shared by
+        // the Dashboard header / About / Analysis; it is intentionally distinct
+        // from the platform launcher icon (mipmap/ic_launcher). See D-027.
         Image(
             painter = painterResource(id = R.drawable.app_icon),
             contentDescription = "Watch My Calories logo",
