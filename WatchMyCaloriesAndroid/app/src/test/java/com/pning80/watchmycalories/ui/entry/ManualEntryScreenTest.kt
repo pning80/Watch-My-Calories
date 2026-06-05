@@ -238,8 +238,10 @@ class ManualEntryScreenTest : BaseComposeTest() {
             )
         }
 
-        // The nutrition toggle button is inside a scrollable Column — scroll to it
-        val toggleNode = composeTestRule.onNodeWithText("Add Nutrition Details (optional)")
+        // The nutrition disclosure row is inside a scrollable Column — scroll to it.
+        // iOS-style DisclosureGroup: constant label "Nutrition Details (optional)"
+        // + a rotating chevron (no Add/Hide text swap).
+        val toggleNode = composeTestRule.onNodeWithText("Nutrition Details (optional)")
         toggleNode.performScrollTo()
         toggleNode.assertExists()
 
@@ -250,8 +252,9 @@ class ManualEntryScreenTest : BaseComposeTest() {
         composeTestRule.mainClock.advanceTimeBy(1000)
         composeTestRule.waitForIdle()
 
-        // After expanding, the toggle text should have changed
-        composeTestRule.onNodeWithText("Hide Nutrition Details").assertExists()
+        // After expanding, the nutrition fields should appear (label stays constant).
+        composeTestRule.onNodeWithText("Protein (g)").performScrollTo().assertExists()
+        composeTestRule.onNodeWithText("Nutrition Details (optional)").assertExists()
     }
 
     // MARK: - Navigation Title
