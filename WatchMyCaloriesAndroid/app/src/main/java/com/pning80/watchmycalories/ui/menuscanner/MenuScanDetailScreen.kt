@@ -148,7 +148,7 @@ fun MenuScanDetailScreen(
 }
 
 @Composable
-private fun MacroStat(label: String, value: Double) {
+internal fun MacroStat(label: String, value: Double) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("${value.toInt()}g", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
