@@ -301,6 +301,23 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.buttons["camera_usePhotoButton"].waitForExistence(timeout: 5))
         snap("15-camera-review")
     }
+
+    /// One-time "Estimates Are Approximate" disclaimer sheet — shown on the first
+    /// capture (CameraView.swift:139). Snapped BEFORE dismissing (vs CameraReview
+    /// which taps Continue first). Under --uitesting the seen-flag resets to false
+    /// so it always appears.
+    func testSnapDisclaimer() {
+        launchWithAIConsentAccepted()
+        app.tabBars.buttons["Log Food"].tap()
+        let scanFood = app.staticTexts["Scan Food"]
+        XCTAssertTrue(scanFood.waitForExistence(timeout: 5))
+        scanFood.tap()
+        let capture = app.buttons["camera_captureButton"]
+        XCTAssertTrue(capture.waitForExistence(timeout: 5))
+        capture.tap()
+        XCTAssertTrue(app.buttons["disclaimer_continueButton"].waitForExistence(timeout: 5))
+        snap("15b-disclaimer")
+    }
     /// Multi-item meal GROUP edit (analysis-success saves a shared-imageID group
     /// → Dashboard grouped card → long-press → Edit group → EditMealGroupView).
     /// The mock estimation saves "Mock Chicken and Rice" (Mock Chicken + Mock Rice)
