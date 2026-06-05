@@ -253,6 +253,14 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.staticTexts["Margherita Pizza"].waitForExistence(timeout: 5))
         snap("14-menu-detail")
     }
+    // NOTE: the food-camera PREVIEW state is NOT cleanly snapshot-able on the
+    // simulator. The live AVCaptureVideoPreviewLayer session can't start without
+    // a real camera, so the preview raises a "Camera Error" alert (same sim limit
+    // as the menu camera, see the MenuAnalysis note above). Capture still works —
+    // model.takePhoto() returns the simulatorPhotos stub bypassing the live
+    // session — which is why testSnapCameraReview (the post-capture review) works
+    // by tapping straight through. The preview chrome (shutter + scrims + Cancel)
+    // can only be verified on a physical device.
     /// Camera post-capture review (Log Food → Scan Food → capture → meal picker + Retake/Use).
     func testSnapCameraReview() {
         launchWithAIConsentAccepted()
