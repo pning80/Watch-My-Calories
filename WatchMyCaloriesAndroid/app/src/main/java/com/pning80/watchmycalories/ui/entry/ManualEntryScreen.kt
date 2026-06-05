@@ -2,13 +2,18 @@ package com.pning80.watchmycalories.ui.entry
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -165,6 +170,9 @@ fun ManualEntryScreen(
                                     index = index,
                                     count = MealType.displayOrder.size
                                 ),
+                                // iOS's segmented Picker shows no leading checkmark on
+                                // the selected segment; suppress Material's default check.
+                                icon = {},
                                 modifier = Modifier.testTag("mealType_${type.displayName}")
                             ) {
                                 Text(type.displayName, style = MaterialTheme.typography.labelSmall)
@@ -180,10 +188,26 @@ fun ManualEntryScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                    TextButton(onClick = { showNutrition = !showNutrition }) {
+                    // iOS uses DisclosureGroup("Nutrition Details (optional)")
+                    // (DashboardView.swift:250): a constant label + a chevron that
+                    // rotates on expand — not an "Add"/"Hide" text-button toggle.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showNutrition = !showNutrition },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Text(
-                            if (showNutrition) "Hide Nutrition Details" else "Add Nutrition Details (optional)",
-                            style = MaterialTheme.typography.titleSmall
+                            "Nutrition Details (optional)",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Icon(
+                            Icons.Filled.ChevronRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.rotate(if (showNutrition) 90f else 0f),
                         )
                     }
 
