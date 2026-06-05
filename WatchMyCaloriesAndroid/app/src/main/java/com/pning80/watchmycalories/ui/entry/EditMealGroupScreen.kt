@@ -140,18 +140,20 @@ fun EditMealGroupScreen(
                             label = { Text("Food Name") },
                             modifier = Modifier.fillMaxWidth()
                         )
+                        // iOS EditMealGroupView orders the per-item row Calories | Quantity
+                        // (Components.swift); Android had Quantity | Calories. Match iOS.
                         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                            OutlinedTextField(
-                                value = itemState.quantity,
-                                onValueChange = { itemState.quantity = it },
-                                label = { Text("Quantity") },
-                                modifier = Modifier.weight(1f)
-                            )
                             OutlinedTextField(
                                 value = itemState.calories,
                                 onValueChange = { itemState.calories = it },
                                 label = { Text("Calories") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                            OutlinedTextField(
+                                value = itemState.quantity,
+                                onValueChange = { itemState.quantity = it },
+                                label = { Text("Quantity") },
                                 modifier = Modifier.weight(1f)
                             )
                         }
