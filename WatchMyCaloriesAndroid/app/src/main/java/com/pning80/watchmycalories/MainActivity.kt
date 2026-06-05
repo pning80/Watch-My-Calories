@@ -63,6 +63,14 @@ class MainActivity : ComponentActivity() {
         // is a no-op. Mirrors iOS `--uitesting`+`--seed-*` launch args.
         TestSeed.applyIfTesting(this, intent)
 
+        // Mirror iOS's simulator HealthKit mock (HealthKitManager.swift:17 → 456) so
+        // the Dashboard two-ring (consumed + burned arcs) + "Burned" stat are exercised
+        // in parity captures. Real launches (and Robolectric, which carries no extra)
+        // read Health Connect, so this only affects --uitesting launches.
+        if (TestSeed.isUiTesting(intent)) {
+            viewModel.healthConnectManager.setActiveEnergyBurnedForUiTesting(456.0)
+        }
+
         val settingsDataStore = SettingsDataStore(this)
 
         // AdMob SDK is consent-gated — `enableAds()` runs UMP before

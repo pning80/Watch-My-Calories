@@ -19,6 +19,18 @@ class HealthConnectManager(private val context: Context) {
     private val _activeEnergyBurned = MutableStateFlow(0.0)
     val activeEnergyBurned: StateFlow<Double> = _activeEnergyBurned.asStateFlow()
 
+    /**
+     * Inject a fixed active-energy value for UI-testing / parity captures, mirroring
+     * iOS's simulator HealthKit mock (`HealthKitManager.swift:17` sets
+     * `activeEnergyBurned = 456` on the sim). Real launches read Health Connect;
+     * `fetchTodayEnergyBurned()` is a no-op while unauthorized (the test case), so
+     * this value persists. Called from MainActivity only when the launch Intent
+     * carries `wmc.test.uitesting`.
+     */
+    fun setActiveEnergyBurnedForUiTesting(value: Double) {
+        _activeEnergyBurned.value = value
+    }
+
     private val _isAuthorized = MutableStateFlow(false)
     val isAuthorized: StateFlow<Boolean> = _isAuthorized.asStateFlow()
 
