@@ -276,10 +276,15 @@ fun MenuAnalysisScreen(
                                         Text(item.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
 
+                                    // iOS menuItemCard shows macros as columns —
+                                    // "{value}g" over the full Protein/Carbs/Fat label
+                                    // (MenuAnalysisView.swift:227); Android's live result
+                                    // used a compact "30g P" inline form, diverging from
+                                    // iOS AND the saved MenuScanDetail. Reuse MacroStat.
                                     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.l), modifier = Modifier.padding(top = Spacing.xs)) {
-                                        item.protein?.let { Text("${it.toInt()}g P", style = MaterialTheme.typography.labelMedium) }
-                                        item.carbs?.let { Text("${it.toInt()}g C", style = MaterialTheme.typography.labelMedium) }
-                                        item.fat?.let { Text("${it.toInt()}g F", style = MaterialTheme.typography.labelMedium) }
+                                        item.protein?.let { MacroStat("Protein", it) }
+                                        item.carbs?.let { MacroStat("Carbs", it) }
+                                        item.fat?.let { MacroStat("Fat", it) }
                                     }
                                 }
                             }
