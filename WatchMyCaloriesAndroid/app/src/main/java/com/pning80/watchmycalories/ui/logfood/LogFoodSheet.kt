@@ -121,6 +121,8 @@ private fun LogOptionButton(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
+                    // iOS LogFoodSheet.swift option title is .body .semibold — match it.
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
