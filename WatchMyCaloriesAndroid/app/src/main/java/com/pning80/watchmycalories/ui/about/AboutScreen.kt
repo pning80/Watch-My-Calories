@@ -12,9 +12,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.PrivacyTip
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.GppMaybe
+import androidx.compose.material.icons.outlined.FrontHand
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,23 +82,25 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(Spacing.l),
             ) {
                 // Brand mark — mirrors iOS About header
-                // (AboutView.swift:23-28 → `Image("MiniAppIcon")`). Shares the
-                // same 1024.png source as the launcher icon.
+                // (AboutView.swift:23-28 → `Image("MiniAppIcon")`, 60pt / r14 /
+                // shadow black-0.1 r2 y1). `app_icon` is the in-app MiniAppIcon
+                // artwork (see D-027), distinct from the launcher icon.
                 Image(
                     painter = painterResource(id = R.drawable.app_icon),
                     contentDescription = "Watch My Calories logo",
                     modifier = Modifier
-                        .size(80.dp)
-                        .shadow(elevation = 6.dp, shape = RoundedCornerShape(20.dp))
-                        .clip(RoundedCornerShape(20.dp))
+                        .size(60.dp)
+                        .shadow(elevation = 2.dp, shape = RoundedCornerShape(14.dp))
+                        .clip(RoundedCornerShape(14.dp))
                 )
 
                 Text(
                     "Watch My Calories",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    // iOS AboutView.swift:30-32 styles the app name cwPrimary (brand
-                    // green); Android was defaulting to white onSurface.
+                    // iOS AboutView.swift:30-32 uses .headline (≈17pt semibold) in
+                    // cwPrimary — a COMPACT header, not a large headline. Android was
+                    // headlineMedium (28sp) bold, far larger. Match iOS size + green.
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
                 )
 
@@ -117,7 +119,9 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 }
                 Text(
                     if (versionCopied) "Copied!" else versionLabel,
-                    style = MaterialTheme.typography.bodyLarge,
+                    // iOS version label is .caption (≈12pt) .secondary
+                    // (AboutView.swift:46-48); Android was bodyLarge (16sp).
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .testTag(AccessibilityTags.About.VERSION_LABEL)
@@ -126,8 +130,8 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                             versionCopied = true
                         }
                 )
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.l))
+                // iOS has no divider between the version label and the Rate card —
+                // just Form-section spacing. Removed for parity.
             }
 
             // --- Banner ad (edge-to-edge; mirrors iOS `listRowInsets(EdgeInsets())`) ---
@@ -155,7 +159,8 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                 // Rating
                 ListItem(
                     headlineContent = { Text("Rate on Play Store") },
-                    leadingContent = { Icon(Icons.Filled.Star, contentDescription = "Rate") },
+                    // iOS uses the outline `star` SF Symbol, not a filled star.
+                    leadingContent = { Icon(Icons.Outlined.StarBorder, contentDescription = "Rate") },
                     colors = actionRowColors,
                     modifier = Modifier
                         .testTag(AccessibilityTags.About.RATE_ON_APP_STORE)
@@ -196,7 +201,9 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
 
                 ListItem(
                     headlineContent = { Text("Privacy Policy") },
-                    leadingContent = { Icon(Icons.Filled.PrivacyTip, contentDescription = "Privacy") },
+                    // iOS uses `hand.raised` (a raised privacy hand), not a shield.
+                    // FrontHand is the Material raised-hand equivalent.
+                    leadingContent = { Icon(Icons.Outlined.FrontHand, contentDescription = "Privacy") },
                     colors = actionRowColors,
                     modifier = Modifier
                         .testTag(AccessibilityTags.About.PRIVACY_POLICY)
