@@ -11,7 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.ui.res.painterResource
 import com.pning80.watchmycalories.R
@@ -340,7 +340,7 @@ private fun MealGroupItem(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Icon(
-                        androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        androidx.compose.material.icons.Icons.Filled.ChevronRight,
                         contentDescription = if (expanded) "Collapse" else "Expand",
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                         modifier = Modifier.rotate(if (expanded) 90f else 0f)
