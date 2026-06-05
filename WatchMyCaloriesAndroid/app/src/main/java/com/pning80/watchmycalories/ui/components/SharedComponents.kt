@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
@@ -424,6 +426,31 @@ fun EmptyStateCard(
             subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
+    }
+}
+
+/**
+ * App-menu (overflow) icon — mirrors iOS `AppMenuToolbar`'s `ellipsis.circle`
+ * (`AppMenuToolbar.swift:23`): a horizontal ellipsis inside a thin circle ring,
+ * tinted cwPrimary green. Android previously used a gray vertical `MoreVert`
+ * (the Material default); per the porting rule to favor iOS faithfulness over
+ * Material-norm divergences, this matches iOS's orientation + circle + color.
+ * Used by the Dashboard header and the History/ScannedMenus TopAppBar.
+ */
+@Composable
+fun AppMenuIcon() {
+    Box(
+        modifier = Modifier
+            .size(26.dp)
+            .border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.MoreHoriz,
+            contentDescription = "App menu",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(18.dp),
         )
     }
 }

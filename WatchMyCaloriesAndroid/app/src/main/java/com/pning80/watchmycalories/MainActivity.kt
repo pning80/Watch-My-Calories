@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -282,7 +281,7 @@ private fun MainAppContent(
                                 onClick = { topBarMenuOpen = true },
                                 modifier = androidx.compose.ui.Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.AppMenu.MENU_BUTTON)
                             ) {
-                                Icon(Icons.Filled.MoreVert, contentDescription = "App menu")
+                                com.pning80.watchmycalories.ui.components.AppMenuIcon()
                             }
                             DropdownMenu(
                                 expanded = topBarMenuOpen,
