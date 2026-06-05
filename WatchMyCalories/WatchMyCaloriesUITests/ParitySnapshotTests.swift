@@ -99,6 +99,17 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         snap("06-scanned-menus")
     }
 
+    /// Stored/Scanned Menus EMPTY state (no scans) — Scan Menu → Stored Menus.
+    func testSnapScannedMenusEmpty() {
+        launchEmpty()
+        app.tabBars.buttons["Scan Menu"].tap()
+        let stored = app.descendants(matching: .any)["scanMenuSheet_storedMenus"].firstMatch
+        XCTAssertTrue(stored.waitForExistence(timeout: 5))
+        stored.tap()
+        _ = app.staticTexts["No scanned menus yet"].waitForExistence(timeout: 5)
+        snap("06b-scanned-menus-empty")
+    }
+
     /// About screen.
     func testSnapAbout() {
         launchEmpty()
