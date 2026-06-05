@@ -381,7 +381,10 @@ class OnboardingScreenTest {
         composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.GET_STARTED_BUTTON).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Connect Health", substring = true).assertIsDisplayed()
+        // The health button lives in the privacy step's scrollable region; scroll
+        // to it (it can sit below the fold on short test canvases).
+        composeTestRule.onNodeWithText("Connect Health", substring = true)
+            .performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -393,7 +396,8 @@ class OnboardingScreenTest {
         composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.GET_STARTED_BUTTON).performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.CONNECT_HEALTH_BUTTON).performClick()
+        composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.CONNECT_HEALTH_BUTTON)
+            .performScrollTo().performClick()
         composeTestRule.waitForIdle()
 
         // Label swap.

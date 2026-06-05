@@ -347,7 +347,29 @@ private fun PrivacyStep(
             )
         }
 
-        ProgressDots(current = 1, total = 2)
+        ProgressDots(current = 1, total = 2, modifier = Modifier.align(Alignment.CenterHorizontally))
+
+        // iOS permissionsStep repeats the privacy reassurance label on this step
+        // (OnboardingView.swift:266-268), between the progress dots and the Next
+        // button — Android only rendered it on the Welcome step. Match iOS, reusing
+        // the Welcome step's Lock + labelMedium treatment.
+        Row(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(
+                Icons.Filled.Lock,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+            Text(
+                "Your data is never stored outside this device",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+        }
 
         Button(
             onClick = onNext,
