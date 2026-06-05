@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.remember
@@ -138,6 +139,27 @@ fun ScannedMenusScreen(
                                             .size(56.dp)
                                             .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp)),
                                     )
+                                } else {
+                                    // iOS shows a `menucard` glyph in a gray rounded square
+                                    // when a scan has no photo (ScannedMenusView.swift:83);
+                                    // Android showed nothing. MenuBook is the established
+                                    // Material match (iter-6).
+                                    Box(
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .background(
+                                                MaterialTheme.colorScheme.surfaceVariant,
+                                                androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                            ),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(
+                                            Icons.AutoMirrored.Filled.MenuBook,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(28.dp),
+                                        )
+                                    }
                                 }
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -158,6 +180,13 @@ fun ScannedMenusScreen(
                                         )
                                     }
                                 }
+                                // Trailing disclosure chevron — iOS list rows show a
+                                // chevron.right (ScannedMenusView.swift); Android had none.
+                                Icon(
+                                    Icons.Filled.ChevronRight,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                             }
                         }
                     }
