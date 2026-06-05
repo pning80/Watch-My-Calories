@@ -168,7 +168,7 @@ fun ScannedMenusScreen(
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = SimpleDateFormat("MMM dd, yyyy h:mm a", Locale.getDefault()).format(Date(scan.timestamp)),
+                                        text = SimpleDateFormat("MMM d, yyyy 'at' h:mm a", Locale.getDefault()).format(Date(scan.timestamp)),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
