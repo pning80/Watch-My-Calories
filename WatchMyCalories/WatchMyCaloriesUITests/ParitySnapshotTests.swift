@@ -86,6 +86,21 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         app.swipeUp()
         snap("04d-settings-metric-profile")
     }
+
+    /// Settings scrolled to the BOTTOM — the Daily Goals + Privacy sections
+    /// (Target Calories / Calculate Recommended Goal / AI Photo Analysis toggle),
+    /// which the top + profile snaps don't reach.
+    func testSnapSettingsBottom() {
+        launchWithSeedData()
+        app.buttons["appMenu_button"].tap()
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        app.swipeUp()
+        app.swipeUp()
+        app.swipeUp()
+        snap("04e-settings-bottom")
+    }
+
     /// Log Food sheet — the 3-option modal (Scan Food / Choose from Library /
     /// Log Manually) opened from the Log Food tab.
     func testSnapLogFood() {
