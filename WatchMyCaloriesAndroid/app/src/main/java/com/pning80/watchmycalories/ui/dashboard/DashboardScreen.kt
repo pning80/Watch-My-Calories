@@ -13,7 +13,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.ui.res.painterResource
 import com.pning80.watchmycalories.R
 import androidx.compose.material3.*
@@ -109,16 +108,9 @@ fun DashboardScreen(
                 onClick = { appMenuOpen = true },
                 modifier = Modifier.testTag(com.pning80.watchmycalories.utils.AccessibilityTags.AppMenu.MENU_BUTTON)
             ) {
-                // App-menu overflow — iOS uses `ellipsis.circle` (horizontal
-                // dots in a circle); MoreVert is the Material equivalent and
-                // is the conventional Android overflow affordance. A gear here
-                // would mislead users into "Settings only" when the menu also
-                // has About.
-                Icon(
-                    imageVector = Icons.Filled.MoreVert,
-                    contentDescription = "App menu",
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
+                // App-menu overflow — matches iOS `ellipsis.circle` (horizontal
+                // dots in a circle, cwPrimary green) via the shared AppMenuIcon.
+                com.pning80.watchmycalories.ui.components.AppMenuIcon()
             }
             DropdownMenu(expanded = appMenuOpen, onDismissRequest = { appMenuOpen = false }) {
                 DropdownMenuItem(
