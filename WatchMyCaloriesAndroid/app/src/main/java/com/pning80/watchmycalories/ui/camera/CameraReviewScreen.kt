@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -229,7 +229,7 @@ private fun UseButton(onClick: () -> Unit) {
         ),
         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
     ) {
-        Icon(Icons.Filled.CheckCircle, contentDescription = null)
+        Icon(Icons.Filled.Check, contentDescription = null)
         Spacer(Modifier.width(8.dp))
         Text("Use", fontWeight = FontWeight.SemiBold)
     }
