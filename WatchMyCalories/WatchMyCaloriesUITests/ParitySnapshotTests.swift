@@ -51,6 +51,14 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         snap("03-history")
     }
 
+    /// History EMPTY state (no entries) — shared EmptyStateCard.
+    func testSnapHistoryEmpty() {
+        launchEmpty()
+        app.tabBars.buttons["History"].tap()
+        _ = app.staticTexts["No meals tracked yet"].waitForExistence(timeout: 5)
+        snap("03b-history-empty")
+    }
+
     /// Settings — top of the form and scrolled down to the profile section
     /// (the screen that was source-compare-only before tap injection).
     func testSnapSettings() {
