@@ -1,15 +1,20 @@
 package com.pning80.watchmycalories.ui.entry
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -46,6 +51,10 @@ fun EditMealGroupScreen(
             })
         }
     }
+    // Per-item "Nutrition (optional)" disclosure state — iOS shows the macros in a
+    // collapsed disclosure per item (D-019); start collapsed, matching iOS + the
+    // single-entry edit (ManualEntryScreen, iter-75).
+    val nutritionExpanded = remember { mutableStateListOf(*Array(entries.size) { false }) }
 
     Scaffold(
         topBar = {
@@ -118,7 +127,7 @@ fun EditMealGroupScreen(
                 }
             }
 
-            itemsIndexed(editableItems) { _, itemState ->
+            itemsIndexed(editableItems) { index, itemState ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(Spacing.l),
@@ -146,28 +155,52 @@ fun EditMealGroupScreen(
                                 modifier = Modifier.weight(1f)
                             )
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
-                            OutlinedTextField(
-                                value = itemState.protein,
-                                onValueChange = { itemState.protein = it },
-                                label = { Text("Protein (g)") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
+                        // iOS shows the per-item macros in a collapsed "Nutrition
+                        // (optional)" disclosure (D-019). Match it: a constant label +
+                        // rotating chevron that reveals the Protein/Carbs/Fat row.
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { nutritionExpanded[index] = !nutritionExpanded[index] },
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                "Nutrition (optional)",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
-                            OutlinedTextField(
-                                value = itemState.carbs,
-                                onValueChange = { itemState.carbs = it },
-                                label = { Text("Carbs (g)") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
+                            Icon(
+                                Icons.Filled.ChevronRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.rotate(if (nutritionExpanded[index]) 90f else 0f),
                             )
-                            OutlinedTextField(
-                                value = itemState.fat,
-                                onValueChange = { itemState.fat = it },
-                                label = { Text("Fat (g)") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
-                            )
+                        }
+                        AnimatedVisibility(visible = nutritionExpanded[index]) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.cardGap)) {
+                                OutlinedTextField(
+                                    value = itemState.protein,
+                                    onValueChange = { itemState.protein = it },
+                                    label = { Text("Protein (g)") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedTextField(
+                                    value = itemState.carbs,
+                                    onValueChange = { itemState.carbs = it },
+                                    label = { Text("Carbs (g)") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                OutlinedTextField(
+                                    value = itemState.fat,
+                                    onValueChange = { itemState.fat = it },
+                                    label = { Text("Fat (g)") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                     }
                 }
