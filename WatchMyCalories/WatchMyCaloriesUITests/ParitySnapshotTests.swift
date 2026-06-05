@@ -86,6 +86,15 @@ final class ParitySnapshotTests: WatchMyCaloriesUITestBase {
         app.swipeUp()
         snap("04d-settings-metric-profile")
     }
+    /// Log Food sheet — the 3-option modal (Scan Food / Choose from Library /
+    /// Log Manually) opened from the Log Food tab.
+    func testSnapLogFood() {
+        launchEmpty()
+        app.tabBars.buttons["Log Food"].tap()
+        XCTAssertTrue(app.staticTexts["Scan Food"].waitForExistence(timeout: 5))
+        snap("05z-logfood-sheet")
+    }
+
     /// Scan Menu sheet — the 3-option modal.
     func testSnapScanMenuSheet() {
         launchEmpty()
