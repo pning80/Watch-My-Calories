@@ -3,6 +3,7 @@ package com.pning80.watchmycalories.ui.analysis
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -268,14 +269,23 @@ fun AnalysisScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.l)) {
-                            Icon(
-                                // iOS uses fork.knife.circle for no-food — a soft
-                                // "couldn't identify" cue, not a Warning triangle.
-                                Icons.Filled.Restaurant,
-                                contentDescription = "No Food",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(64.dp)
-                            )
+                            // iOS uses the `fork.knife.circle` SF Symbol — the fork/knife
+                            // glyph INSIDE a thin circle ring — as a soft "couldn't
+                            // identify" cue (EstimationReviewView.swift:182). Material's
+                            // Restaurant glyph has no circle, so wrap it in a ring to match.
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .border(2.dp, MaterialTheme.colorScheme.onSurfaceVariant, androidx.compose.foundation.shape.CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    Icons.Filled.Restaurant,
+                                    contentDescription = "No Food",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(34.dp)
+                                )
+                            }
                             Text("No Food Detected", style = MaterialTheme.typography.titleLarge)
                             Text(
                                 // iOS: "...Try taking a clearer photo." (EstimationReviewView.swift:191)
