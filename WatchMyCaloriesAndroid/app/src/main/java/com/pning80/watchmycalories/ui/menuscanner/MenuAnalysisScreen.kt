@@ -169,7 +169,11 @@ fun MenuAnalysisScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.HelpOutline,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            // iOS tints the not-a-menu glyph (doc.questionmark) in a
+                            // muted brand green (cwPrimary.opacity(0.6),
+                            // MenuAnalysisView.swift:246), not neutral gray. HelpOutline
+                            // is the Material adaptation (no doc.questionmark equivalent).
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                             modifier = Modifier.size(64.dp),
                         )
                         Text("Not a Menu", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
