@@ -35,10 +35,12 @@ extensions.
   columns iter-88 + not-a-menu tint iter-89), D-019 (segmented/Total/nutrition/field-order
   iters-79/80/85).
 
-### Proposed — awaiting your sign-off (`PN <date>` on the row)
+### Accepted — signed off `PN 2026-06-06` (was proposed)
 
-These are deliberate keep-Android decisions; each row in `PORTING_DEVIATIONS.md` has the
-iOS-vs-Android detail + rationale. Most fall into three established classes:
+All 15 below were reviewed one-by-one and **accepted** on 2026-06-06; each row in
+`PORTING_DEVIATIONS.md` now carries `PN 2026-06-06 (accepted)`. They are deliberate
+keep-Android decisions with iOS-vs-Android detail + rationale on each row. Most fall into
+three established classes:
 **iter-10 header** (Material TopAppBar vs iOS sheet/centered-title), **Form-vs-Material**
 (discrete Cards/OutlinedFields vs iOS Form rows), and **incidental-iOS-blue** (Android on-brand
 green vs iOS un-tinted blue).
