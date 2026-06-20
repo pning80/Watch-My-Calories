@@ -308,21 +308,30 @@ struct WatchMyCaloriesApp: App {
         let lunchTime = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: calendar.startOfDay(for: Date()))!
         let mealName = "Mock Bento Box"
 
-        // Three items grouped by mealName — exercises FoodEntryGroupCard multi-item path
+        // The app groups a multi-item meal by shared imageID (one photo → several food
+        // items), with mealName as the editable group label. Attach one synthetic image
+        // so the three items form a single FoodEntryGroupCard (the multi-item path).
+        let imageID = UUID()
+        let image = synthesizeTestImage(size: CGSize(width: 320, height: 240))
+        if let data = image.jpegData(compressionQuality: 0.8) {
+            let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            try? data.write(to: docs.appendingPathComponent("\(imageID.uuidString).jpg"))
+        }
+
         let rice = FoodEntry(
             name: "Brown Rice", calories: 220, quantity: "1 cup",
             timestamp: lunchTime, protein: 5, carbs: 45, fat: 2,
-            mealName: mealName, mealType: .lunch
+            imageID: imageID, mealName: mealName, mealType: .lunch
         )
         let chicken = FoodEntry(
             name: "Teriyaki Chicken", calories: 350, quantity: "5 oz",
             timestamp: lunchTime, protein: 30, carbs: 12, fat: 18,
-            mealName: mealName, mealType: .lunch
+            imageID: imageID, mealName: mealName, mealType: .lunch
         )
         let edamame = FoodEntry(
             name: "Edamame", calories: 120, quantity: "1 cup",
             timestamp: lunchTime, protein: 11, carbs: 9, fat: 5,
-            mealName: mealName, mealType: .lunch
+            imageID: imageID, mealName: mealName, mealType: .lunch
         )
         context.insert(rice)
         context.insert(chicken)

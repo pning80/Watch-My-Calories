@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import com.pning80.watchmycalories.utils.AccessibilityTags
 import org.junit.Test
@@ -140,13 +141,12 @@ class ManualEntryParityTest : MainActivityComposeTest() {
         composeTestRule.onNodeWithTag("mealType_Dinner").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag(AccessibilityTags.ManualEntry.SAVE_BUTTON).performClick()
-        // Strict mirror of iOS: assert the Dinner meal section header appears on
-        // the dashboard after save. Android renders headers UPPERCASE while iOS
-        // uses title case — visual divergence, same data. Poll because the
+        // Assert the Dinner meal section header appears on the dashboard after save.
+        // The dashboard header is title-case displayName ("Dinner"); poll because the
         // dashboard rebinds after the manual-entry route pops.
         composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodesWithText("DINNER").fetchSemanticsNodes().isNotEmpty()
+            composeTestRule.onAllNodesWithText("Dinner").fetchSemanticsNodes().isNotEmpty()
         }
-        composeTestRule.onNodeWithText("DINNER").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Dinner").performScrollTo().assertIsDisplayed()
     }
 }

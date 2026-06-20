@@ -231,6 +231,12 @@ private fun MainAppContent(
     }
 
     LaunchedEffect(Unit) {
+        // Under UI testing the burned-calories value is mocked in onCreate, so we must NOT
+        // request real Health Connect permissions here: doing so launches a system permission
+        // Activity that backgrounds MainActivity, detaches the Compose hierarchy, and breaks the
+        // instrumented test harness ("No compose hierarchies found"). Production launches never
+        // carry EXTRA_UI_TESTING, so this guard is a no-op there.
+        if (TestSeed.uiTestingActive) return@LaunchedEffect
         if (androidx.health.connect.client.HealthConnectClient.getSdkStatus(context) == androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE) {
             viewModel.healthConnectManager.checkPermissions()
             if (!viewModel.healthConnectManager.isAuthorized.value) {
