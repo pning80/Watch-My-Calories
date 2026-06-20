@@ -1,5 +1,7 @@
 # Visual Parity Audit — iOS ↔ Android (Pixel 9a + Test iPhone 14)
 
+> **Archived — historical record of the completed iOS→Android port.** Some links to `PORTING_*` / `PARITY_*` working docs point to files removed once the port landed; treat them as historical.
+
 Hands-on screen-by-screen comparison to identify remaining porting gaps and produce a fix plan. Sibling to `PORT_AUDIT.md` (which was a one-off code-level audit captured 2026-05-28). This document is the **procedural runbook**; the audit *output* (gap list, fix plan) lands at the bottom of this file or in a new section as the audit is performed.
 
 **Status:** **executed 2026-05-29 (later that evening).** 23 Android screenshots captured under `PortingEvidence/screenshots/android/audit-2026-05-29/`; iOS comparison done against `AppStore/V1.4.1/Screenshots/` + PORT_AUDIT.md's textual reference description. Findings + fix plan below.

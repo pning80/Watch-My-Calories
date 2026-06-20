@@ -1,5 +1,7 @@
 # Watch My Calories — iOS↔Android Port Audit & Correction Plan
 
+> **Archived — historical record of the completed iOS→Android port.** Some links to `PORTING_*` / `PARITY_*` working docs point to files removed once the port landed; treat them as historical.
+
 **Captured:** 2026-05-28 from real Pixel 9a (1080×2424, 420 dpi → 411 dp × 922 dp) running the current `main` build, compared against iOS v1.4.1 App Store reference screenshots and full code review.
 
 **TL;DR:** The port is functionally connected but the Android UI is visibly broken in ways that would never have shipped if anyone had run the app on a phone. Three issues are blocking, ten are P1, and the spacing/theme system needs a partial rebuild. `PORTING_MATRIX.md`'s "Tier 2 ≥ 95% pass" claim is incorrect.
