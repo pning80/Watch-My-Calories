@@ -9,6 +9,40 @@ This repository contains **two independent native apps** (iOS and Android) that
 mirror the same features, plus a small backend proxy. There is no shared code
 between the platforms.
 
+## Background — an experiment in agentic coding
+
+I built Watch My Calories to understand how **agentic coding** actually works in
+practice — how well an AI coding agent can build a real app, and whether it can
+carry that app through the *entire* lifecycle: ideation, development, testing,
+and a production release. All of the code here was written by AntiGravity and Claude Code working from my prompts and direction.
+
+It started as a pure toy. The first commit (February 2026) was barely more than
+a project goal and two use cases jotted into a notes file. But the early results
+were good enough that I kept going, adding feature after feature to find out
+where the limits were. Beyond the user-facing app, that came to include:
+
+- a **GCP Cloud Run backend** so the Gemini API key never ships inside the app;
+- **device and app attestation** (Apple App Attest, then Android Play Integrity)
+  to prevent malicious use of the app to abuse the Gemini API;
+- **AdMob** integration; and
+- the full **Apple App Store** release process — export compliance, privacy
+  policy, screenshots, review — ending in a published app.
+
+Somewhere along the way it stopped being a toy. I've used the iOS app myself for
+a while, and it helped me lose about 10 lb.
+
+Once the iOS app had every feature I wanted, I set a harder challenge: have
+Claude Code **port it to Android**. The first few attempts didn't produce a usable
+app; a simple replication turned out to be non-trivial for the AI agent. What finally worked was the `/loop` feature — I asked Claude Code to
+replicate every iOS feature on Android and then compare the two apps *screen by
+screen and UI element by UI element*, updating the Android side wherever it
+found a difference. That loop ran once every 30 minutes for about a week. The result is the Android app in this repo: a faithful replica of the iOS app, give or take some
+intentional platform-specific differences.
+
+The iOS version is published on the [Apple App Store](https://apps.apple.com/us/app/watch-my-calories/id6760247033). It's primarily for my person use, though everyone can download and use it (no charge) if they find it useful. The Android version has been tested and should be functional, though not tested as extensively as the iOS version. There's no timeline for publishing the Android version on the Google Play Store.
+
+The iOS app has all the features I need at the moment. I don't plan to add any more features in the foreseeable future. The repo will be maintained for the time being. I may not respond to pull requests. 
+
 ## Features
 
 - **AI food analysis** — Snap a photo; Google Gemini identifies foods and
