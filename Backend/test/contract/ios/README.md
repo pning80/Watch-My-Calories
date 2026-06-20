@@ -1,6 +1,6 @@
 # iOS Wire Contract Snapshots
 
-Frozen captures of the iOS-facing wire contract, used by `PORTING_CRITERIA.md` T1.10.b and T1.10.c to prove the backend changes for Android did not regress iOS.
+Frozen captures of the iOS-facing wire contract, used to prove that backend changes (e.g. for Android) do not regress the iOS contract.
 
 ## What goes here
 
@@ -33,4 +33,4 @@ Verbatim binary captures (raw HTTP request bytes from a real iPhone) embed real 
 
 ## Snapshot update policy
 
-Per `PORTING_CRITERIA.md` T1.10.c — snapshot updates require explicit reviewer sign-off and a note in `Backend/CHANGELOG.md`. An "innocent" snapshot bump in a porting PR is a red flag, not a routine fix. If the snapshot has to move, the iOS app is changing and that is out of scope per Operating Principle 7.
+Snapshot updates require explicit reviewer sign-off and a note in `Backend/CHANGELOG.md`. An "innocent" snapshot bump is a red flag, not a routine fix: if a snapshot has to move, the iOS-facing wire contract is changing, so confirm that change is intended.

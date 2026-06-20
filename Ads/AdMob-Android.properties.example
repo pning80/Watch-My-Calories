@@ -1,0 +1,13 @@
+# AdMob unit IDs for the Android app — TEMPLATE.
+#
+# Copy this file to `Ads/AdMob-Android.properties` (gitignored) and fill in your
+# real production unit IDs, OR set the same keys in
+# `WatchMyCaloriesAndroid/local.properties` (which takes precedence).
+#
+# If neither is present, `WatchMyCaloriesAndroid/app/build.gradle.kts` falls back
+# to Google's published TEST IDs (shown below), so debug/CI/fresh-clone builds
+# never fire real AdMob impressions.
+
+ADMOB_APP_ID=ca-app-pub-3940256099942544~3347511713
+ADMOB_BANNER_ID=ca-app-pub-3940256099942544/6300978111
+ADMOB_NATIVE_ID=ca-app-pub-3940256099942544/2247696110

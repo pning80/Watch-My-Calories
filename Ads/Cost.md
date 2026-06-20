@@ -2,7 +2,7 @@
 
 ## Gemini API Cost
 
-**Model:** `gemini-3.1-flash-lite-preview`
+**Model:** `gemini-3.1-flash-lite`
 **Pricing:** $0.25 / 1M input tokens, $1.50 / 1M output tokens
 **Configuration:** `medium` thinking level, `media_resolution_high`
 

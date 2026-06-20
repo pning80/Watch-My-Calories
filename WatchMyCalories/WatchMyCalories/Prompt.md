@@ -2,6 +2,8 @@
 
 This document contains a sequence of prompts designed to recreate the **Watch My Calories** iPhone app from scratch, incorporating all iterative refinements and design decisions made during development.
 
+> ⚠️ **Historical generation prompts — not the current architecture.** The shipped app proxies Gemini through a backend, so there is **no on-device API key** (despite Prompts 4/8), and the navigation was later restructured (tabs are Today / Log Food / Scan Menu / History; Settings via a toolbar gear, not Prompt 9's "Dashboard/Camera/History/Settings"). See `CLAUDE.md` for the current design.
+
 ## Phase 1: Foundation & Data Layer
 
 **Prompt 1: Project Setup & Data Models**
