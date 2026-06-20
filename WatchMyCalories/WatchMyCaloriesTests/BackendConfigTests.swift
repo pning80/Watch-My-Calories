@@ -3,13 +3,19 @@ import XCTest
 
 final class BackendConfigTests: XCTestCase {
 
-    func testAPIKeyIsNotEmpty() {
-        XCTAssertFalse(BackendConfig.apiKey.isEmpty, "XOR-deobfuscated API key should not be empty")
-    }
-
-    func testAPIKeyLengthMatchesObfuscatedArrayLength() {
-        // Both obfuscatedKey and keyMask are 64 bytes → 64-char UTF-8 key
-        XCTAssertEqual(BackendConfig.apiKey.count, 64)
+    func testAPIKeyMatchesInfoPlistSource() {
+        // The dev legacy key is injected from Backend/.env.dev (the single source
+        // of truth) via the xcconfig → Info.plist (AppBackendApiKey). It may be
+        // empty when not configured (e.g. CI / fresh clone); the contract is only
+        // that apiKey mirrors that injected value in DEBUG.
+        #if DEBUG
+        let expected = Bundle.main.infoDictionary?["AppBackendApiKey"] as? String ?? ""
+        XCTAssertEqual(BackendConfig.apiKey, expected,
+                       "apiKey should be sourced from Info.plist AppBackendApiKey")
+        #else
+        XCTAssertTrue(BackendConfig.apiKey.isEmpty,
+                      "RELEASE builds carry no legacy key — production uses App Attest")
+        #endif
     }
 
     func testBaseURLIsValidHTTPS() {

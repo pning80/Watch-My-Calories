@@ -1,6 +1,5 @@
 package com.pning80.watchmycalories.security
 
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -22,10 +21,13 @@ class BackendConfigTest {
     }
 
     @Test
-    fun testDevLegacyKeyLengthMatchesObfuscatedArrayLength() {
+    fun testDevLegacyKeyIsNullOrNonBlank() {
+        // Sourced from Backend/.env.dev via BuildConfig.APP_BACKEND_API_KEY (the
+        // single source of truth). May be null when unconfigured (CI / fresh
+        // clone); when present it must be a non-blank value, never "".
         val devKey = BackendConfig.devLegacyKey
         if (devKey != null) {
-            assertEquals(64, devKey.length)
+            assertTrue("dev legacy key should be non-blank when present", devKey.isNotBlank())
         }
     }
 }

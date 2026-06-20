@@ -8,6 +8,8 @@
 	<string>$(ADMOB_BANNER_ID)</string>
 	<key>AdMobNativeAdUnitID</key>
 	<string>$(ADMOB_NATIVE_ID)</string>
+	<key>AppBackendApiKey</key>
+	<string>$(APP_BACKEND_API_KEY)</string>
 <key>SKAdNetworkItems</key>
 	<array>
 		<dict>
