@@ -1,5 +1,7 @@
 # Ideation Notes
 
+> ⚠️ **Historical ideation — original vision, not the shipped design.** Notably, the app no longer uses a user-supplied on-device Gemini API key (the backend proxies Gemini; food photos are sent there for analysis). See `CLAUDE.md` for the current architecture.
+
 ## Goal of the project
 
 The goal of this project is to develop an iPhone app that can help the user estimate the calories of the food they eat and track their daily consumption.

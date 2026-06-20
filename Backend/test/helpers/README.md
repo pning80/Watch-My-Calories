@@ -1,6 +1,6 @@
 # Backend Test Helpers
 
-Shared test setup used by both iOS-path and Android-path tests. Factored out per `PORTING_CRITERIA.md` T1.9.g to avoid duplication.
+Shared test setup used by both iOS-path and Android-path tests. Factored out to avoid duplication across the two platforms' backend tests.
 
 ## Current contents
 

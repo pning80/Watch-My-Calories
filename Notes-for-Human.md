@@ -31,7 +31,7 @@ Take a look at the project fold and find the initial ideas from Ideation.md file
   - **Note**: Since my personal phone is an iPhone, all the incremental features and bug fixes were done on the iOS version. The Android version hasn't been updated since the it passed the testing on a Pixel 9.
 
 ## Adding a GCP backend to the app
-- The Prompt file for the GCP backend: `GCP_Backend_Plan.md`
+- The Prompt file for the GCP backend: `GCP-Backend-Plan.md`
 - **Note after completion**: Successfully added the backend to the app. The backend is deployed on GCP Cloud Run and can be accessed by the app. 
 
 ## Preparing for App Store submission

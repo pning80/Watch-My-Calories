@@ -1,3 +1,26 @@
-ADMOB_APP_ID = ca-app-pub-4373517820912322~7348619621
-ADMOB_BANNER_ID = ca-app-pub-4373517820912322/7815523487
-ADMOB_NATIVE_ID = ca-app-pub-4373517820912322/4385711647
+// AdMob configuration for the iOS app.
+//
+// This committed file holds Google's PUBLISHED TEST unit IDs so a fresh clone
+// builds and only ever renders test ads. Real production unit IDs are NOT
+// committed — they live in the gitignored `AdMob-iOS.local.xcconfig` override
+// included at the bottom of this file (later definitions win in xcconfig).
+//
+// To build with production ads locally, create `Ads/AdMob-iOS.local.xcconfig`:
+//   ADMOB_APP_ID    = ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX
+//   ADMOB_BANNER_ID = ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
+//   ADMOB_NATIVE_ID = ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
+//
+// These feed Info.plist ($(ADMOB_APP_ID) etc.). In DEBUG, AdManager.swift
+// hardcodes the test ad-unit IDs directly and ignores these values; in RELEASE
+// it reads them from Info.plist.
+
+ADMOB_APP_ID = ca-app-pub-3940256099942544~1458002511
+ADMOB_BANNER_ID = ca-app-pub-3940256099942544/2934735716
+ADMOB_NATIVE_ID = ca-app-pub-3940256099942544/3986624511
+
+// Dev-only legacy x-backend-key (empty by default — production uses App Attest).
+// Single source of truth is Backend/.env.dev; run scripts/sync-dev-backend-key.sh
+// to populate the real value into AdMob-iOS.local.xcconfig below.
+APP_BACKEND_API_KEY =
+
+#include? "AdMob-iOS.local.xcconfig"

@@ -34,10 +34,13 @@ if [ -z "$APPLE_TEAM_ID" ]; then
   exit 1
 fi
 
-# Play Integrity (Android) — both default to project-derived values so a deploy works
-# even before .env.* are updated. Override in .env.* if the values ever change.
-: "${PLAY_INTEGRITY_PROJECT_NUMBER:=657698311127}"
+# Play Integrity (Android). Set PLAY_INTEGRITY_PROJECT_NUMBER in .env.* (your GCP
+# project number). PLAY_INTEGRITY_PACKAGE_NAME defaults to the app id.
 : "${PLAY_INTEGRITY_PACKAGE_NAME:=com.pning80.watchmycalories}"
+if [ -z "$PLAY_INTEGRITY_PROJECT_NUMBER" ]; then
+  echo "Error: PLAY_INTEGRITY_PROJECT_NUMBER is not set in $ENV_FILE (your GCP project number)"
+  exit 1
+fi
 
 # Prod safety prompt
 if [ "$ENV" = "prod" ]; then
