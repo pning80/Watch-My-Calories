@@ -2,7 +2,9 @@
 
 ## Overview
 
-100 tests across 13 test files (12 `.test.js` + 1 helper). Uses Node.js built-in test runner (`node:test` + `node:assert/strict`) with `supertest` for HTTP integration tests. Fully self-contained — no network, Firestore, Apple devices, or environment variables needed.
+208 tests across 24 `.test.ts` files (plus shared helpers and contract fixtures). Uses Node.js built-in test runner (`node:test` + `node:assert/strict`) with `supertest` for HTTP integration tests; `npm test` compiles TypeScript first. Fully self-contained — no network, Firestore, Apple devices, or environment variables needed.
+
+> Note: the per-file inventory and case lists below are illustrative and **may lag** the current suite (they predate several added test files). Run `npm test` for the authoritative count and list.
 
 Additionally, 6 deployment smoke tests live in `test/deployment/` and run against real Cloud Run endpoints (not included in `npm test`).
 
@@ -157,7 +159,7 @@ Claude will execute `npm test` in the `Backend/` directory and report results.
 ### `health-cors.test.js` (5 tests)
 
 **`Health check endpoint`**
-- `GET / returns 200 with expected message` — "WatchMyCalories Backend is running."
+- `GET / returns 200 with JSON health status` — `{ status: 'ok', uptime, attestedKeysCount, env }`
 - `GET / includes CORS header` — `access-control-allow-origin: *`
 - `GET /nonexistent returns 404` — unknown routes return 404
 
@@ -289,7 +291,7 @@ URL resolution: `CLOUD_RUN_URL` env var (for CI), or `gcloud run services descri
 ### `deployment/smoke.test.js` (6 tests)
 
 **`Deployment smoke tests (<env>)`**
-- `GET / returns 200 with health message` — verify "WatchMyCalories Backend is running."
+- `GET / returns 200 with JSON health status` — verify `{ status: 'ok', ... }`
 - `responses include CORS headers` — verify `access-control-allow-origin: *`
 - `GET /attest/challenge returns 200 with UUID challenge` — verify UUID v4 format
 - `POST /v1beta/models/* with no auth returns 401` — no headers → 401

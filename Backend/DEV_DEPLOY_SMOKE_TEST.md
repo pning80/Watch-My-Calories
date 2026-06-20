@@ -1,5 +1,7 @@
 # Dev Deploy Smoke Test (Stage 1 burn-in entry point)
 
+> **Archived — historical record of the completed iOS→Android port.** Some links to `PORTING_*` / `PARITY_*` working docs point to files removed once the port landed; treat them as historical.
+
 What to check immediately after `./deploy.sh dev` lands the Stage 1 backend
 changes (commit `7ff3731` and successors). The goal is to confirm that
 
@@ -16,7 +18,7 @@ Run these in order. If any fails, roll back per the command in
 ```bash
 gcloud run services describe watchmycalories-backend-dev \
   --region us-central1 \
-  --project gen-lang-client-0629636941 \
+  --project YOUR_GCP_PROJECT_ID \
   --format='value(status.traffic[0].revisionName)'
 ```
 
@@ -35,7 +37,7 @@ the new image was pushed:
 ```bash
 gcloud run revisions describe "$NEW_DEV_REV" \
   --region us-central1 \
-  --project gen-lang-client-0629636941 \
+  --project YOUR_GCP_PROJECT_ID \
   --format='value(spec.containers[0].image)'
 ```
 
@@ -53,7 +55,7 @@ as the basic boot signal.
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" \
-  https://watchmycalories-backend-dev-657698311127.us-central1.run.app/
+  https://watchmycalories-backend-dev-YOUR_PROJECT_NUMBER.us-central1.run.app/
 ```
 
 Expect: `200`. Any non-200 → roll back immediately, the service didn't boot.
@@ -72,7 +74,7 @@ curl -sv \
   -X POST \
   -H "Content-Type: application/json" \
   -d '{"contents":[{"parts":[{"text":"hi"}]}]}' \
-  https://watchmycalories-backend-dev-657698311127.us-central1.run.app/v1beta/models/default:generateContent \
+  https://watchmycalories-backend-dev-YOUR_PROJECT_NUMBER.us-central1.run.app/v1beta/models/default:generateContent \
   2>&1 | grep -E "^< HTTP|< x-app-platform|^\{"
 ```
 
@@ -89,7 +91,7 @@ sanity check.
 ```bash
 APP_KEY="$(gcloud secrets versions access latest \
   --secret=watchmycalories-dev-app-backend-api-key \
-  --project=gen-lang-client-0629636941)"
+  --project=YOUR_GCP_PROJECT_ID)"
 
 curl -s -o /tmp/r.json -w "HTTP %{http_code}, %{time_total}s\n" \
   -X POST \
@@ -97,7 +99,7 @@ curl -s -o /tmp/r.json -w "HTTP %{http_code}, %{time_total}s\n" \
   -H "x-backend-key: $APP_KEY" \
   -H "X-App-Platform: ios" \
   -d '{"contents":[{"parts":[{"text":"Say the word ok and nothing else."}]}]}' \
-  https://watchmycalories-backend-dev-657698311127.us-central1.run.app/v1beta/models/default:generateContent
+  https://watchmycalories-backend-dev-YOUR_PROJECT_NUMBER.us-central1.run.app/v1beta/models/default:generateContent
 
 head -c 200 /tmp/r.json
 echo
@@ -126,7 +128,7 @@ curl -sv \
   -H "Content-Type: application/json" \
   -H "X-App-Platform: android" \
   -d '{"keyID":"test-key-id","attestation":"not-a-real-token","challenge":"deadbeef"}' \
-  https://watchmycalories-backend-dev-657698311127.us-central1.run.app/attest/verify \
+  https://watchmycalories-backend-dev-YOUR_PROJECT_NUMBER.us-central1.run.app/attest/verify \
   2>&1 | grep -E "^< HTTP|^\{"
 ```
 
@@ -143,7 +145,7 @@ curl -s \
   -H "Content-Type: application/json" \
   -H "X-App-Platform: android" \
   -d '{"keyID":"x","attestation":"y","challenge":"z"}' \
-  https://watchmycalories-backend-dev-657698311127.us-central1.run.app/attest/verify \
+  https://watchmycalories-backend-dev-YOUR_PROJECT_NUMBER.us-central1.run.app/attest/verify \
   | grep -iE "Error:|at .+\(.+:[0-9]+\)|StackTrace" \
   && echo "FAIL: stack trace leaked" || echo "ok: no stack trace in body"
 ```
@@ -158,7 +160,7 @@ nullable. Existing iOS docs without them must still load.
 ```bash
 # Pick a random existing iOS doc
 SAMPLE_DOC="$(gcloud firestore documents list attestedKeys-dev \
-  --project=gen-lang-client-0629636941 \
+  --project=YOUR_GCP_PROJECT_ID \
   --limit=1 --format='value(name)')"
 
 echo "Sample iOS doc: $SAMPLE_DOC"
@@ -175,7 +177,7 @@ Cloud Run logs for the keyID load path:
 ```bash
 gcloud run services logs read watchmycalories-backend-dev \
   --region us-central1 \
-  --project gen-lang-client-0629636941 \
+  --project YOUR_GCP_PROJECT_ID \
   --limit 30 \
   --filter='textPayload:"attested-keys"'
 ```
@@ -205,7 +207,7 @@ Open in another terminal/tab:
 ```bash
 gcloud run services logs tail watchmycalories-backend-dev \
   --region us-central1 \
-  --project gen-lang-client-0629636941 \
+  --project YOUR_GCP_PROJECT_ID \
   --filter='severity>=WARNING'
 ```
 
@@ -231,7 +233,7 @@ If any step fails, roll back **before** investigating:
 gcloud run services update-traffic watchmycalories-backend-dev \
   --region us-central1 \
   --to-revisions=watchmycalories-backend-dev-00016-xmw=100 \
-  --project gen-lang-client-0629636941
+  --project YOUR_GCP_PROJECT_ID
 ```
 
 …then file a `porting/stage-1-deploy-failure` issue with the failed step's

@@ -2,6 +2,8 @@
 
 This document contains a sequence of prompts designed to create the **Watch-My-Calories** Android app from scratch. This project is a port of the existing iOS application, adapted for modern Android development standards using Kotlin and Jetpack Compose.
 
+> ⚠️ **Historical generation prompts — not a description of the shipped app.** The built app diverges from these prompts in several places (e.g. manual DI instead of Hilt; no on-device Gemini key — the backend proxies; field names `imageID`/`itemsData`). See `CLAUDE.md` for the current architecture.
+
 ## Design Philosophy & Aesthetics (Frontend-Design Skill)
 
 **Crucial**: The UI must be implemented with a **BOLD, PREMIUM, and ORGANIC** aesthetic. Do not build a generic "Material Design" app.

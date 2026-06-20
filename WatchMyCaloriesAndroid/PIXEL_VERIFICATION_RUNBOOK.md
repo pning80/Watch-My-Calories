@@ -1,5 +1,7 @@
 # Pixel 9a Verification Runbook (Stage 2 exit gate)
 
+> **Archived — historical record of the completed iOS→Android port.** Some links to `PORTING_*` / `PARITY_*` working docs point to files removed once the port landed; treat them as historical.
+
 Hands-on verification of the Android port against `watchmycalories-backend-dev`
 on a real Pixel 9a (the test device named in `CLAUDE.md`). Closes the four
 device-blocked items in `PORTING_RUNBOOK.md` Stage 2 exit gate.
@@ -11,12 +13,12 @@ device-blocked items in `PORTING_RUNBOOK.md` Stage 2 exit gate.
       revision was built from a tree containing the Stage 1 backend commit
       `7ff3731` (Backend: dual-platform support). Verify with
       `gcloud run revisions describe watchmycalories-backend-dev-NNNNN-xxx
-      --region us-central1 --project gen-lang-client-0629636941 | grep image`.
+      --region us-central1 --project YOUR_GCP_PROJECT_ID | grep image`.
 - [ ] `roles/playintegrity.user` has been granted to
-      `watchmycalories-backend@gen-lang-client-0629636941.iam.gserviceaccount.com`
+      `watchmycalories-backend@YOUR_GCP_PROJECT_ID.iam.gserviceaccount.com`
       (per Stage 0.2). Verify with:
       ```bash
-      gcloud projects get-iam-policy gen-lang-client-0629636941 \
+      gcloud projects get-iam-policy YOUR_GCP_PROJECT_ID \
         --flatten="bindings[].members" \
         --filter="bindings.role:roles/playintegrity.user AND bindings.members:watchmycalories-backend@*" \
         --format="value(bindings.members)"
@@ -24,7 +26,7 @@ device-blocked items in `PORTING_RUNBOOK.md` Stage 2 exit gate.
       Should print one match. If empty, the backend will return 503
       `play_integrity_not_configured` and this runbook cannot proceed.
 - [ ] Pixel 9a is on Wi-Fi reachable from the dev backend URL
-      `https://watchmycalories-backend-dev-657698311127.us-central1.run.app`
+      `https://watchmycalories-backend-dev-YOUR_PROJECT_NUMBER.us-central1.run.app`
       (any public Wi-Fi will do).
 - [ ] `adb` is installed on the Mac and the Pixel is in developer mode with
       USB debugging enabled (Settings → About phone → tap "Build number" 7x →
@@ -88,7 +90,7 @@ persistence) in a single flow.
 **Fail modes:**
 - Step 5 stuck on Loading > 60s → backend or attestation issue. Check Cloud
   Run logs: `gcloud run services logs read watchmycalories-backend-dev
-  --region us-central1 --project gen-lang-client-0629636941 --limit 20`.
+  --region us-central1 --project YOUR_GCP_PROJECT_ID --limit 20`.
 - "Unauthorized (401): play_integrity_not_configured" → IAM grant missing.
 - "Unauthorized (401): android_assertion_invalid" → the re-attest-retry path
   should fire and recover; if you see a permanent 401, the HMAC counter is
@@ -182,7 +184,7 @@ attestation never succeeded.
 Cross-reference Firestore:
 ```bash
 gcloud firestore documents list attestedKeys-dev \
-  --project=gen-lang-client-0629636941 --limit=5 \
+  --project=YOUR_GCP_PROJECT_ID --limit=5 \
   --filter="platform=android"
 ```
 

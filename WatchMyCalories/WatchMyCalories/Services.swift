@@ -138,9 +138,8 @@ final class GeminiService: EstimationService, MenuAnalysisService {
     /// Sends a prompt + images to the Gemini backend and returns the cleaned JSON text from the response.
     private func sendGeminiRequest(prompt: String, images: [Data]) async throws -> String {
         let backendURL = BackendConfig.baseURL
-        let backendKey = BackendConfig.apiKey
 
-        guard !backendURL.isEmpty, !backendKey.isEmpty else {
+        guard !backendURL.isEmpty else {
             throw GeminiError.missingBackendConfig
         }
 
@@ -157,6 +156,10 @@ final class GeminiService: EstimationService, MenuAnalysisService {
         request.addValue(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown", forHTTPHeaderField: "X-App-Version")
 
         if !attestManager.isSupported {
+            // Legacy fallback (simulator / dev only). The key is required only on
+            // this path; production uses App Attest and never sends it.
+            let backendKey = BackendConfig.apiKey
+            guard !backendKey.isEmpty else { throw GeminiError.missingBackendConfig }
             request.addValue(backendKey, forHTTPHeaderField: "x-backend-key")
         }
 

@@ -2,6 +2,8 @@
 
 > Platform-agnostic behavioral specification. Describes what the app does, not how it's implemented.
 > Use this spec to build or verify any platform (iOS, Android, etc.).
+>
+> ⚠️ **Point-in-time spec — partially stale.** Navigation was later restructured (tabs are now **Today / Log Food / Scan Menu / History**; Settings moved to a toolbar **gear** icon), and the Scan-Menu and About flows were added. Where this doc and `CLAUDE.md` / the source disagree, the code is authoritative.
 
 ---
 
@@ -27,9 +29,11 @@ The app has 4 bottom tabs displayed in this order:
 | Order | Tab | Icon | Description |
 |-------|-----|------|-------------|
 | 1 | Today | Flame | Daily calorie dashboard |
-| 2 | Scan | Camera | Food photo capture |
-| 3 | History | Calendar | Past entries by date |
-| 4 | Settings | Gear | Profile, preferences, privacy |
+| 2 | Log Food | plus.circle | Add food (camera / photo library / manual entry) |
+| 3 | Scan Menu | doc.viewfinder | Scan a restaurant menu |
+| 4 | History | Calendar | Past entries by date |
+
+Settings is reached via the toolbar **gear** icon (not a tab).
 
 ### Launch Behavior
 

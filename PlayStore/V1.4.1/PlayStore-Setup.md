@@ -42,7 +42,7 @@ All the content you need to fill in Google Play Console for your Android version
 See your nutrition at a glance! After scanning food, the results screen now shows a full macro breakdown — protein, carbs, and fat with grams, percentages, and a visual proportional bar.
 
 Also in this update:
-- Built for Android 14+ with full Jetpack Compose native support
+- Native Android build with a full Jetpack Compose UI (Android 8.0+; Health Connect features require Android 14+)
 - Migrated Apple Health integration seamlessly over to Google Health Connect
 - Food entries on the Dashboard and History now show a proportional bar visualizing your macro balance
 ```
