@@ -1,7 +1,10 @@
 # Watch My Calories
 
-**iOS and Android apps built with AI agents** with zero line of human-written code: Tracks your daily calories effortlessly with AI-powered food recognition. Snap a photo of your meal and Watch My Calories identifies each food item, estimates portions, and calculates calories and macronutrients — all while keeping your
-data on your device.
+**iOS and Android apps built with AI agents — not a single line of human-written
+code.** Track your daily calories effortlessly with AI-powered food recognition:
+snap a photo of your meal and Watch My Calories identifies each food item,
+estimates portions, and calculates calories and macronutrients — all while
+keeping your data on your device.
 
 This repository contains **two independent native apps** (iOS and Android) that
 mirror the same features, plus a small backend proxy. There is no shared code
