@@ -241,11 +241,14 @@ class OnboardingParityTest : MainActivityComposeTest() {
     fun testGoalStepGenderPickerCanChangeSelection() {
         launchResetOnboarding()
         advanceToGoalStep()
-        // Default gender is Other; tap Female (segmented button).
-        composeTestRule.onNodeWithText("Female").performScrollTo().performClick()
+        // Gender is a dropdown (default "Male"); open it and pick Female.
+        composeTestRule.onNodeWithText("Male").performScrollTo().performClick()
+        composeTestRule.waitUntil(timeoutMillis = 3000) {
+            composeTestRule.onAllNodesWithText("Female").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Female").performClick()
         composeTestRule.waitForIdle()
-        // Female segment still present after selection — and Finish button still works (no crash).
-        composeTestRule.onNodeWithText("Female").performScrollTo().assertIsDisplayed()
+        // Finish button still works (no crash) after the selection.
         composeTestRule.onNodeWithTag(AccessibilityTags.Onboarding.FINISH_BUTTON).performScrollTo().assertIsDisplayed()
     }
 

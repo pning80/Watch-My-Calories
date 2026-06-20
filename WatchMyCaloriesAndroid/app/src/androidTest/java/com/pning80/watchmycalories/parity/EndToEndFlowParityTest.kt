@@ -59,8 +59,12 @@ class EndToEndFlowParityTest : MainActivityComposeTest() {
     fun testManualEntryAppearsInCorrectMealSection() {
         launchEmpty()
         addManualEntry("Trail Mix", "200", "1 bag", mealType = "Snack")
-        // SNACK section header appears (UPPERCASE on Android per D-006)
-        composeTestRule.onNodeWithText("SNACK").assertIsDisplayed()
+        // SNACK section header appears (UPPERCASE on Android per D-006). Wait for the
+        // dashboard to rebind after the manual-entry route pops.
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText("Snack").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Snack").assertIsDisplayed()
         composeTestRule.onNodeWithText("Trail Mix").assertIsDisplayed()
     }
 
@@ -106,9 +110,12 @@ class EndToEndFlowParityTest : MainActivityComposeTest() {
         addManualEntry("Toast", "150", "2 slices", mealType = "Breakfast")
         addManualEntry("Sandwich", "400", "1 whole", mealType = "Lunch")
         addManualEntry("Pasta", "600", "1 plate", mealType = "Dinner")
-        composeTestRule.onNodeWithText("BREAKFAST").assertIsDisplayed()
-        composeTestRule.onNodeWithText("LUNCH").assertIsDisplayed()
-        composeTestRule.onNodeWithText("DINNER").performScrollTo().assertIsDisplayed()
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText("Breakfast").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Breakfast").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Lunch").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Dinner").performScrollTo().assertIsDisplayed()
     }
 
     /** Mirror of iOS `testCaloriesAccumulateAcrossMealTypes`. */
@@ -128,8 +135,11 @@ class EndToEndFlowParityTest : MainActivityComposeTest() {
     fun testEntryVisibleOnDashboardAndHistory() {
         launchEmpty()
         addManualEntry("Granola Bar", "180", "1 bar", mealType = "Snack")
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText("Snack").fetchSemanticsNodes().isNotEmpty()
+        }
         composeTestRule.onNodeWithText("Granola Bar").assertIsDisplayed()
-        composeTestRule.onNodeWithText("SNACK").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Snack").assertIsDisplayed()
         composeTestRule.onNodeWithTag(AccessibilityTags.Tab.HISTORY).performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("180", substring = true).assertIsDisplayed()

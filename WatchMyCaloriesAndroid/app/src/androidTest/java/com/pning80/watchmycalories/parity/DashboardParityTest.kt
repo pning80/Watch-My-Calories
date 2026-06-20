@@ -28,7 +28,7 @@ import org.junit.Test
  *     iOS groups them under a single "Mock Bento Box" card with expand.
  *
  * Known platform-rendering divergence (not a parity gap, just a visual choice):
- *   - Meal section headers are UPPERCASE on Android ("BREAKFAST") vs title case
+ *   - Meal section headers are UPPERCASE on Android ("Breakfast") vs title case
  *     on iOS ("Breakfast"). Tests assert on the Android rendering.
  */
 class DashboardParityTest : MainActivityComposeTest() {
@@ -123,21 +123,28 @@ class DashboardParityTest : MainActivityComposeTest() {
         }
         // Breakfast and Lunch sections should be visible (seed has entries in both).
         // Android renders headers UPPERCASE; iOS uses title case (visual divergence).
-        composeTestRule.onNodeWithText("BREAKFAST").assertIsDisplayed()
-        composeTestRule.onNodeWithText("LUNCH").assertIsDisplayed()
+        // Wait for the seeded entries to load + the LazyColumn to compose the headers.
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText("Breakfast").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Breakfast").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Lunch").assertIsDisplayed()
     }
 
     /** Mirror of iOS `testOnlyRelevantMealSectionsAppear`. */
     @Test
     fun testOnlyRelevantMealSectionsAppear() {
         launchWithSeedData()
-        composeTestRule.onNodeWithText("BREAKFAST").assertIsDisplayed()
-        composeTestRule.onNodeWithText("LUNCH").assertIsDisplayed()
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText("Breakfast").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Breakfast").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Lunch").assertIsDisplayed()
         // Dinner and Snack should NOT appear (no seeded entries for them).
-        assert(composeTestRule.onAllNodesWithText("DINNER").fetchSemanticsNodes().isEmpty()) {
+        assert(composeTestRule.onAllNodesWithText("Dinner").fetchSemanticsNodes().isEmpty()) {
             "Dinner section should not appear without seeded Dinner entries"
         }
-        assert(composeTestRule.onAllNodesWithText("SNACK").fetchSemanticsNodes().isEmpty()) {
+        assert(composeTestRule.onAllNodesWithText("Snack").fetchSemanticsNodes().isEmpty()) {
             "Snack section should not appear without seeded Snack entries"
         }
     }

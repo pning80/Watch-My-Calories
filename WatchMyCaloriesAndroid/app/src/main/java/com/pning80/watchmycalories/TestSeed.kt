@@ -41,6 +41,17 @@ object TestSeed {
     const val EXTRA_START_AT_ANALYSIS = "wmc.test.startAtAnalysis"       // skip camera, jump to AnalysisScreen
     const val EXTRA_START_AT_MENU_ANALYSIS = "wmc.test.startAtMenuAnalysis" // skip camera, jump to MenuAnalysisScreen
 
+    /**
+     * True once a UI-testing launch has been applied via [applyIfTesting]. Lets
+     * composables gate test-only behavior (e.g. skipping the Health Connect
+     * permission request, which would launch a system Activity that backgrounds
+     * MainActivity and detaches the Compose tree) without re-deriving the Activity
+     * intent from a (possibly wrapped) Compose `LocalContext`. False in production.
+     */
+    @Volatile
+    var uiTestingActive: Boolean = false
+        private set
+
     fun isUiTesting(intent: Intent?): Boolean =
         intent?.getBooleanExtra(EXTRA_UI_TESTING, false) == true
 
@@ -87,6 +98,7 @@ object TestSeed {
      * `runBlocking` so the activity doesn't render an empty state then jump.
      */
     fun applyIfTesting(context: Context, intent: Intent?) {
+        uiTestingActive = isUiTesting(intent)
         if (!isUiTesting(intent)) return
 
         // Suppress AdMob entry points in test mode — keeps the UMP consent

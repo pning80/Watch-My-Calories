@@ -111,9 +111,13 @@ class SettingsParityTest : MainActivityComposeTest() {
     fun testGenderPickerInteraction() {
         openSettings()
         composeTestRule.onNodeWithTag(AccessibilityTags.Settings.GENDER_PICKER).performScrollTo().assertIsDisplayed()
-        // Segmented buttons render all option labels — "Male" is always present as a
-        // segment label, regardless of which one is currently selected.
-        composeTestRule.onNodeWithText("Male").performScrollTo().assertIsDisplayed()
+        // Gender is an InlineMenuPickerRow dropdown — only the selected value shows until
+        // it's opened. Tap to open, then the option labels (incl. "Male") become visible.
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.GENDER_PICKER).performClick()
+        composeTestRule.waitUntil(timeoutMillis = 3000) {
+            composeTestRule.onAllNodesWithText("Male").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Male").assertIsDisplayed()
     }
 
     /** Mirror of iOS `testActivityLevelPickerInteraction`. */
@@ -329,8 +333,12 @@ class SettingsParityTest : MainActivityComposeTest() {
     @Test
     fun testGenderPickerCanChangeSelection() {
         openSettings()
-        // Default is Other; tap Female (a different segment) — Save flips enabled.
-        composeTestRule.onNodeWithText("Female").performScrollTo().performClick()
+        // Default is Other; open the gender dropdown and pick Female — Save flips enabled.
+        composeTestRule.onNodeWithTag(AccessibilityTags.Settings.GENDER_PICKER).performScrollTo().performClick()
+        composeTestRule.waitUntil(timeoutMillis = 3000) {
+            composeTestRule.onAllNodesWithText("Female").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Female").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag(AccessibilityTags.Settings.SAVE_BUTTON).assertIsEnabled()
     }

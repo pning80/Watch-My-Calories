@@ -462,7 +462,9 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    if (isPrivacyOptionsRequired) {
+                    // Hidden under UI testing — ads (and the UMP privacy flow) are disabled there,
+                    // so the button must not render (mirrors AdManager.disableForUITesting).
+                    if (isPrivacyOptionsRequired && !com.pning80.watchmycalories.TestSeed.uiTestingActive) {
                         Spacer(modifier = Modifier.height(Spacing.s))
                         Button(
                             onClick = { AdManager.presentPrivacyOptionsForm(context as android.app.Activity) },
