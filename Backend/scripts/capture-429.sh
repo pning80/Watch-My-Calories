@@ -10,8 +10,8 @@
 # Default output: Backend/test/contract/ios/rate-limit-429.response.json
 set -euo pipefail
 
-BACKEND_URL="${BACKEND_URL:-https://watchmycalories-backend-dev-657698311127.us-central1.run.app}"
-GCP_PROJECT="${GCP_PROJECT:-gen-lang-client-0629636941}"
+BACKEND_URL="${BACKEND_URL:?Set BACKEND_URL to your dev Cloud Run URL, e.g. https://<service>-<project-number>.us-central1.run.app}"
+GCP_PROJECT="${GCP_PROJECT:-$(gcloud config get-value project 2>/dev/null)}"
 SECRET_NAME="${SECRET_NAME:-watchmycalories-dev-app-backend-api-key}"
 OUT="${1:-Backend/test/contract/ios/rate-limit-429.response.json}"
 MAX_ATTEMPTS="${MAX_ATTEMPTS:-200}"

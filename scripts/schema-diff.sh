@@ -106,11 +106,11 @@ for model in $MODELS; do
     if [ -n "$undocumented_ios" ] || [ -n "$undocumented_android" ]; then
         echo "--- $model: undocumented field-name mismatch ---"
         if [ -n "$undocumented_ios" ]; then
-            echo "  iOS only (no PORTING_DEVIATIONS.md entry):"
+            echo "  iOS only (not in the ALLOWLIST in scripts/schema-diff.sh):"
             echo "$undocumented_ios" | sed 's/^/    /' | sed '/^[[:space:]]*$/d'
         fi
         if [ -n "$undocumented_android" ]; then
-            echo "  Android only (no PORTING_DEVIATIONS.md entry):"
+            echo "  Android only (not in the ALLOWLIST in scripts/schema-diff.sh):"
             echo "$undocumented_android" | sed 's/^/    /' | sed '/^[[:space:]]*$/d'
         fi
         echo ""

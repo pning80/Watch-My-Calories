@@ -54,6 +54,23 @@ test-results/
 .env
 .env.*
 
+# Real production AdMob unit IDs — never committed. The repo ships Google test
+# IDs (Ads/AdMob-iOS.xcconfig committed with test IDs; Android falls back to
+# test IDs). Real IDs live in these gitignored overrides / local.properties.
+Ads/AdMob-iOS.local.xcconfig
+Ads/AdMob-Android.properties
+
+# Build artifacts / logs (leak local /Users paths)
+build_log.txt
+*.build_log.txt
+
+# One-time history-scrub helper (not part of the project)
+scrub-history.sh
+
+# Play Developer API service-account key — never commit
+play-service-account*.json
+**/play-service-account*.json
+
 # Stage 0.3 capture intermediates — raw, un-redacted mitmproxy output.
 # Only the redacted files in Backend/test/contract/ios/ (no .intermediate prefix) are committed.
 Backend/test/contract/ios/.intermediate*/

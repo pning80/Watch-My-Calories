@@ -1,4 +1,4 @@
-# App Store Connect Initial Setup — Watch My Calories
+# App Store Connect Initial Setup — Watch My Calories v1.0.0
 
 **Date: 2026-03-08**
 
