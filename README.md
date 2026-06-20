@@ -29,13 +29,9 @@ where the limits were. Beyond the user-facing app, that came to include:
 Somewhere along the way it stopped being a toy. I've used the iOS app myself for
 a while, and it helped me lose about 10 lb.
 
-Once the iOS app had every feature I wanted, I set a harder challenge: have
+Once the iOS app had every feature I wanted, I attempted another experiment: have
 Claude Code **port it to Android**. The first few attempts didn't produce a usable
-app; a simple replication turned out to be non-trivial for the AI agent. What finally worked was the `/loop` feature — I asked Claude Code to
-replicate every iOS feature on Android and then compare the two apps *screen by
-screen and UI element by UI element*, updating the Android side wherever it
-found a difference. That loop ran once every 30 minutes for about a week. The result is the Android app in this repo: a faithful replica of the iOS app, give or take some
-intentional platform-specific differences.
+app; a simple replication turned out to be non-trivial for the AI agent. What finally worked was the `/loop` feature — I asked Claude Code to replicate every iOS feature on Android and then compare the two apps *screen by screen and UI element by UI element*, updating the Android side wherever it found a difference. That loop ran once every 30 minutes for about a week. The result is the Android app in this repo: a faithful replica of the iOS app, give or take some intentional platform-specific differences.
 
 The iOS version is published on the [Apple App Store](https://apps.apple.com/us/app/watch-my-calories/id6760247033). It's primarily for my person use, though everyone can download and use it (no charge) if they find it useful. The Android version has been tested and should be functional, though not tested as extensively as the iOS version. There's no timeline for publishing the Android version on the Google Play Store.
 
