@@ -5,6 +5,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
+    id("com.github.triplet.play") version "3.12.1"
 }
 
 // local.properties values (dev-only secrets; never committed)
@@ -68,7 +69,7 @@ android {
         applicationId = "com.pning80.watchmycalories"
         minSdk = 26
         targetSdk = 35
-        versionCode = 142
+        versionCode = 143
         versionName = "1.4.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -242,4 +243,22 @@ configurations.all {
         force("androidx.test.espresso:espresso-idling-resource:3.7.0")
         force("androidx.test.ext:junit:1.2.1")
     }
+}
+
+// Google Play publishing (gradle-play-publisher). Uploads the signed AAB to the
+// internal testing track. Credentials come from a Play Developer API service-account
+// JSON whose path is read from local.properties `PLAY_SERVICE_ACCOUNT_JSON` (or the
+// env var) — gitignored, absent in CI/fresh checkouts, so normal builds/tests are
+// unaffected and only `publish*` tasks require it.
+//
+// Publish with:  scripts/build-release.sh :app:publishReleaseBundle
+// (the wrapper exports the keystore password from Keychain before running the task).
+play {
+    val playCreds: String? =
+        localProps.getProperty("PLAY_SERVICE_ACCOUNT_JSON") ?: System.getenv("PLAY_SERVICE_ACCOUNT_JSON")
+    if (playCreds != null && file(playCreds).exists()) {
+        serviceAccountCredentials.set(file(playCreds))
+    }
+    track.set("internal")
+    defaultToAppBundles.set(true)
 }
