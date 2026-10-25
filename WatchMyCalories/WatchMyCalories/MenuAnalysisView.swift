@@ -23,6 +23,9 @@ struct MenuAnalysisView: View {
     // Ad state
     @StateObject private var adLoader = NativeAdLoader()
 
+    // Dynamic Type scaling for decorative status glyphs
+    @ScaledMetric(relativeTo: .largeTitle) private var glyph64: CGFloat = 64
+
     private var isRateLimited: Bool {
         errorMessage?.starts(with: "Too many requests") ?? false
     }
@@ -219,9 +222,7 @@ struct MenuAnalysisView: View {
             .padding(.top, 4)
         }
         .padding()
-        .background(Color.cwSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .cwSurface(role: .card)
     }
 
     private func macroLabel(_ label: String, value: Double) -> some View {
@@ -242,7 +243,7 @@ struct MenuAnalysisView: View {
             Spacer()
 
             Image(systemName: "doc.questionmark")
-                .font(.system(size: 64))
+                .font(.system(size: glyph64))
                 .foregroundStyle(Color.cwPrimary.opacity(0.6))
 
             Text("Not a Menu")
@@ -257,13 +258,8 @@ struct MenuAnalysisView: View {
 
             Button(action: onScanAgain) {
                 Text("Try Again")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color.cwPrimary)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
+            .buttonStyle(CWPrimaryButtonStyle())
             .padding(.horizontal, 40)
 
             Spacer()
@@ -277,8 +273,8 @@ struct MenuAnalysisView: View {
             Spacer()
 
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 64))
-                .foregroundStyle(.orange)
+                .font(.system(size: glyph64))
+                .foregroundStyle(Color.cwWarning)
 
             Text("Analysis Failed")
                 .font(.title2)
@@ -315,13 +311,8 @@ struct MenuAnalysisView: View {
                     analysisTask = Task { await analyze() }
                 }) {
                     Text("Try Again")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color.cwPrimary)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
+                .buttonStyle(CWPrimaryButtonStyle())
 
                 Button(action: onDone) {
                     Text("Cancel")

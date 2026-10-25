@@ -87,13 +87,11 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
 
         // Look for Delete button in context menu
         let deleteButton = app.buttons["Delete"]
-        if deleteButton.waitForExistence(timeout: 3) {
-            deleteButton.tap()
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: 3), "context menu should offer Delete")
+        deleteButton.tap()
 
-            // After deleting 300kcal oatmeal, total should be 450
-            XCTAssertTrue(app.staticTexts["450"].waitForExistence(timeout: 3))
-        }
-        // If context menu doesn't appear (CI flakiness), test still passes
+        // After deleting 300kcal oatmeal, total should be 450
+        XCTAssertTrue(app.staticTexts["450"].waitForExistence(timeout: 3))
     }
 
     // MARK: - History Title Accessibility
@@ -238,9 +236,8 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         app.tabBars.buttons["History"].tap()
         // History day card collapsed; tap to expand
         let dayCard = app.buttons["history_dayCard"]
-        if dayCard.waitForExistence(timeout: 5) {
-            dayCard.tap()
-        }
+        XCTAssertTrue(dayCard.waitForExistence(timeout: 5), "History should show a day card")
+        dayCard.tap()
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0).waitForExistence(timeout: 5))
     }
 
@@ -248,7 +245,8 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         launchWithMultiItemMeal()
         app.tabBars.buttons["History"].tap()
         let dayCard = app.buttons["history_dayCard"]
-        if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
+        XCTAssertTrue(dayCard.waitForExistence(timeout: 5), "History should show a day card")
+        dayCard.tap()
         let mealGroup = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
         XCTAssertTrue(mealGroup.waitForExistence(timeout: 5))
         mealGroup.tap()
@@ -260,7 +258,8 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         launchWithMultiItemMeal()
         app.tabBars.buttons["History"].tap()
         let dayCard = app.buttons["history_dayCard"]
-        if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
+        XCTAssertTrue(dayCard.waitForExistence(timeout: 5), "History should show a day card")
+        dayCard.tap()
         let mealGroup = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
         XCTAssertTrue(mealGroup.waitForExistence(timeout: 5))
         mealGroup.press(forDuration: 1.2)
@@ -274,7 +273,8 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         launchWithMultiItemMeal()
         app.tabBars.buttons["History"].tap()
         let dayCard = app.buttons["history_dayCard"]
-        if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
+        XCTAssertTrue(dayCard.waitForExistence(timeout: 5), "History should show a day card")
+        dayCard.tap()
         let mealGroup = app.staticTexts.matching(NSPredicate(format: "label == %@", "Mock Bento Box")).element(boundBy: 0)
         XCTAssertTrue(mealGroup.waitForExistence(timeout: 5))
         mealGroup.tap()
@@ -295,7 +295,8 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         launchWithImage()
         app.tabBars.buttons["History"].tap()
         let dayCard = app.buttons["history_dayCard"]
-        if dayCard.waitForExistence(timeout: 5) { dayCard.tap() }
+        XCTAssertTrue(dayCard.waitForExistence(timeout: 5), "History should show a day card")
+        dayCard.tap()
         XCTAssertTrue(app.staticTexts["Mock Lunch with Photo"].waitForExistence(timeout: 5))
         let firstImage = app.images.firstMatch
         XCTAssertTrue(firstImage.waitForExistence(timeout: 3))
@@ -305,5 +306,96 @@ final class HistoryTests: WatchMyCaloriesUITestBase {
         let closeButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "xmark")).firstMatch
         XCTAssertTrue(closeButton.waitForExistence(timeout: 3),
                       "Full-screen image cover should expose an xmark.circle.fill close button")
+    }
+
+    // MARK: - Trend card (chart + stat chips)
+
+    /// Any element whose accessibility label starts with `prefix` (stat chips and the chart
+    /// are single combined elements, e.g. "Avg / day, 633 kcal").
+    private func element(labelPrefix prefix: String) -> XCUIElement {
+        app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@", prefix))
+            .firstMatch
+    }
+
+    private func assertLabel(_ prefix: String, equals expected: String, file: StaticString = #filePath, line: UInt = #line) {
+        let el = element(labelPrefix: prefix)
+        XCTAssertTrue(el.waitForExistence(timeout: 5), "Missing element labeled '\(prefix)…'", file: file, line: line)
+        XCTAssertEqual(el.label, expected, file: file, line: line)
+    }
+
+    func testTrendStatChipsShowSeededHistory() {
+        // Seed: today 750, yesterday 750, 2 days ago 400; target 2200.
+        launchWithHistoryData()
+        app.tabBars.buttons["History"].tap()
+
+        assertLabel("Avg / day", equals: "Avg / day, 633 kcal")   // (750 + 750 + 400) / 3
+        assertLabel("On target", equals: "On target, 3/3")
+        assertLabel("Day streak", equals: "Day streak, 3")
+    }
+
+    func testTrendChartIsExposedToVoiceOver() {
+        launchWithHistoryData()
+        app.tabBars.buttons["History"].tap()
+
+        let chart = element(labelPrefix: "Daily calories")
+        XCTAssertTrue(chart.waitForExistence(timeout: 5))
+        XCTAssertEqual(chart.label, "Daily calories, last 7 days")
+        XCTAssertEqual(chart.value as? String, "3 of 7 days logged, none over goal")
+    }
+
+    func testTrendRangeSwitchTo30Days() {
+        launchWithHistoryData()
+        app.tabBars.buttons["History"].tap()
+
+        let month = app.buttons["30D"]
+        XCTAssertTrue(month.waitForExistence(timeout: 5))
+        month.tap()
+        XCTAssertTrue(month.isSelected, "30D segment should be selected after tapping")
+
+        let chart = element(labelPrefix: "Daily calories")
+        XCTAssertTrue(chart.waitForExistence(timeout: 3))
+        XCTAssertEqual(chart.label, "Daily calories, last 30 days")
+        XCTAssertEqual(chart.value as? String, "3 of 30 days logged, none over goal")
+        // Same three logged days fall in both windows, so the stats are unchanged.
+        assertLabel("Avg / day", equals: "Avg / day, 633 kcal")
+        assertLabel("On target", equals: "On target, 3/3")
+        assertLabel("Day streak", equals: "Day streak, 3")
+    }
+
+    func testTrendShowsOverGoalDay() {
+        // Today 2000 kcal vs 1200 target (the trend uses the base target, not burned-adjusted).
+        launchWithOverGoal()
+        app.tabBars.buttons["History"].tap()
+
+        assertLabel("On target", equals: "On target, 0/1")
+        let chart = element(labelPrefix: "Daily calories")
+        XCTAssertTrue(chart.waitForExistence(timeout: 3))
+        XCTAssertEqual(chart.value as? String, "1 of 7 days logged, 1 over goal")
+    }
+
+    func testDeleteEntryUpdatesTrendStats() {
+        // Today only: 300 + 450 = 750. Deleting the 300 kcal entry must update the chips
+        // live while the chart is on screen.
+        launchWithSeedData()
+        app.tabBars.buttons["History"].tap()
+
+        assertLabel("Avg / day", equals: "Avg / day, 750 kcal")
+
+        let total = app.staticTexts["750"]
+        XCTAssertTrue(total.waitForExistence(timeout: 3))
+        total.tap()
+
+        let oatmeal = app.staticTexts["Oatmeal with Berries"]
+        XCTAssertTrue(oatmeal.waitForExistence(timeout: 3))
+        oatmeal.press(forDuration: 1.5)
+
+        let deleteButton = app.buttons["Delete"]
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: 3), "context menu should offer Delete")
+        deleteButton.tap()
+
+        XCTAssertTrue(app.staticTexts["450"].waitForExistence(timeout: 3))
+        assertLabel("Avg / day", equals: "Avg / day, 450 kcal")
+        assertLabel("Day streak", equals: "Day streak, 1")
     }
 }

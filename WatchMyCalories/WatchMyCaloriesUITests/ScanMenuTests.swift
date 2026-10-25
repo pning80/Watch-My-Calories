@@ -129,11 +129,10 @@ final class ScanMenuTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(storedButton.waitForExistence(timeout: 3))
         storedButton.tap()
         let row = app.cells.containing(NSPredicate(format: "label CONTAINS %@", "Mock Italian Place")).firstMatch
-        if row.waitForExistence(timeout: 3) {
-            row.swipeLeft()
-            XCTAssertTrue(app.buttons["Delete"].waitForExistence(timeout: 2),
-                          "Swiping left should reveal a Delete action")
-        }
+        XCTAssertTrue(row.waitForExistence(timeout: 3), "Stored menus should list the seeded scan")
+        row.swipeLeft()
+        XCTAssertTrue(app.buttons["Delete"].waitForExistence(timeout: 2),
+                      "Swiping left should reveal a Delete action")
     }
 
     func testMenuScanDetailDeleteButtonShowsConfirmation() {

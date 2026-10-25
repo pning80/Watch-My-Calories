@@ -21,6 +21,10 @@ struct WatchMyCaloriesApp: App {
         ProcessInfo.processInfo.arguments.contains("--seed-data")
     }
 
+    private static var shouldSeedOverGoal: Bool {
+        ProcessInfo.processInfo.arguments.contains("--seed-over-goal")
+    }
+
     private static var shouldSeedHistory: Bool {
         ProcessInfo.processInfo.arguments.contains("--seed-history")
     }
@@ -105,6 +109,9 @@ struct WatchMyCaloriesApp: App {
                 .onAppear {
                     if Self.shouldSeedData {
                         seedTestData(container: container)
+                    }
+                    if Self.shouldSeedOverGoal {
+                        seedOverGoalData(container: container)
                     }
                     if Self.shouldSeedHistory {
                         seedHistoryData(container: container)
@@ -248,6 +255,50 @@ struct WatchMyCaloriesApp: App {
             mealType: .lunch
         )
         context.insert(salad)
+    }
+
+    /// Today's consumption exceeds the effective goal: 1200 target + 456 simulator-burned
+    /// = 1656, consumed 2000 → hero shows the over-goal state ("Over by 344").
+    @MainActor
+    private func seedOverGoalData(container: ModelContainer) {
+        let context = container.mainContext
+
+        // Only seed if empty
+        let descriptor = FetchDescriptor<FoodEntry>()
+        guard (try? context.fetchCount(descriptor)) == 0 else { return }
+
+        let profile = UserProfile(
+            height: 175,
+            weight: 70,
+            age: 30,
+            gender: .male,
+            activityLevel: .moderatelyActive,
+            targetCalories: 1200
+        )
+        context.insert(profile)
+
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        let pancakes = FoodEntry(
+            name: "Pancake Stack",
+            calories: 1000,
+            quantity: "1 plate",
+            timestamp: calendar.date(bySettingHour: 8, minute: 0, second: 0, of: today)!,
+            protein: 20, carbs: 140, fat: 38,
+            mealType: .breakfast
+        )
+        context.insert(pancakes)
+
+        let burger = FoodEntry(
+            name: "Double Cheeseburger",
+            calories: 1000,
+            quantity: "1 burger",
+            timestamp: calendar.date(bySettingHour: 12, minute: 30, second: 0, of: today)!,
+            protein: 50, carbs: 60, fat: 60,
+            mealType: .lunch
+        )
+        context.insert(burger)
     }
 
     @MainActor

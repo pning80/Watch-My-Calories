@@ -30,7 +30,31 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         // Consumed calories element uses accessibilityLabel
         let consumed = app.otherElements["dashboard_consumedCalories"]
         XCTAssertTrue(consumed.waitForExistence(timeout: 3))
+        // Ring label is a full sentence: "750 of 2656 kilocalories eaten, 1906 remaining"
+        // (effective goal = 2200 target + 456 simulator-burned).
         XCTAssertTrue(consumed.label.contains("750"))
+        XCTAssertTrue(consumed.label.contains("of 2656"), "Ring label should reference the effective goal; got: \(consumed.label)")
+        XCTAssertTrue(consumed.label.contains("1906 remaining"), "Ring label should state remaining calories; got: \(consumed.label)")
+    }
+
+    // MARK: - Over-goal State
+
+    func testHeroShowsOverGoalState() {
+        launchWithOverGoal()
+
+        XCTAssertTrue(app.staticTexts["Breakfast"].waitForExistence(timeout: 5))
+
+        // effectiveGoal = 1200 + 456 = 1656; consumed = 2000 → over by 344
+        let remaining = app.staticTexts["dashboard_remainingValue"]
+        XCTAssertTrue(remaining.waitForExistence(timeout: 3))
+        XCTAssertTrue(remaining.label.contains("Over by"), "Stat row should switch to 'Over by'; got: \(remaining.label)")
+        XCTAssertTrue(remaining.label.contains("344"), "Over-by amount should be 344; got: \(remaining.label)")
+        XCTAssertFalse(remaining.label.contains("Remaining"))
+
+        let consumed = app.otherElements["dashboard_consumedCalories"]
+        XCTAssertTrue(consumed.waitForExistence(timeout: 3))
+        XCTAssertTrue(consumed.label.contains("2000 of 1656"), "Ring label should show eaten vs goal; got: \(consumed.label)")
+        XCTAssertTrue(consumed.label.contains("over by 344"), "Ring VoiceOver label should announce the overage; got: \(consumed.label)")
     }
 
     func testMealSectionsAppearWithSeedData() {
@@ -190,14 +214,13 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         oatmeal.press(forDuration: 1.5)
 
         let deleteButton = app.buttons["Delete"]
-        if deleteButton.waitForExistence(timeout: 3) {
-            deleteButton.tap()
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: 3), "context menu should offer Delete")
+        deleteButton.tap()
 
-            // After deleting 300kcal oatmeal, consumed should be 450
-            let consumed = app.otherElements["dashboard_consumedCalories"]
-            XCTAssertTrue(consumed.waitForExistence(timeout: 3))
-            XCTAssertTrue(consumed.label.contains("450"))
-        }
+        // After deleting 300kcal oatmeal, consumed should be 450
+        let consumed = app.otherElements["dashboard_consumedCalories"]
+        XCTAssertTrue(consumed.waitForExistence(timeout: 3))
+        XCTAssertTrue(consumed.label.contains("450"))
     }
 
     // MARK: - Parity audit (2026-05-30) — group cards / full screen image
@@ -291,13 +314,12 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(entry.waitForExistence(timeout: 5))
         entry.press(forDuration: 1.2)
         let editButton = app.buttons["Edit"]
-        if editButton.waitForExistence(timeout: 3) {
-            editButton.tap()
-            // Edit sheet exposes text fields for name + calories + quantity (no testID per
-            // EditFoodEntryView's textfields). Assert at least one TextField is present.
-            XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 3),
-                          "Edit sheet should show editable text fields")
-        }
+        XCTAssertTrue(editButton.waitForExistence(timeout: 3), "context menu should offer Edit")
+        editButton.tap()
+        // Edit sheet exposes text fields for name + calories + quantity (no testID per
+        // EditFoodEntryView's textfields). Assert at least one TextField is present.
+        XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 3),
+                      "Edit sheet should show editable text fields")
     }
 
     func testViewEntryFromDashboardContextMenu() {
@@ -306,12 +328,11 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(entry.waitForExistence(timeout: 5))
         entry.press(forDuration: 1.2)
         let viewButton = app.buttons["View"]
-        if viewButton.waitForExistence(timeout: 3) {
-            viewButton.tap()
-            // View sheet is read-only — assert a Done button is present
-            XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 3),
-                          "View sheet should expose a Done button")
-        }
+        XCTAssertTrue(viewButton.waitForExistence(timeout: 3), "context menu should offer View")
+        viewButton.tap()
+        // View sheet is read-only — assert a Done button is present
+        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 3),
+                      "View sheet should expose a Done button")
     }
 
     func testEditMealGroupFromDashboardContextMenu() {
@@ -320,11 +341,10 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(mealHeader.waitForExistence(timeout: 5))
         mealHeader.press(forDuration: 1.2)
         let editButton = app.buttons["Edit"]
-        if editButton.waitForExistence(timeout: 3) {
-            editButton.tap()
-            XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 3),
-                          "Edit meal group sheet should show editable text fields")
-        }
+        XCTAssertTrue(editButton.waitForExistence(timeout: 3), "context menu should offer Edit")
+        editButton.tap()
+        XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 3),
+                      "Edit meal group sheet should show editable text fields")
     }
 
     func testEditSubItemFromDashboardContextMenu() {
@@ -336,10 +356,9 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(subItem.waitForExistence(timeout: 3))
         subItem.press(forDuration: 1.2)
         let editButton = app.buttons["Edit"]
-        if editButton.waitForExistence(timeout: 3) {
-            editButton.tap()
-            XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 3),
-                          "Edit sub-item sheet should show editable text fields")
-        }
+        XCTAssertTrue(editButton.waitForExistence(timeout: 3), "context menu should offer Edit")
+        editButton.tap()
+        XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 3),
+                      "Edit sub-item sheet should show editable text fields")
     }
 }

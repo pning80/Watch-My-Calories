@@ -326,28 +326,24 @@ final class OnboardingTests: XCTestCase {
         app.launch()
         navigateToStep(2)
         let maleRow = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Male")).firstMatch
-        if maleRow.waitForExistence(timeout: 3) {
-            maleRow.tap()
-            let femaleOption = app.buttons["Female"]
-            if femaleOption.waitForExistence(timeout: 2) {
-                femaleOption.tap()
-                XCTAssertTrue(app.staticTexts["Female"].waitForExistence(timeout: 2))
-            }
-        }
+        XCTAssertTrue(maleRow.waitForExistence(timeout: 3), "Goal step should show the picker row")
+        maleRow.tap()
+        let femaleOption = app.buttons["Female"]
+        XCTAssertTrue(femaleOption.waitForExistence(timeout: 2), "Picker menu should list the option")
+        femaleOption.tap()
+        XCTAssertTrue(app.staticTexts["Female"].waitForExistence(timeout: 2))
     }
 
     func testGoalStepActivityPickerCanChangeSelection() {
         app.launch()
         navigateToStep(2)
         let activityRow = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Sedentary")).firstMatch
-        if activityRow.waitForExistence(timeout: 3) {
-            activityRow.tap()
-            let veryActiveOption = app.buttons["Very Active"]
-            if veryActiveOption.waitForExistence(timeout: 2) {
-                veryActiveOption.tap()
-                XCTAssertTrue(app.staticTexts["Very Active"].waitForExistence(timeout: 2))
-            }
-        }
+        XCTAssertTrue(activityRow.waitForExistence(timeout: 3), "Goal step should show the picker row")
+        activityRow.tap()
+        let veryActiveOption = app.buttons["Very Active"]
+        XCTAssertTrue(veryActiveOption.waitForExistence(timeout: 2), "Picker menu should list the option")
+        veryActiveOption.tap()
+        XCTAssertTrue(app.staticTexts["Very Active"].waitForExistence(timeout: 2))
     }
 
     func testGetStartedButtonAdvancesFromWelcome() {

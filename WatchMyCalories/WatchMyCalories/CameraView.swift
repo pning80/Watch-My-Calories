@@ -14,6 +14,7 @@ struct CameraView: View {
     @State private var cameraAuthStatus: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
     @State private var showEstimateDisclaimer = false
     @ObservedObject private var store = SettingsStore.shared
+    @ScaledMetric(relativeTo: .largeTitle) private var glyph64: CGFloat = 64
 
     private var isCameraDenied: Bool {
         #if targetEnvironment(simulator)
@@ -118,6 +119,7 @@ struct CameraView: View {
                     }
                     .disabled(model.isCapturing)
                     .opacity(model.isCapturing ? 0.5 : 1.0)
+                    .accessibilityLabel("Capture photo")
                     .accessibilityIdentifier(AccessibilityID.Camera.captureButton)
                     .padding(.bottom, 40)
                 }
@@ -166,7 +168,7 @@ struct CameraView: View {
             Spacer()
 
             Image(systemName: "camera.fill")
-                .font(.system(size: 64))
+                .font(.system(size: glyph64))
                 .foregroundStyle(Color.cwPrimary.opacity(0.6))
 
             Text("Camera Access Required")
@@ -177,7 +179,7 @@ struct CameraView: View {
             Text("To scan your meals, please allow camera access in Settings.")
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(Color.gray)
+                .foregroundStyle(Color.cwTextSecondary)
                 .padding(.horizontal, 40)
 
             Button {
@@ -186,13 +188,8 @@ struct CameraView: View {
                 }
             } label: {
                 Label("Open Settings", systemImage: "gear")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color.cwPrimary)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
+            .buttonStyle(CWPrimaryButtonStyle())
             .padding(.horizontal, 40)
 
             Spacer()
@@ -262,6 +259,7 @@ struct MealTypePicker: View {
                             Capsule().fill(selection == type ? Color.cwAccent : Color.white.opacity(0.25))
                         )
                 }
+                .accessibilityAddTraits(selection == type ? [.isSelected] : [])
             }
         }
         .accessibilityIdentifier(AccessibilityID.MealTypePicker.picker)

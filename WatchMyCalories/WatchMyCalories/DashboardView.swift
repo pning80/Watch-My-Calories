@@ -60,16 +60,13 @@ struct DashboardView: View {
                                     
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Watch My Calories")
-                                        .font(.system(.title2, design: .serif, weight: .bold))
-                                        .foregroundStyle(Color.cwPrimary)
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.8)
+                                        .cwTitle(role: .compact)
                                     
                                     Text(Date(), format: .dateTime.weekday(.wide).day().month())
                                         .font(.caption)
                                         .fontWeight(.medium)
                                         .textCase(.uppercase)
-                                        .foregroundStyle(Color.gray)
+                                        .foregroundStyle(Color.cwTextSecondary)
                                         .kerning(0.5)
                                 }
                                 Spacer()
@@ -310,7 +307,7 @@ private struct NutrientField: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
                 .font(.caption)
-                .foregroundStyle(Color.gray)
+                .foregroundStyle(Color.cwTextSecondary)
             TextField("—", text: $text)
                 .textFieldStyle(.roundedBorder)
                 .keyboardType(.decimalPad)

@@ -6,6 +6,7 @@ struct ScannedMenusView: View {
     @Query(sort: \MenuScan.timestamp, order: .reverse) private var scans: [MenuScan]
 
     @State private var editMode: EditMode = .inactive
+    @ScaledMetric(relativeTo: .largeTitle) private var glyph64: CGFloat = 64
 
     var body: some View {
         Group {
@@ -31,8 +32,9 @@ struct ScannedMenusView: View {
         VStack(spacing: 16) {
             Spacer()
             Image(systemName: "menucard")
-                .font(.system(size: 64))
+                .font(.system(size: glyph64))
                 .foregroundStyle(Color.cwPrimary.opacity(0.4))
+                .accessibilityHidden(true)
             Text("No scanned menus yet")
                 .font(.headline)
             Text("Use the Scan Menu tab to photograph a restaurant menu and see calorie estimates.")
@@ -179,6 +181,7 @@ struct MenuScanDetailView: View {
                 } label: {
                     Image(systemName: "trash")
                 }
+                .accessibilityLabel("Delete scanned menu")
             }
         }
         .confirmationDialog("Delete this scanned menu?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
@@ -218,9 +221,7 @@ struct MenuScanDetailView: View {
             .padding(.top, 4)
         }
         .padding()
-        .background(Color.cwSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .cwSurface(role: .card)
     }
 
     private func macroLabel(_ label: String, value: Double) -> some View {

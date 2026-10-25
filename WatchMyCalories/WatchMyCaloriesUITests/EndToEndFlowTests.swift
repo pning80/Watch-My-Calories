@@ -220,15 +220,14 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         oatmeal.press(forDuration: 1.5)
 
         let deleteButton = app.buttons["Delete"]
-        if deleteButton.waitForExistence(timeout: 3) {
-            deleteButton.tap()
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: 3), "context menu should offer Delete")
+        deleteButton.tap()
 
-            // Hero card should now show 450 (750 - 300)
-            let consumedAfter = app.otherElements["dashboard_consumedCalories"]
-            XCTAssertTrue(consumedAfter.waitForExistence(timeout: 3))
-            XCTAssertTrue(consumedAfter.label.contains("450"))
-            XCTAssertFalse(consumedAfter.label.contains("750"))
-        }
+        // Hero card should now show 450 (750 - 300)
+        let consumedAfter = app.otherElements["dashboard_consumedCalories"]
+        XCTAssertTrue(consumedAfter.waitForExistence(timeout: 3))
+        XCTAssertTrue(consumedAfter.label.contains("450"))
+        XCTAssertFalse(consumedAfter.label.contains("750"))
     }
 
     // MARK: - Remaining Calories Update

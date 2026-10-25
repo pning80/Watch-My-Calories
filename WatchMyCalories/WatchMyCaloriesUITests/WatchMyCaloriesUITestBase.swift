@@ -26,6 +26,12 @@ class WatchMyCaloriesUITestBase: XCTestCase {
         app.launch()
     }
 
+    /// Launch with today's consumption over the effective goal (2000 eaten vs 1200 + 456 burned).
+    func launchWithOverGoal() {
+        app.launchArguments.append("--seed-over-goal")
+        app.launch()
+    }
+
     /// Launch with an empty database.
     func launchEmpty() {
         app.launch()

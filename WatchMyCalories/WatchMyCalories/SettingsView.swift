@@ -109,7 +109,7 @@ struct SettingsView: View {
                                     .foregroundStyle(Color.primary)
                                 Spacer()
                                 Text("\(weightLbs) lbs")
-                                    .foregroundStyle(isEditingWeight ? Color.accentColor : Color.secondary)
+                                    .foregroundStyle(isEditingWeight ? Color.cwPrimary : Color.secondary)
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -136,7 +136,7 @@ struct SettingsView: View {
                                     .foregroundStyle(Color.primary)
                                 Spacer()
                                 Text("\(heightCmUI) cm")
-                                    .foregroundStyle(isEditingHeight ? Color.accentColor : Color.secondary)
+                                    .foregroundStyle(isEditingHeight ? Color.cwPrimary : Color.secondary)
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -163,7 +163,7 @@ struct SettingsView: View {
                                     .foregroundStyle(Color.primary)
                                 Spacer()
                                 Text("\(weightKgUI) kg")
-                                    .foregroundStyle(isEditingWeight ? Color.accentColor : Color.secondary)
+                                    .foregroundStyle(isEditingWeight ? Color.cwPrimary : Color.secondary)
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -191,7 +191,7 @@ struct SettingsView: View {
                                 .foregroundStyle(Color.primary)
                             Spacer()
                             Text("\(age)")
-                                .foregroundStyle(isEditingAge ? Color.accentColor : Color.secondary)
+                                .foregroundStyle(isEditingAge ? Color.cwPrimary : Color.secondary)
                         }
                         .contentShape(Rectangle())
                         .onTapGesture {

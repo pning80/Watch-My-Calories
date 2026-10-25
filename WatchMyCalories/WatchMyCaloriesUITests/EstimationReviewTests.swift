@@ -2,9 +2,11 @@ import XCTest
 
 final class EstimationReviewTests: WatchMyCaloriesUITestBase {
 
-    /// Navigate to camera, capture, and tap Use to start estimation.
+    /// Navigate to camera, capture, and tap Use to start a (mock, success-mode) estimation.
+    /// AI consent is pre-accepted — without it the consent sheet blocks the estimation; the
+    /// consent flow itself is covered by the `testAIConsent…` tests.
     private func startEstimation() {
-        launchEmpty()
+        launchWithAIConsentAccepted()
         // Open Log Food sheet, then tap Scan Food
         app.tabBars.buttons["Log Food"].tap()
         let scanFood = app.staticTexts["Scan Food"]
@@ -27,26 +29,18 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
     }
 
     private func elementExists(_ identifier: String, timeout: TimeInterval = 5) -> Bool {
-        // SwiftUI VStacks may appear as different element types
-        return app.otherElements[identifier].waitForExistence(timeout: timeout)
-            || app.scrollViews[identifier].exists
-            || app.staticTexts[identifier].exists
+        // SwiftUI state containers surface as different element types (and their identifier
+        // is inherited by descendant Texts), so match any type.
+        app.descendants(matching: .any)[identifier].firstMatch.waitForExistence(timeout: timeout)
     }
 
-    /// Wait for estimation to finish (success or error).
-    /// Returns "success", "error", "noFood", or "loading".
-    @discardableResult
-    private func waitForEstimationResult(timeout: TimeInterval = 30) -> String {
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if elementExists("review_success", timeout: 0.5) { return "success" }
-            if elementExists("review_error", timeout: 0.5) { return "error" }
-            if elementExists("review_noFood", timeout: 0.5) { return "noFood" }
-            // Check for "View Results" button which appears when estimation completes successfully
-            if app.buttons["ads_viewResultsButton"].exists { return "completedLoading" }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
-        }
-        return "loading"
+    /// Success mode: loading → "View Results" → success screen. Fails if any step is missing.
+    private func advanceToSuccessUI() {
+        let viewResults = app.buttons["ads_viewResultsButton"]
+        XCTAssertTrue(viewResults.waitForExistence(timeout: 30),
+                      "View Results should appear once the mock estimation completes")
+        viewResults.tap()
+        XCTAssertTrue(elementExists("review_success"), "Success screen should appear after View Results")
     }
 
     // MARK: - Loading State
@@ -72,57 +66,33 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
 
     func testEstimationResultShowsActionButton() {
         startEstimation()
-        let result = waitForEstimationResult()
-
-        switch result {
-        case "success":
-            XCTAssertTrue(app.buttons["review_doneButton"].exists, "Done button should appear on success")
-        case "completedLoading":
-            XCTAssertTrue(app.buttons["ads_viewResultsButton"].exists, "View Results button should appear")
-        case "error":
-            XCTAssertTrue(app.buttons["review_tryAgainButton"].exists, "Try Again button should appear on error")
-        case "noFood":
-            XCTAssertTrue(
-                app.buttons["review_tryAgainButton"].exists || app.buttons["review_cancelButton"].exists,
-                "Action button should appear on no food"
-            )
-        default:
-            // Still loading after timeout — not a failure, just slow network
-            break
-        }
+        advanceToSuccessUI()
+        XCTAssertTrue(app.buttons["review_doneButton"].waitForExistence(timeout: 3),
+                      "Done button should appear on success")
     }
 
     func testDoneButtonReturnsToDashboard() {
         startEstimation()
-        let result = waitForEstimationResult()
-
-        // Navigate through to success view
-        if result == "completedLoading" {
-            let viewResults = app.buttons["ads_viewResultsButton"]
-            if viewResults.waitForExistence(timeout: 3) {
-                viewResults.tap()
-            }
-        }
-
-        guard result == "success" || result == "completedLoading" else { return }
+        advanceToSuccessUI()
 
         let doneButton = app.buttons["review_doneButton"]
-        guard doneButton.waitForExistence(timeout: 5) else { return }
+        XCTAssertTrue(doneButton.waitForExistence(timeout: 5))
         doneButton.tap()
 
-        // Should be back on Dashboard
-        let addButton = app.otherElements["dashboard_heroCard"]
-        XCTAssertTrue(addButton.waitForExistence(timeout: 5))
+        // Back on Dashboard, with the two mock items (250 + 200) logged
+        let heroCard = app.otherElements["dashboard_heroCard"]
+        XCTAssertTrue(heroCard.waitForExistence(timeout: 5))
+        let consumed = app.otherElements["dashboard_consumedCalories"]
+        XCTAssertTrue(consumed.waitForExistence(timeout: 3))
+        XCTAssertTrue(consumed.label.hasPrefix("450 of"), "Saved estimate should be logged; got: \(consumed.label)")
     }
 
     func testCancelButtonOnError() {
-        startEstimation()
-        let result = waitForEstimationResult()
-
-        guard result == "error" || result == "noFood" else { return }
+        startEstimationWithLaunchArgs(["--mock-estimation-error"])
+        XCTAssertTrue(waitForErrorView(), "Mock-error mode should render the review_error view")
 
         let cancelButton = app.buttons["review_cancelButton"]
-        guard cancelButton.waitForExistence(timeout: 3) else { return }
+        XCTAssertTrue(cancelButton.waitForExistence(timeout: 3))
         cancelButton.tap()
 
         // Should return to camera
@@ -134,18 +104,7 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
 
     func testSuccessScreenShowsLoggedMessage() {
         startEstimation()
-        let result = waitForEstimationResult()
-
-        if result == "completedLoading" {
-            let viewResults = app.buttons["ads_viewResultsButton"]
-            if viewResults.waitForExistence(timeout: 3) {
-                viewResults.tap()
-            }
-        }
-
-        guard result == "success" || result == "completedLoading" else { return }
-        guard elementExists("review_success") else { return }
-
+        advanceToSuccessUI()
         XCTAssertTrue(
             app.staticTexts["Logged Successfully!"].exists,
             "Success screen should show 'Logged Successfully!' message"
@@ -154,18 +113,7 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
 
     func testSuccessScreenShowsTotalAdded() {
         startEstimation()
-        let result = waitForEstimationResult()
-
-        if result == "completedLoading" {
-            let viewResults = app.buttons["ads_viewResultsButton"]
-            if viewResults.waitForExistence(timeout: 3) {
-                viewResults.tap()
-            }
-        }
-
-        guard result == "success" || result == "completedLoading" else { return }
-        guard elementExists("review_success") else { return }
-
+        advanceToSuccessUI()
         XCTAssertTrue(
             app.staticTexts["Total Added"].exists,
             "Success screen should show 'Total Added' label"
@@ -174,19 +122,10 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
 
     func testDoneButtonVisibleWithoutScrolling() {
         startEstimation()
-        let result = waitForEstimationResult()
-
-        if result == "completedLoading" {
-            let viewResults = app.buttons["ads_viewResultsButton"]
-            if viewResults.waitForExistence(timeout: 3) {
-                viewResults.tap()
-            }
-        }
-
-        guard result == "success" || result == "completedLoading" else { return }
+        advanceToSuccessUI()
 
         let doneButton = app.buttons["review_doneButton"]
-        guard doneButton.waitForExistence(timeout: 5) else { return }
+        XCTAssertTrue(doneButton.waitForExistence(timeout: 5))
 
         // Done button should be hittable without scrolling (pinned at bottom)
         XCTAssertTrue(doneButton.isHittable, "Done button should be visible without scrolling")
@@ -217,14 +156,7 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
         useButton.tap()
     }
 
-    /// Wait for the error VIEW (the inline error VStack inside the loading container) to
-    /// appear. With the IOS-BUG-1 fix landed (this PR), the error VStack now exposes the
-    /// `review_error` accessibility identifier, so we can detect the error state directly
-    /// instead of inferring it from the "Try Again" button label.
-    ///
-    /// We still tap action buttons via their LABEL ("Try Again", "Cancel") because IOS-BUG-2
-    /// (SwiftUI `.buttonStyle(.borderedProminent)` strips `.accessibilityIdentifier`) is
-    /// unrelated and unfixed.
+    /// Wait for the error view (`review_error`) to appear.
     private func waitForErrorView(timeout: TimeInterval = 30) -> Bool {
         return elementExists("review_error", timeout: timeout)
     }
@@ -233,7 +165,7 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
         startEstimationWithLaunchArgs(["--mock-estimation-error"])
         XCTAssertTrue(waitForErrorView(),
                       "Mock-error mode should render the review_error view")
-        XCTAssertTrue(app.buttons["Try Again"].exists,
+        XCTAssertTrue(app.buttons["review_tryAgainButton"].exists,
                       "Try Again button must appear inside the error view")
         XCTAssertTrue(app.staticTexts["Analysis Failed"].exists,
                       "Error state should show 'Analysis Failed' headline")
@@ -242,7 +174,7 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
     func testErrorStateShowsCancelButton() {
         startEstimationWithLaunchArgs(["--mock-estimation-error"])
         XCTAssertTrue(waitForErrorView())
-        XCTAssertTrue(app.buttons["Cancel"].exists,
+        XCTAssertTrue(app.buttons["review_cancelButton"].exists,
                       "Cancel button must appear on error state")
     }
 
@@ -257,15 +189,15 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
     func testErrorStateTryAgainTapResetsView() {
         startEstimationWithLaunchArgs(["--mock-estimation-error"])
         XCTAssertTrue(waitForErrorView())
-        app.buttons["Try Again"].tap()
+        app.buttons["review_tryAgainButton"].tap()
         // After Try Again, the loading state re-fires and we end up back in error.
         XCTAssertTrue(waitForErrorView(timeout: 15))
     }
 
     /// In no-food mode the mock returns success-with-empty-items. The flow is:
-    /// loading → "View Results" button appears → user taps it → no-food UI with Try Again/Cancel.
+    /// loading → "View Results" button appears → user taps it → no-food UI with Retake Photo/Cancel.
     private func advanceToNoFoodUI() {
-        let viewResults = app.buttons["View Results"]
+        let viewResults = app.buttons["ads_viewResultsButton"]
         XCTAssertTrue(viewResults.waitForExistence(timeout: 30),
                       "View Results button must appear after empty-items estimation")
         viewResults.tap()
@@ -273,17 +205,18 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.staticTexts["No Food Detected"].waitForExistence(timeout: 5))
     }
 
-    func testNoFoodStateShowsTryAgainButton() {
+    func testNoFoodStateShowsRetakeButton() {
         startEstimationWithLaunchArgs(["--mock-estimation-no-food"])
         advanceToNoFoodUI()
-        XCTAssertTrue(app.buttons["Try Again"].exists,
-                      "No-food UI should expose a Try Again button")
+        XCTAssertTrue(app.buttons["review_tryAgainButton"].exists,
+                      "No-food UI should expose a Retake Photo button")
+        XCTAssertEqual(app.buttons["review_tryAgainButton"].label, "Retake Photo")
     }
 
     func testNoFoodStateShowsCancelButton() {
         startEstimationWithLaunchArgs(["--mock-estimation-no-food"])
         advanceToNoFoodUI()
-        XCTAssertTrue(app.buttons["Cancel"].exists,
+        XCTAssertTrue(app.buttons["review_cancelButton"].exists,
                       "No-food UI should expose a Cancel button")
     }
 
@@ -325,13 +258,12 @@ final class EstimationReviewTests: WatchMyCaloriesUITestBase {
         // Find a Decline / Don't Allow button on the consent sheet
         let declineButton = app.buttons.matching(
             NSPredicate(format: "label CONTAINS[c] %@ OR label CONTAINS[c] %@", "don't allow", "decline")).firstMatch
-        if declineButton.waitForExistence(timeout: 5) {
-            declineButton.tap()
-            // After decline, should return to camera screen (or be cancelled)
-            let backOnCamera = app.buttons["camera_captureButton"].waitForExistence(timeout: 5)
-            let backOnDashboard = app.buttons["dashboard_emptyStateCard"].waitForExistence(timeout: 2)
-            XCTAssertTrue(backOnCamera || backOnDashboard,
-                          "After AI consent decline, user should return to camera or dashboard")
-        }
+        XCTAssertTrue(declineButton.waitForExistence(timeout: 5), "AI consent sheet should offer Don't Allow")
+        declineButton.tap()
+        // After decline, should return to camera screen (or be cancelled)
+        let backOnCamera = app.buttons["camera_captureButton"].waitForExistence(timeout: 5)
+        let backOnDashboard = app.buttons["dashboard_emptyStateCard"].waitForExistence(timeout: 2)
+        XCTAssertTrue(backOnCamera || backOnDashboard,
+                      "After AI consent decline, user should return to camera or dashboard")
     }
 }

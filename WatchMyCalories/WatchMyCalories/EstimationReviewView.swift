@@ -28,6 +28,11 @@ struct EstimationReviewView: View {
     @State private var pendingError: String? = nil
     @State private var estimationTask: Task<Void, Never>? = nil
 
+    // Dynamic Type scaling for decorative status glyphs
+    @ScaledMetric(relativeTo: .largeTitle) private var glyph64: CGFloat = 64
+    @ScaledMetric(relativeTo: .largeTitle) private var glyph40: CGFloat = 40
+    @ScaledMetric(relativeTo: .largeTitle) private var glyph24: CGFloat = 24
+
     private var isRateLimited: Bool {
         pendingError?.starts(with: "Too many requests") ?? false
     }
@@ -83,13 +88,14 @@ struct EstimationReviewView: View {
                                 .tint(Color.cwPrimary)
                             Text("Analyzing food...")
                                 .font(.headline)
-                                .foregroundStyle(Color.gray)
+                                .foregroundStyle(Color.cwTextSecondary)
                         } else if pendingError != nil {
                             // Inline error UI
                             HStack(spacing: 8) {
                                 Image(systemName: isRateLimited ? "clock.fill" : "exclamationmark.triangle.fill")
-                                    .font(.system(size: 24))
-                                    .foregroundStyle(isRateLimited ? Color.cwPrimary : Color.orange)
+                                    .font(.system(size: glyph24))
+                                    .foregroundStyle(isRateLimited ? Color.cwPrimary : Color.cwWarning)
+                                    .accessibilityHidden(true)
 
                                 Text(isRateLimited ? "Too Many Requests" : "Analysis Failed")
                                     .font(.headline)
@@ -99,14 +105,14 @@ struct EstimationReviewView: View {
                             Text(isRateLimited ? (pendingError ?? "") : "We couldn't analyze the image. Please try again.")
                                 .font(.subheadline)
                                 .multilineTextAlignment(.center)
-                                .foregroundStyle(Color.gray)
+                                .foregroundStyle(Color.cwTextSecondary)
 
                             if showDetails, let errorText = pendingError {
                                 ScrollView {
                                     Text(errorText)
                                         .font(.caption)
                                         .fontDesign(.monospaced)
-                                        .foregroundStyle(Color.red)
+                                        .foregroundStyle(Color.cwOverGoal)
                                         .padding()
                                         .background(Color.red.opacity(0.1))
                                         .cornerRadius(8)
@@ -119,7 +125,7 @@ struct EstimationReviewView: View {
                                 withAnimation { showDetails.toggle() }
                             }
                             .font(.footnote)
-                            .foregroundStyle(Color.blue)
+                            .foregroundStyle(Color.cwLink)
 
                             HStack(spacing: 16) {
                                 Button("Try Again") {
@@ -131,13 +137,14 @@ struct EstimationReviewView: View {
                                     .accessibilityIdentifier(AccessibilityID.EstimationReview.tryAgainButton)
 
                                 Button("Cancel") { dismiss() }
-                                    .foregroundStyle(Color.gray)
+                                    .foregroundStyle(Color.cwTextSecondary)
                                     .accessibilityIdentifier(AccessibilityID.EstimationReview.cancelButton)
                             }
                         } else {
                             Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 40))
+                                .font(.system(size: glyph40))
                                 .foregroundStyle(Color.cwPrimary)
+                                .accessibilityHidden(true)
                             Text("Analysis complete!")
                                 .font(.headline)
                                 .foregroundStyle(Color.cwTextPrimary)
@@ -147,13 +154,8 @@ struct EstimationReviewView: View {
                                 isLoading = false
                             } label: {
                                 Text("View Results")
-                                    .font(.headline)
-                                    .foregroundStyle(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .background(Color.cwPrimary)
-                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                             }
+                            .buttonStyle(CWPrimaryButtonStyle())
                             .padding(.horizontal, 40)
                             .accessibilityIdentifier(AccessibilityID.Ads.viewResultsButton)
                             .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -163,13 +165,13 @@ struct EstimationReviewView: View {
                     .padding(.bottom, 40)
                     .animation(.easeInOut(duration: 0.3), value: estimationComplete)
                 }
-                // IOS-BUG-1 fix: the outer container's accessibilityIdentifier inherits
-                // down to all descendant Text views in SwiftUI, overriding any nested
-                // `.accessibilityIdentifier()` on individual children. To let XCUITest
-                // distinguish loading vs error states reliably, we switch the container's
-                // identifier based on the rendered state:
+                // The state containers below use `.accessibilityElement(children: .contain)`:
+                // without it a container's identifier is inherited by every descendant and
+                // overwrites the buttons' own identifiers (e.g. "View Results" was exposed as
+                // "review_loading"). The identifier switches with the rendered state:
                 //   - "review_error" when the error UI is showing
                 //   - "review_loading" otherwise (initial spinner, success-loading branch)
+                .accessibilityElement(children: .contain)
                 .accessibilityIdentifier(
                     estimationComplete && pendingError != nil
                         ? AccessibilityID.EstimationReview.errorView
@@ -180,8 +182,9 @@ struct EstimationReviewView: View {
                     // No food detected
                     VStack(spacing: 16) {
                         Image(systemName: "fork.knife.circle")
-                            .font(.system(size: 64))
-                            .foregroundStyle(Color.gray)
+                            .font(.system(size: glyph64))
+                            .foregroundStyle(Color.cwTextSecondary)
+                            .accessibilityHidden(true)
 
                         Text("No Food Detected")
                             .font(.title2)
@@ -190,10 +193,10 @@ struct EstimationReviewView: View {
 
                         Text("We couldn't identify any food items in this photo. Try taking a clearer photo.")
                             .multilineTextAlignment(.center)
-                            .foregroundStyle(Color.gray)
+                            .foregroundStyle(Color.cwTextSecondary)
 
                         VStack(spacing: 12) {
-                            Button("Try Again") { dismiss() }
+                            Button("Retake Photo") { dismiss() }
                                 .buttonStyle(.borderedProminent)
                                 .tint(Color.cwPrimary)
                                 .accessibilityIdentifier(AccessibilityID.EstimationReview.tryAgainButton)
@@ -202,21 +205,23 @@ struct EstimationReviewView: View {
                                 onDone()
                                 dismiss()
                             }
-                                .foregroundStyle(Color.gray)
+                                .foregroundStyle(Color.cwTextSecondary)
                                 .accessibilityIdentifier(AccessibilityID.EstimationReview.cancelButton)
                         }
                         .padding(.top, 8)
                     }
                     .padding()
+                    .accessibilityElement(children: .contain)
                     .accessibilityIdentifier(AccessibilityID.EstimationReview.noFoodView)
                 } else {
                     VStack(spacing: 0) {
                         ScrollView {
                             VStack(spacing: 24) {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 64))
+                                    .font(.system(size: glyph64))
                                     .foregroundStyle(Color.cwPrimary)
                                     .transition(.scale.combined(with: .opacity))
+                                    .accessibilityHidden(true)
 
                                 Text("Logged Successfully!")
                                     .font(.title2)
@@ -243,9 +248,7 @@ struct EstimationReviewView: View {
                                             )
                                         }
                                         .padding()
-                                        .background(Color.cwSurface)
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                                        .cwSurface(role: .row)
                                     }
 
                                     VStack(spacing: 10) {
@@ -305,6 +308,7 @@ struct EstimationReviewView: View {
                         .accessibilityIdentifier(AccessibilityID.EstimationReview.doneButton)
                     }
                     .transition(.opacity)
+                    .accessibilityElement(children: .contain)
                     .accessibilityIdentifier(AccessibilityID.EstimationReview.successView)
                 }
             }

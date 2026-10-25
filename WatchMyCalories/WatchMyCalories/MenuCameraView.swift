@@ -12,6 +12,7 @@ struct MenuCameraView: View {
     @State private var cameraAuthStatus: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
     @State private var showEstimateDisclaimer = false
     @ObservedObject private var store = SettingsStore.shared
+    @ScaledMetric(relativeTo: .largeTitle) private var glyph64: CGFloat = 64
 
     private var isCameraDenied: Bool {
         #if targetEnvironment(simulator)
@@ -110,6 +111,7 @@ struct MenuCameraView: View {
                                 .frame(width: 68, height: 68)
                         }
                     }
+                    .accessibilityLabel("Capture photo")
                     .disabled(model.isCapturing)
                     .opacity(model.isCapturing ? 0.5 : 1.0)
                     .padding(.bottom, 40)
@@ -161,7 +163,7 @@ struct MenuCameraView: View {
             Spacer()
 
             Image(systemName: "camera.fill")
-                .font(.system(size: 64))
+                .font(.system(size: glyph64))
                 .foregroundStyle(Color.cwPrimary.opacity(0.6))
 
             Text("Camera Access Required")
@@ -172,7 +174,7 @@ struct MenuCameraView: View {
             Text("To scan restaurant menus, please allow camera access in Settings.")
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(Color.gray)
+                .foregroundStyle(Color.cwTextSecondary)
                 .padding(.horizontal, 40)
 
             Button {
@@ -181,13 +183,8 @@ struct MenuCameraView: View {
                 }
             } label: {
                 Label("Open Settings", systemImage: "gear")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color.cwPrimary)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
+            .buttonStyle(CWPrimaryButtonStyle())
             .padding(.horizontal, 40)
 
             Spacer()

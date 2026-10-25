@@ -14,6 +14,7 @@
 		1B294522DAA8F72CEC2F1FC5 /* TabNavigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55250D05BADD440A2577C15 /* TabNavigationTests.swift */; };
 		1BC854477B1472C18121354F /* ImageStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7379CDA5384B21623141D9A8 /* ImageStorage.swift */; };
 		1F095FDC1661581BF3E502A6 /* OnboardingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F54FB0C36AAEF2B30ACE55A /* OnboardingTests.swift */; };
+		1FC2697A1FB973AE3C7F69DE /* HistoryTrendStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CE8C44450DB95072CFB7247 /* HistoryTrendStatsTests.swift */; };
 		27D84E4BA6334FCF875EA772 /* FoodEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D291B37B194DCAE2AE284D16 /* FoodEntryTests.swift */; };
 		2B5603DF9151284FA96ABB62 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 657D2ECCF1A3B8B8B80B0FDB /* OnboardingView.swift */; };
 		2B8FC8CE2ED898E49F1DDA39 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 289D70AF343F07ECF3E9E085 /* DashboardView.swift */; };
@@ -130,6 +131,7 @@
 		657D2ECCF1A3B8B8B80B0FDB /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		6686EB8F1CC8A770139ACDD9 /* Ideation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Ideation.md; sourceTree = "<group>"; };
 		6BFDEDFA93ABCA53E9E806E7 /* UserProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileTests.swift; sourceTree = "<group>"; };
+		6CE8C44450DB95072CFB7247 /* HistoryTrendStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryTrendStatsTests.swift; sourceTree = "<group>"; };
 		71FEB77D8961ED4B2074CA64 /* CalorieCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieCalculatorTests.swift; sourceTree = "<group>"; };
 		7379CDA5384B21623141D9A8 /* ImageStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageStorage.swift; sourceTree = "<group>"; };
 		743D6CC509B9BBBD2809A175 /* ImageStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageStorageTests.swift; sourceTree = "<group>"; };
@@ -243,6 +245,7 @@
 				48A49C397A1E694DBE38C172 /* FoodEntryEdgeCaseTests.swift */,
 				D291B37B194DCAE2AE284D16 /* FoodEntryTests.swift */,
 				FE51EF8CAD8F17E6D5DAA8D3 /* GeminiResponseParsingTests.swift */,
+				6CE8C44450DB95072CFB7247 /* HistoryTrendStatsTests.swift */,
 				743D6CC509B9BBBD2809A175 /* ImageStorageTests.swift */,
 				FB67C2E69EE069D9569F03F4 /* MealTypeTests.swift */,
 				E0983642BAE5A2E429C1469A /* MenuAnalysisModelTests.swift */,
@@ -460,6 +463,7 @@
 				2D204487F1A230C040162BBA /* FoodEntryEdgeCaseTests.swift in Sources */,
 				27D84E4BA6334FCF875EA772 /* FoodEntryTests.swift in Sources */,
 				2C3CD4C6F9AF2F2286707AB1 /* GeminiResponseParsingTests.swift in Sources */,
+				1FC2697A1FB973AE3C7F69DE /* HistoryTrendStatsTests.swift in Sources */,
 				5985B5814945F314A13D460B /* ImageStorageTests.swift in Sources */,
 				0565E1FE96FDA9751DDF8440 /* MealTypeTests.swift in Sources */,
 				DD0BA3638F2D5F70076F50FE /* MenuAnalysisModelTests.swift in Sources */,

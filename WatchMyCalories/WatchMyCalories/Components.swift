@@ -87,10 +87,11 @@ struct FullScreenImageView: View {
 }
 
 struct EmptyStateCard: View {
+    @ScaledMetric(relativeTo: .largeTitle) private var glyphSize: CGFloat = 40
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "camera.viewfinder")
-                .font(.system(size: 40))
+                .font(.system(size: glyphSize))
                 .foregroundStyle(Color.cwSecondary)
                 .padding()
                 .background(Circle().fill(Color.cwPrimary))
@@ -99,16 +100,21 @@ struct EmptyStateCard: View {
                 .font(.headline)
                 .foregroundStyle(Color.cwTextPrimary)
             
-            Text("Tap the camera tab to scan your first meal.")
+            Text("Tap here to log your first meal.")
                 .font(.subheadline)
-                .foregroundStyle(Color.gray)
+                .foregroundStyle(Color.cwTextSecondary)
                 .multilineTextAlignment(.center)
+
+            Label("Log food", systemImage: "plus.circle.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.cwPrimary)
+                .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
         .padding(40)
         .background(
-            RoundedRectangle(cornerRadius: 24)
-                .strokeBorder(Color.gray.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [5]))
+            RoundedRectangle(cornerRadius: CWRadius.hero)
+                .strokeBorder(Color.cwTextTertiary.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [5]))
         )
         .padding(.horizontal)
     }
@@ -123,21 +129,37 @@ struct HeroSummaryCard: View {
         entries.reduce(0) { $0 + $1.calories }
     }
     
-    var effectiveTarget: Double {
-        targetCalories + burnedCalories
+    // Earned-calories model: HealthKit "burned" extends the day's calorie budget.
+    var effectiveGoal: Double {
+        max(targetCalories + burnedCalories, 0)
+    }
+
+    var isOver: Bool {
+        effectiveGoal > 0 && consumed > effectiveGoal
+    }
+
+    /// One self-consistent color for the ring + center number across states.
+    var ringColor: Color {
+        isOver ? .cwOverGoal : .cwPrimary
+    }
+
+    var ringAccessibilityLabel: String {
+        let goal = Int(effectiveGoal)
+        let eaten = Int(consumed)
+        if isOver {
+            return "\(eaten) of \(goal) kilocalories eaten, over by \(Int(consumed - effectiveGoal))"
+        }
+        return "\(eaten) of \(goal) kilocalories eaten, \(Int(max(remaining, 0))) remaining"
     }
     
     var progress: Double {
-        guard effectiveTarget > 0 else { return 0 }
-        return min(consumed / effectiveTarget, 1.0)
+        guard effectiveGoal > 0 else { return 0 }
+        return min(consumed / effectiveGoal, 1.0)
     }
     
+    /// Signed remaining — negative once the user is over the effective goal.
     var remaining: Double {
-        max(0, effectiveTarget - consumed)
-    }
-    var burnedProgress: Double {
-        guard effectiveTarget > 0 else { return 0 }
-        return min(burnedCalories / effectiveTarget, 1.0)
+        effectiveGoal - consumed
     }
 
     // Macro totals
@@ -156,43 +178,33 @@ struct HeroSummaryCard: View {
         VStack(spacing: 0) {
         HStack(spacing: 20) {
             ZStack {
-                // Background Ring (Total Budget / Remaining if seen as inverse)
+                // Track ring (full budget)
                 Circle()
                     .stroke(Color.cwSecondary, lineWidth: 15)
-                
-                // Burned Ring (Orange, starts at 0, goes to burnedProgress)
-                // This is laid OUT UNDER the Consumed ring or stacked with it.
-                // It represents the "bonus" or expanded part of the target.
-                Circle()
-                    .trim(from: 0, to: min(progress + burnedProgress, 1.0))
-                    .stroke(
-                        Color.cwAccent,
-                        style: StrokeStyle(lineWidth: 15, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .animation(.spring(response: 1.0, dampingFraction: 0.7), value: progress + burnedProgress)
 
-                // Foreground Ring (Consumed, Green, over the orange background)
+                // Progress ring — one ring: cwPrimary under budget, cwOverGoal once over.
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(
-                        Color.cwPrimary,
+                        ringColor,
                         style: StrokeStyle(lineWidth: 15, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
                     .animation(.spring(response: 1.0, dampingFraction: 0.7), value: progress)
-                
+                    .animation(.easeInOut(duration: 0.3), value: isOver)
+
                 VStack(spacing: 0) {
                     Text("\(Int(consumed))")
-                        .font(.system(size: 28, weight: .heavy, design: .rounded))
-                        .foregroundStyle(Color.cwPrimary)
+                        .cwNumeral(.hero)
+                        .foregroundStyle(ringColor)
+                        .contentTransition(.numericText())
                     Text("kcal")
                         .font(.caption2)
                         .fontWeight(.bold)
-                        .foregroundStyle(Color.gray)
+                        .foregroundStyle(Color.cwTextSecondary)
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(Int(consumed))")
+                .accessibilityLabel(ringAccessibilityLabel)
                 .accessibilityIdentifier(AccessibilityID.Dashboard.consumedCalories)
             }
             .frame(width: 120, height: 120)
@@ -201,11 +213,14 @@ struct HeroSummaryCard: View {
                 StatRow(label: "Goal", value: "\(Int(targetCalories))", icon: "flag.fill", color: .gray, accessibilityID: AccessibilityID.Dashboard.goalValue)
 
                 if burnedCalories > 0 {
-                    StatRow(label: "Burned", value: "\(Int(burnedCalories))", icon: "flame.fill", color: .cwAccent)
+                    StatRow(label: "Burned", value: "+\(Int(burnedCalories))", icon: "flame.fill", color: .cwAccent)
                 }
 
-                // Remaining -> Light Green (cwSecondary)
-                StatRow(label: "Remaining", value: "\(Int(remaining))", icon: "chart.bar.fill", color: .cwSecondary, accessibilityID: AccessibilityID.Dashboard.remainingValue)
+                if isOver {
+                    StatRow(label: "Over by", value: "\(Int(consumed - effectiveGoal))", icon: "exclamationmark.triangle.fill", color: .cwOverGoal, accessibilityID: AccessibilityID.Dashboard.remainingValue)
+                } else {
+                    StatRow(label: "Remaining", value: "\(Int(remaining))", icon: "chart.bar.fill", color: .cwSecondary, accessibilityID: AccessibilityID.Dashboard.remainingValue)
+                }
             }
         }
 
@@ -217,11 +232,11 @@ struct HeroSummaryCard: View {
 
             // Labels + values
             HStack(spacing: 0) {
-                macroLabel("Protein", grams: totalProtein, cals: proteinCals, color: .cwPrimary)
+                macroLabel("Protein", grams: totalProtein, cals: proteinCals, color: .cwMacroProtein)
                 Spacer()
-                macroLabel("Carbs", grams: totalCarbs, cals: carbsCals, color: .cwAccent)
+                macroLabel("Carbs", grams: totalCarbs, cals: carbsCals, color: .cwMacroCarbs)
                 Spacer()
-                macroLabel("Fat", grams: totalFat, cals: fatCals, color: .secondary)
+                macroLabel("Fat", grams: totalFat, cals: fatCals, color: .cwMacroFat)
             }
 
             // Stacked proportional bar
@@ -270,6 +285,15 @@ struct MacroProportionalBar: View {
     let fatCals: Double
     var height: CGFloat = 8
 
+    private var macroAccessibilityLabel: String {
+        let total = proteinCals + carbsCals + fatCals
+        guard total > 0 else { return "No macro data" }
+        let p = Int((proteinCals / total * 100).rounded())
+        let c = Int((carbsCals / total * 100).rounded())
+        let f = Int((fatCals / total * 100).rounded())
+        return "Macros: protein \(p) percent, carbs \(c) percent, fat \(f) percent"
+    }
+
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
@@ -280,18 +304,20 @@ struct MacroProportionalBar: View {
 
             HStack(spacing: 1.5) {
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(Color.cwPrimary)
+                    .fill(Color.cwMacroProtein)
                     .frame(width: max(pWidth, proteinCals > 0 ? 4 : 0))
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(Color.cwAccent)
+                    .fill(Color.cwMacroCarbs)
                     .frame(width: max(cWidth, carbsCals > 0 ? 4 : 0))
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(Color.secondary)
+                    .fill(Color.cwMacroFat)
                     .frame(width: max(fWidth, fatCals > 0 ? 4 : 0))
             }
             .animation(.easeInOut(duration: 0.5), value: total)
         }
         .frame(height: height)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(macroAccessibilityLabel)
     }
 }
 
@@ -335,9 +361,9 @@ struct CompactMacroRow: View {
                 )
 
                 HStack(spacing: 8) {
-                    compactMacro("P", grams: totalProtein, pct: pct(proteinCals), color: .cwPrimary)
-                    compactMacro("C", grams: totalCarbs, pct: pct(carbsCals), color: .cwAccent)
-                    compactMacro("F", grams: totalFat, pct: pct(fatCals), color: .secondary)
+                    compactMacro("P", grams: totalProtein, pct: pct(proteinCals), color: .cwMacroProtein)
+                    compactMacro("C", grams: totalCarbs, pct: pct(carbsCals), color: .cwMacroCarbs)
+                    compactMacro("F", grams: totalFat, pct: pct(fatCals), color: .cwMacroFat)
                 }
                 .fixedSize()
             }
@@ -396,9 +422,9 @@ struct InlineMacroRow: View {
     var body: some View {
         if hasMacroData {
             HStack(spacing: 8) {
-                if let p = protein, p > 0 { macroChip("P", grams: p, color: .cwPrimary) }
-                if let c = carbs, c > 0 { macroChip("C", grams: c, color: .cwAccent) }
-                if let f = fat, f > 0 { macroChip("F", grams: f, color: .secondary) }
+                if let p = protein, p > 0 { macroChip("P", grams: p, color: .cwMacroProtein) }
+                if let c = carbs, c > 0 { macroChip("C", grams: c, color: .cwMacroCarbs) }
+                if let f = fat, f > 0 { macroChip("F", grams: f, color: .cwMacroFat) }
             }
         }
     }
@@ -486,15 +512,15 @@ struct FoodEntryCard: View {
                 HStack(spacing: 4) {
                     Text(entry.timestamp, style: .time)
                         .font(.caption2)
-                        .foregroundStyle(Color.gray)
-                    
+                        .foregroundStyle(Color.cwTextSecondary)
+
                     Text("•")
                         .font(.caption2)
-                        .foregroundStyle(Color.gray)
-                    
+                        .foregroundStyle(Color.cwTextSecondary)
+
                     Text(SettingsStore.shared.unitSystem.convertQuantity(entry.quantity))
                         .font(.caption2)
-                        .foregroundStyle(Color.gray)
+                        .foregroundStyle(Color.cwTextSecondary)
                 }
             }
             
@@ -506,9 +532,7 @@ struct FoodEntryCard: View {
                 .foregroundStyle(Color.cwPrimary)
         }
         .padding(10)
-        .background(Color.cwSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: Color.black.opacity(0.03), radius: 3, x: 0, y: 1)
+        .cwSurface(role: .row)
         .padding(.horizontal)
         .onAppear {
             if let id = entry.imageID {
@@ -609,7 +633,7 @@ struct FoodEntryGroupCard: View {
                 if let firstTimestamp = group.items.first?.timestamp {
                     Text(firstTimestamp, style: .time)
                         .font(.caption2)
-                        .foregroundStyle(Color.gray)
+                        .foregroundStyle(Color.cwTextSecondary)
                 }
 
                 if group.hasMacroData {
@@ -711,7 +735,7 @@ struct FoodEntryGroupCard: View {
                                 Text("\(Int(item.calories))")
                                     .font(.caption)
                                     .fontWeight(.medium)
-                                    .foregroundStyle(Color.gray)
+                                    .foregroundStyle(Color.cwTextSecondary)
                             }
 
                             InlineMacroRow(entry: item)
@@ -749,10 +773,9 @@ struct FoodEntryGroupCard: View {
                 .transition(.opacity)
             }
         }
-        .background(Color.cwSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .cwSurface(role: .card)
         .padding(.horizontal)
+        .sensoryFeedback(.selection, trigger: isExpanded)
         .onAppear {
             if let id = group.representativeImageID {
                 self.thumbnail = ImageStorage.shared.load(id: id)
@@ -922,7 +945,7 @@ struct EditFoodEntryView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Group Title (Meal Name)")
                                         .font(.caption)
-                                        .foregroundStyle(Color.gray)
+                                        .foregroundStyle(Color.cwTextSecondary)
                                     TextField("Meal Name (e.g., Chicken & Rice)", text: $mealName)
                                         .textFieldStyle(.roundedBorder)
                                 }
@@ -930,7 +953,7 @@ struct EditFoodEntryView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Item Name")
                                         .font(.caption)
-                                        .foregroundStyle(Color.gray)
+                                        .foregroundStyle(Color.cwTextSecondary)
                                     TextField("Food name", text: $name)
                                         .textFieldStyle(.roundedBorder)
                                 }
@@ -1118,7 +1141,7 @@ struct EditMealGroupView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Meal Name")
                                         .font(.caption)
-                                        .foregroundStyle(Color.gray)
+                                        .foregroundStyle(Color.cwTextSecondary)
                                     TextField("Meal Name (e.g., Chicken & Rice)", text: $mealName)
                                         .textFieldStyle(.roundedBorder)
                                 }
@@ -1145,7 +1168,7 @@ struct EditMealGroupView: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Item Name")
                                             .font(.caption)
-                                            .foregroundStyle(Color.gray)
+                                            .foregroundStyle(Color.cwTextSecondary)
                                         TextField("Food name", text: $item.name)
                                             .textFieldStyle(.roundedBorder)
                                     }
@@ -1154,7 +1177,7 @@ struct EditMealGroupView: View {
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("Calories")
                                                 .font(.caption)
-                                                .foregroundStyle(Color.gray)
+                                                .foregroundStyle(Color.cwTextSecondary)
                                             TextField("Calories", text: $item.caloriesText)
                                                 .textFieldStyle(.roundedBorder)
                                                 .keyboardType(.decimalPad)
@@ -1163,7 +1186,7 @@ struct EditMealGroupView: View {
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("Quantity")
                                                 .font(.caption)
-                                                .foregroundStyle(Color.gray)
+                                                .foregroundStyle(Color.cwTextSecondary)
                                             TextField(SettingsStore.shared.unitSystem == .metric ? "e.g. 200 g" : "e.g. 1 cup", text: $item.quantity)
                                                 .textFieldStyle(.roundedBorder)
                                         }
@@ -1259,7 +1282,7 @@ private struct EditNutrientField: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
                 .font(.caption)
-                .foregroundStyle(Color.gray)
+                .foregroundStyle(Color.cwTextSecondary)
             TextField("—", text: $text)
                 .textFieldStyle(.roundedBorder)
                 .keyboardType(.decimalPad)
@@ -1453,7 +1476,7 @@ private struct ViewFieldRow: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
                 .font(.caption)
-                .foregroundStyle(Color.gray)
+                .foregroundStyle(Color.cwTextSecondary)
             Text(value)
                 .font(.body)
                 .foregroundStyle(Color.cwTextPrimary)
@@ -1476,7 +1499,7 @@ private struct ViewNutrientBox: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
                 .font(.caption)
-                .foregroundStyle(Color.gray)
+                .foregroundStyle(Color.cwTextSecondary)
             Text(value.map { "\(String(format: "%g", $0)) \(unit)" } ?? "—")
                 .font(.body)
                 .foregroundStyle(Color.cwTextPrimary)
