@@ -12,7 +12,16 @@ class HealthKitManager: ObservableObject {
     @Published var isAuthorized: Bool = false
     private var observerQuery: HKObserverQuery?
 
+    /// UI tests get a fixed burned value on every device (simulator and phone alike) so
+    /// calorie assertions don't depend on the device's real HealthKit data.
+    private static let uiTestBurnedCalories = 456.0
+
     init() {
+        if WatchMyCaloriesApp.isUITesting {
+            activeEnergyBurned = Self.uiTestBurnedCalories
+            isAuthorized = true
+            return
+        }
         #if targetEnvironment(simulator)
         activeEnergyBurned = 456.0
         isAuthorized = true
@@ -57,7 +66,8 @@ class HealthKitManager: ObservableObject {
     }
 
     func fetchTodayEnergyBurned() {
-        guard HKHealthStore.isHealthDataAvailable(),
+        guard !WatchMyCaloriesApp.isUITesting,
+              HKHealthStore.isHealthDataAvailable(),
               let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
         let now = Date()
         let startOfDay = Calendar.current.startOfDay(for: now)
@@ -83,7 +93,8 @@ class HealthKitManager: ObservableObject {
     }
 
     func startObserving() {
-        guard HKHealthStore.isHealthDataAvailable(),
+        guard !WatchMyCaloriesApp.isUITesting,
+              HKHealthStore.isHealthDataAvailable(),
               let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
 
         // Stop any existing observer to prevent duplicates

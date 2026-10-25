@@ -45,6 +45,28 @@ final class TabNavigationTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.staticTexts["Log Food"].waitForExistence(timeout: 3))
     }
 
+    /// Log Food / Scan Menu are action tabs: they open a sheet and must never become the
+    /// selected tab (on iOS 27 the old UIKit interceptor let them switch to a blank page).
+    func testActionTabsNeverBecomeSelected() {
+        launchWithSeedData()
+        let tabs = app.tabBars.buttons
+        tabs["History"].tap()
+        XCTAssertTrue(tabs["History"].isSelected)
+
+        tabs["Log Food"].tap()
+        XCTAssertTrue(app.staticTexts["Log Manually"].waitForExistence(timeout: 3))
+        XCTAssertFalse(tabs["Log Food"].isSelected, "Log Food must not become the selected tab")
+        XCTAssertTrue(tabs["History"].isSelected, "History should stay selected behind the sheet")
+        app.swipeDown(velocity: .fast)
+        XCTAssertTrue(app.staticTexts["history_title"].waitForExistence(timeout: 3),
+                      "History should be showing after the sheet is dismissed")
+
+        tabs["Scan Menu"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["scanMenuSheet_storedMenus"].firstMatch.waitForExistence(timeout: 3))
+        XCTAssertFalse(tabs["Scan Menu"].isSelected, "Scan Menu must not become the selected tab")
+        XCTAssertTrue(tabs["History"].isSelected)
+    }
+
     func testTappingScanMenuTabShowsSheet() {
         launchEmpty()
 

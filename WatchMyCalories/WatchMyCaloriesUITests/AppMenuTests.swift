@@ -82,7 +82,8 @@ final class AppMenuTests: WatchMyCaloriesUITestBase {
 
         XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 3))
 
-        let helpLink = app.buttons["about_helpAndSupport"]
+        // SwiftUI Link: a Button on older iOS, a Link on iOS 26+.
+        let helpLink = app.descendants(matching: .any)["about_helpAndSupport"].firstMatch
         XCTAssertTrue(helpLink.waitForExistence(timeout: 3))
     }
 
@@ -94,7 +95,8 @@ final class AppMenuTests: WatchMyCaloriesUITestBase {
 
         XCTAssertTrue(app.navigationBars["About"].waitForExistence(timeout: 3))
 
-        let privacyLink = app.buttons["about_privacyPolicy"]
+        // SwiftUI Link: a Button on older iOS, a Link on iOS 26+.
+        let privacyLink = app.descendants(matching: .any)["about_privacyPolicy"].firstMatch
         XCTAssertTrue(privacyLink.waitForExistence(timeout: 3))
     }
 

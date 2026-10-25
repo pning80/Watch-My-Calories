@@ -226,8 +226,7 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         // Hero card should now show 450 (750 - 300)
         let consumedAfter = app.otherElements["dashboard_consumedCalories"]
         XCTAssertTrue(consumedAfter.waitForExistence(timeout: 3))
-        XCTAssertTrue(consumedAfter.label.contains("450"))
-        XCTAssertFalse(consumedAfter.label.contains("750"))
+        XCTAssertTrue(consumedAfter.label.hasPrefix("450 of"), "Consumed should drop to 450; got: \(consumedAfter.label)")
     }
 
     // MARK: - Remaining Calories Update
@@ -256,7 +255,7 @@ final class EndToEndFlowTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(emptyCard.waitForExistence(timeout: 3))
 
         // Remaining = effectiveTarget - consumed
-        // effectiveTarget = 2000 (set goal) + 456 (simulator burned) = 2456
+        // effectiveTarget = 2000 (set goal) + 456 (UI-test burned) = 2456
         // remaining = 2456 - 0 = 2456
         let remaining = app.staticTexts["dashboard_remainingValue"]
         XCTAssertTrue(remaining.waitForExistence(timeout: 3))

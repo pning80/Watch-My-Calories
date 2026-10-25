@@ -25,15 +25,24 @@ struct ContentView: View {
         case dashboard, logFood, scanMenu, history
     }
 
+    /// Log Food and Scan Menu are action tabs: selecting one opens its sheet and the
+    /// current tab stays selected, so their placeholder views are never shown.
+    private var tabSelection: Binding<Tab> {
+        Binding(
+            get: { selectedTab },
+            set: { newTab in
+                switch newTab {
+                case .logFood: showLogFoodSheet = true
+                case .scanMenu: showScanMenuSheet = true
+                case .dashboard, .history: selectedTab = newTab
+                }
+            }
+        )
+    }
+
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: tabSelection) {
             DashboardView(onLogFood: { showLogFoodSheet = true }, scrollToMeal: $scrollToMeal)
-                .background(
-                    TabBarInterceptor(
-                        onLogFood: { showLogFoodSheet = true },
-                        onScanMenu: { showScanMenuSheet = true }
-                    )
-                )
                 .tabItem {
                     Label("Today", systemImage: "flame.fill")
                 }
@@ -264,48 +273,6 @@ struct ManualEntryRootView: View {
                 modelContext.insert(entry)
                 onDone()
             })
-        }
-    }
-}
-
-// MARK: - Tab Bar Interceptor
-
-/// Prevents UIKit's TabView from switching to placeholder tabs (Log Food, Scan Menu).
-/// Instead, calls the provided closures so the sheet can appear without any tab transition flash.
-private struct TabBarInterceptor: UIViewControllerRepresentable {
-    var onLogFood: () -> Void
-    var onScanMenu: () -> Void
-
-    func makeCoordinator() -> Coordinator { Coordinator() }
-
-    func makeUIViewController(context: Context) -> UIViewController { UIViewController() }
-
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        context.coordinator.onLogFood = onLogFood
-        context.coordinator.onScanMenu = onScanMenu
-        DispatchQueue.main.async {
-            guard let tabBarController = uiViewController.tabBarController else { return }
-            tabBarController.delegate = context.coordinator
-        }
-    }
-
-    class Coordinator: NSObject, UITabBarControllerDelegate {
-        var onLogFood: (() -> Void)?
-        var onScanMenu: (() -> Void)?
-
-        func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
-            guard let vcs = tabBarController.viewControllers,
-                  let index = vcs.firstIndex(of: viewController) else { return true }
-            switch index {
-            case 1:
-                onLogFood?()
-                return false
-            case 2:
-                onScanMenu?()
-                return false
-            default:
-                return true
-            }
         }
     }
 }

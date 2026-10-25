@@ -31,7 +31,7 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         let consumed = app.otherElements["dashboard_consumedCalories"]
         XCTAssertTrue(consumed.waitForExistence(timeout: 3))
         // Ring label is a full sentence: "750 of 2656 kilocalories eaten, 1906 remaining"
-        // (effective goal = 2200 target + 456 simulator-burned).
+        // (effective goal = 2200 target + 456 UI-test burned).
         XCTAssertTrue(consumed.label.contains("750"))
         XCTAssertTrue(consumed.label.contains("of 2656"), "Ring label should reference the effective goal; got: \(consumed.label)")
         XCTAssertTrue(consumed.label.contains("1906 remaining"), "Ring label should state remaining calories; got: \(consumed.label)")
@@ -104,7 +104,7 @@ final class DashboardTests: WatchMyCaloriesUITestBase {
         XCTAssertTrue(app.staticTexts["Breakfast"].waitForExistence(timeout: 5))
 
         // Remaining = effectiveTarget - consumed
-        // effectiveTarget = 2200 (seed target) + 456 (simulator burned calories) = 2656
+        // effectiveTarget = 2200 (seed target) + 456 (UI-test burned calories) = 2656
         // remaining = 2656 - 750 = 1906
         let remainingElement = app.staticTexts["dashboard_remainingValue"]
         XCTAssertTrue(remainingElement.waitForExistence(timeout: 3))

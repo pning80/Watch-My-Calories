@@ -257,7 +257,7 @@ struct WatchMyCaloriesApp: App {
         context.insert(salad)
     }
 
-    /// Today's consumption exceeds the effective goal: 1200 target + 456 simulator-burned
+    /// Today's consumption exceeds the effective goal: 1200 target + 456 UI-test burned
     /// = 1656, consumed 2000 → hero shows the over-goal state ("Over by 344").
     @MainActor
     private func seedOverGoalData(container: ModelContainer) {

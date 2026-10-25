@@ -200,11 +200,17 @@ final class SettingsTests: WatchMyCaloriesUITestBase {
         let discardButton = app.buttons["Discard Changes"]
         XCTAssertTrue(discardButton.waitForExistence(timeout: 5))
 
-        // "Keep Editing" has role: .cancel — find via predicate as the system
-        // may render it differently in the action sheet
+        // "Keep Editing" has role: .cancel. iOS 26+ presents the dialog as a popover without
+        // the cancel button; its "dismiss popup" region is the platform's cancel action.
         let keepButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'Keep Editing'")).firstMatch
-        XCTAssertTrue(keepButton.waitForExistence(timeout: 3), "Discard dialog should offer Keep Editing")
-        keepButton.tap()
+        let dismissRegion = app.otherElements["PopoverDismissRegion"]
+        if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 26 {
+            XCTAssertTrue(dismissRegion.waitForExistence(timeout: 3), "Discard dialog popover should be dismissible")
+            dismissRegion.tap()
+        } else {
+            XCTAssertTrue(keepButton.waitForExistence(timeout: 3), "Discard dialog should offer Keep Editing")
+            keepButton.tap()
+        }
 
         // Should still be on Settings
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
