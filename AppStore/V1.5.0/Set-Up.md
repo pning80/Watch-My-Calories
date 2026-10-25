@@ -56,6 +56,7 @@ Answer **None** / **No** to all questions:
 > - Refreshed design across the Dashboard, History, and scan results
 > - Improved VoiceOver support for charts and the scan results screen
 > - Fixed an issue on iOS 27 where Log Food and Scan Menu could show a blank screen
+> - Added a Cancel button when reviewing a photo from your library
 
 ### App Description
 
@@ -77,7 +78,7 @@ Answer **None** / **No** to all questions:
 
 ### Promotional Text
 
-> Snap a photo of your meal or a restaurant menu — AI estimates calories and macros for every item. Now with a fresh design and calorie trends in History. Private and on-device.
+> Snap a photo of a meal or restaurant menu — AI estimates calories and macros for every item. Now with a fresh design and calorie trends in History. Private and on-device.
 
 *(Promotional text can be updated without a new app version.)*
 
