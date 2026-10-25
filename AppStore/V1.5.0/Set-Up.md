@@ -394,7 +394,7 @@ Recommended: release to all users at once — *not* phased. v1.4.1 shows a blank
 
 - [x] **Log Food / Scan Menu tabs** — tap each ~5× on iOS 27. Sheet opens, previous tab stays selected, no blank-screen flash. *(Confirmed on device, 2026-10-25.)*
 - [x] **Food scan (production)** — real Gemini result via App Attest (Release build has no legacy key, so this proves attestation works). *(iPhone 16 Pro, 2026-10-25, after the backend fix.)*
-- [ ] **History trend** — chart + chips match logged data; 7D ↔ 30D switch; delete an entry and confirm the chips update; VoiceOver reads the chart summary.
+- [x] **History trend** — chart + chips match logged data; 7D ↔ 30D switch; delete an entry and confirm the chips update; VoiceOver reads the chart summary. *(Confirmed on device, 2026-10-25.)*
 - [ ] **Choose from Library** — one food photo, one menu photo; also check **Cancel** on the photo review returns to the app (new in this build).
 - [ ] **Scan Menu** — with location allowed and denied.
 - [ ] **Dashboard** — HealthKit allowed (burned calories raise the goal) and denied.
