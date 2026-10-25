@@ -265,6 +265,11 @@ struct PhotoLibraryRootView: View {
                     })
                 }
             }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { onCancel() }
+                }
+            }
         }
     }
 }
