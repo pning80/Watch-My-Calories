@@ -108,7 +108,9 @@ calorie,tracker,food,AI,nutrition,macro,health,diet,meal,trend,menu,restaurant,s
 
 The v1.5.0 screenshot folder is at `AppStore/V1.5.0/Screenshots/`.
 
-> **Every screen changed in the v1.5.0 design overhaul — all 10 screenshots must be replaced.** The v1.4.1 set is 6.5" (1242 × 2688). v1.5.0 targets **6.9" (1320 × 2868)**.
+> **Every screen changed in the v1.5.0 design overhaul — all 10 screenshots must be replaced.**
+>
+> **Requirement change (as of Oct 2026):** App Store Connect now **requires the iPhone 6.3" display** set — 1206 × 2622 (or 1179 × 2556). The 6.9" and 6.5" sets are optional. Upload `Screenshots/6.3-inch/` (1206 × 2622, resized from the 6.9" captures) to the **6.3" Display** slot; optionally also upload `Screenshots/*.png` (1320 × 2868) to **6.9" Display**. Delete the old 1.4.1 shots from the 6.5" slot so no size shows the old design.
 
 ### Format & Limits
 
@@ -164,7 +166,8 @@ Capture all 10 manually on the **iPhone 18 Pro Max simulator (iOS 27)**, which r
 - Known cosmetic issue in SS-6: on the black photo-library screen the status-bar time and signal render black-on-black. Accepted for v1.5.0; fix in a later version.
 
 - [x] All 10 captured on the iPhone 18 Pro Max simulator (iOS 27), 1320 × 2868, test-ad banners kept as in v1.4.1 (2026-10-25)
-- [ ] Upload all 10 at 6.9" (1320 × 2868)
+- [x] 6.3" set created: `Screenshots/6.3-inch/` (1206 × 2622)
+- [ ] Upload `6.3-inch/` to the **6.3" Display** slot (required); optionally the 1320 × 2868 set to **6.9"**; delete the old 1.4.1 shots in **6.5"**
 
 *Reference: [Apple Screenshot Specifications](https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/)*
 
@@ -374,7 +377,7 @@ Complete these items before clicking **Submit for Review**:
 - [ ] **TestFlight smoke test** of the processed build
 - [ ] **Select Build** — 1.5.0 (11)
 - [ ] **App Review Notes** — updated History step. Section 5
-- [ ] **Screenshots** — upload the 10 captured shots (6.9"). Section 3
+- [ ] **Screenshots** — upload `Screenshots/6.3-inch/` to the required 6.3" slot. Section 3
 
 ### Optional (If Changed)
 
