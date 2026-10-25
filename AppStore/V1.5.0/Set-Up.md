@@ -54,9 +54,10 @@ Answer **None** / **No** to all questions:
 >
 > Also in this update:
 > - Refreshed design across the Dashboard, History, and scan results
-> - Improved VoiceOver support for charts and the scan results screen
-> - Fixed an issue on iOS 27 where Log Food and Scan Menu could show a blank screen
+> - Over your goal? The Dashboard now shows how much you're over, and History highlights over-goal days in red
+> - Better accessibility: improved VoiceOver labels throughout and icons that scale with your text size
 > - Added a Cancel button when reviewing a photo from your library
+> - Fixed an issue on iOS 27 where Log Food and Scan Menu could show a blank screen
 
 ### App Description
 
