@@ -369,7 +369,7 @@ Complete these items before clicking **Submit for Review**:
 ### Must Do (Blockers)
 
 - [ ] **Finish the device smoke test** of the Release build (on the Test iPhone 14 and iPhone 16 Pro) — remaining items in Testing below
-- [ ] **What's New in This Version** — Section 2
+- [ ] **What's New in This Version** — text is final (Section 2, 2026-10-25); paste it into App Store Connect
 - [ ] **Upload Build** — Archive and upload v1.5.0 (11) via Xcode. Section 7
 - [ ] **TestFlight smoke test** of the processed build
 - [ ] **Select Build** — 1.5.0 (11)
