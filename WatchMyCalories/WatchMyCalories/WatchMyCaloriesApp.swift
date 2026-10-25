@@ -45,16 +45,6 @@ struct WatchMyCaloriesApp: App {
         ProcessInfo.processInfo.arguments.contains("--ai-consent-accepted")
     }
 
-    /// DEBUG only: fills the six days before today with realistic meals in the
-    /// persistent store so the History trend looks lived-in for App Store screenshots.
-    private static var shouldSeedScreenshotWeek: Bool {
-        #if DEBUG
-        ProcessInfo.processInfo.arguments.contains("--screenshot-week")
-        #else
-        false
-        #endif
-    }
-
     static var shouldResetOnboarding: Bool {
         ProcessInfo.processInfo.arguments.contains("--reset-onboarding")
     }
@@ -135,9 +125,6 @@ struct WatchMyCaloriesApp: App {
                     if Self.shouldSeedWithImage {
                         seedWithImage(container: container)
                     }
-                    if Self.shouldSeedScreenshotWeek {
-                        seedScreenshotWeek(container: container)
-                    }
                 }
             } else {
                 Text("Unable to load data. Please restart the app.")
@@ -145,60 +132,6 @@ struct WatchMyCaloriesApp: App {
                     .padding()
             }
         }
-    }
-
-    /// Adds meals to each of the six days before today that has no entries yet,
-    /// so relaunching with the flag never duplicates. Today is left untouched.
-    @MainActor
-    private func seedScreenshotWeek(container: ModelContainer) {
-        let context = container.mainContext
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-
-        typealias Meal = (name: String, quantity: String, hour: Int, minute: Int, calories: Double, protein: Double, carbs: Double, fat: Double, type: MealType)
-        let week: [[Meal]] = [
-            [("Greek Yogurt with Granola", "1 bowl", 7, 45, 380, 22, 48, 10, .breakfast),
-             ("Grilled Chicken Caesar Salad", "1 plate", 12, 30, 520, 42, 18, 30, .lunch),
-             ("Salmon with Roasted Vegetables", "1 plate", 18, 45, 640, 44, 32, 34, .dinner),
-             ("Apple with Almond Butter", "1 apple", 15, 30, 290, 7, 30, 17, .snack)],
-            [("Avocado Toast with Egg", "2 slices", 8, 0, 420, 18, 36, 22, .breakfast),
-             ("Turkey Sandwich", "1 sandwich", 12, 15, 480, 34, 46, 16, .lunch),
-             ("Beef Stir-Fry with Rice", "1 plate", 19, 0, 720, 38, 82, 22, .dinner),
-             ("Latte", "1 cup", 15, 0, 190, 10, 18, 8, .snack)],
-            [("Oatmeal with Berries", "1 bowl", 7, 30, 340, 11, 58, 7, .breakfast),
-             ("Chicken Burrito Bowl", "1 bowl", 12, 45, 690, 42, 74, 22, .lunch),
-             ("Shrimp Tacos", "3 tacos", 18, 30, 560, 32, 52, 22, .dinner)],
-            [("Scrambled Eggs and Toast", "1 plate", 8, 15, 410, 24, 30, 20, .breakfast),
-             ("Pork Katsu Curry", "1 plate", 12, 30, 780, 34, 92, 28, .lunch),
-             ("Miso Soup and Edamame", "1 bowl", 18, 45, 300, 20, 24, 12, .dinner),
-             ("Protein Bar", "1 bar", 16, 0, 210, 20, 22, 7, .snack)],
-            [("Smoothie Bowl", "1 bowl", 7, 45, 390, 14, 66, 8, .breakfast),
-             ("Margherita Pizza", "2 slices", 12, 30, 560, 24, 66, 22, .lunch),
-             ("Grilled Lobster Tail", "1 plate", 19, 15, 580, 46, 26, 32, .dinner),
-             ("Mixed Nuts", "1 handful", 15, 30, 200, 6, 8, 17, .snack)],
-            [("Banana Pancakes", "3 pancakes", 8, 30, 460, 12, 78, 11, .breakfast),
-             ("Seafood Paella", "1 plate", 13, 0, 650, 36, 72, 22, .lunch),
-             ("Garden Salad with Tuna", "1 bowl", 18, 30, 430, 34, 18, 24, .dinner)],
-        ]
-
-        for (index, meals) in week.enumerated() {
-            let day = calendar.date(byAdding: .day, value: -(index + 1), to: today)!
-            let nextDay = calendar.date(byAdding: .day, value: 1, to: day)!
-            let existing = FetchDescriptor<FoodEntry>(predicate: #Predicate { $0.timestamp >= day && $0.timestamp < nextDay })
-            guard (try? context.fetchCount(existing)) == 0 else { continue }
-
-            for meal in meals {
-                context.insert(FoodEntry(
-                    name: meal.name,
-                    calories: meal.calories,
-                    quantity: meal.quantity,
-                    timestamp: calendar.date(bySettingHour: meal.hour, minute: meal.minute, second: 0, of: day)!,
-                    protein: meal.protein, carbs: meal.carbs, fat: meal.fat,
-                    mealType: meal.type
-                ))
-            }
-        }
-        try? context.save()
     }
 
     @MainActor
