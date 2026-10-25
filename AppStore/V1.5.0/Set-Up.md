@@ -152,7 +152,7 @@ Capture all 10 manually on the **iPhone 18 Pro Max simulator (iOS 27)**, which r
 | SS-6 Pick from library | Photo library review flow |
 | SS-7 Entry menu | Log Food sheet (Scan Food / Choose from Library / Log Manually) |
 | SS-8 Meal history | **New:** trend chart + Avg/day, On target, Day streak — consider making this the 2nd screenshot |
-| SS-9 Your privacy | Onboarding privacy step |
+| SS-9 Meal info | View Meal: meal name, type, and per-item calories / macros |
 | SS-10 Settings | Profile, calorie goal, privacy choices |
 
 **Tips:**
@@ -160,7 +160,7 @@ Capture all 10 manually on the **iPhone 18 Pro Max simulator (iOS 27)**, which r
 - Before capturing on a simulator, clean the status bar: `xcrun simctl status_bar booted override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3`.
 - Simulator drafts come from a DEBUG/UI-test build. Check each for test ad creative or test-only content before uploading.
 
-- [ ] Capture all 10 on the iPhone 18 Pro Max simulator (⌘S in Simulator saves a full-resolution PNG)
+- [x] All 10 captured on the iPhone 18 Pro Max simulator (iOS 27), 1320 × 2868, test-ad banners kept as in v1.4.1 (2026-10-25)
 - [ ] Upload all 10 at 6.9" (1320 × 2868)
 
 *Reference: [Apple Screenshot Specifications](https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/)*
