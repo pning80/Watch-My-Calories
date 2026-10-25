@@ -123,7 +123,7 @@ You only need to provide screenshots for the **largest device size** per device 
 
 | Display | Devices | Portrait (px) | Landscape (px) |
 |---------|---------|---------------|-----------------|
-| **6.9"** | iPhone 16 Pro Max | 1320 × 2868 | 2868 × 1320 |
+| **6.9"** | iPhone 16/17/18 Pro Max | 1320 × 2868 | 2868 × 1320 |
 | **6.5"** | iPhone XS Max, 11 Pro Max | 1242 × 2688 | 2688 × 1242 |
 
 > Either 6.9" or 6.5" is required. Apple auto-scales for 6.7", 6.1", 5.8", 5.5", and smaller.
@@ -159,7 +159,8 @@ Capture all 10 manually on the **iPhone 18 Pro Max simulator (iOS 27)**, which r
 **Tips:**
 - Light mode screenshots are generally preferred as lead images for the App Store listing.
 - Before capturing on a simulator, clean the status bar: `xcrun simctl status_bar booted override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3`.
-- Simulator drafts come from a DEBUG/UI-test build. Check each for test ad creative or test-only content before uploading.
+- The final screenshots come from a Debug build, so ad slots show Google test ads ("Test mode"). These were kept on purpose, as in the approved v1.4.1 set.
+- Known cosmetic issue in SS-6: on the black photo-library screen the status-bar time and signal render black-on-black. Accepted for v1.5.0; fix in a later version.
 
 - [x] All 10 captured on the iPhone 18 Pro Max simulator (iOS 27), 1320 × 2868, test-ad banners kept as in v1.4.1 (2026-10-25)
 - [ ] Upload all 10 at 6.9" (1320 × 2868)
@@ -332,7 +333,7 @@ No CCATS or ERN number is needed. Apple's standard HTTPS exemption applies.
 3. In the Organizer window: select the archive > **Distribute App > App Store Connect**
 4. Follow the wizard (automatic signing recommended)
 5. Wait for the build to finish processing in App Store Connect (~10-30 minutes)
-6. **TestFlight first:** install the processed build from TestFlight on the Test iPhone 14 and smoke-test one food scan, the Log Food / Scan Menu tabs, and History
+6. **TestFlight first:** add the build to the **early access** internal group, then install it from the TestFlight app on the iPhone 16 Pro *over* the current development build (do not delete the app — that erases its data). Smoke-test one food scan, the Log Food / Scan Menu tabs, and History
 7. Select the build in your App Store Connect version page
 
 ---
@@ -355,19 +356,24 @@ Complete these items before clicking **Submit for Review**:
 
 - [x] Version bumped to 1.5.0 (build 11)
 - [x] Release build verified: production AdMob IDs, empty legacy backend key, no internal `.md` notes in the bundle, `ITSAppUsesNonExemptEncryption = NO`, MinimumOSVersion 18.0 (raised from 17.0 in this release)
-- [x] Full UI suite green on Test iPhone 14 (iOS 27.0.1) and iOS 18.5 simulator; unit tests green
+- [x] Final test runs on the shipping code: unit 111/111 and UI 225 (2 pre-existing skips, 0 failures) on both the iOS 27 and iOS 18.5 simulators; earlier full runs on the Test iPhone 14 (iOS 27.0.1) and iOS 26.4 simulator also green
+- [x] iOS 27 fixes verified on device: no blank-tab flash on Log Food / Scan Menu; Cancel added to the Log Food photo-library review
+- [x] Backend: iOS 27 App Attest fix (authData extensions) deployed to production revision `watchmycalories-backend-00012-f7x`; verified with a real scan from the iPhone 16 Pro. No app change needed — it also fixes new iOS 27 installs of v1.4.1
 - [x] Parity gates + CI green
 - [x] Production backend healthy; Firestore `(default)` DB present
+- [x] Support and Privacy Policy gists in sync with the repo; Marketing URL now serves a landing page (`app-ads.txt` unaffected)
+- [x] Listing text within App Store limits (subtitle 29/30, promotional text 170/170, keywords 91/100)
+- [x] 10 screenshots captured at 1320 × 2868
 
 ### Must Do (Blockers)
 
-- [ ] **Device smoke test of the Release build** (installed on Test iPhone 14) — see Testing below
+- [ ] **Finish the device smoke test** of the Release build (on the Test iPhone 14 and iPhone 16 Pro) — remaining items in Testing below
 - [ ] **What's New in This Version** — Section 2
 - [ ] **Upload Build** — Archive and upload v1.5.0 (11) via Xcode. Section 7
 - [ ] **TestFlight smoke test** of the processed build
 - [ ] **Select Build** — 1.5.0 (11)
 - [ ] **App Review Notes** — updated History step. Section 5
-- [ ] **Screenshots** — replace all 10 at 6.9". Section 3
+- [ ] **Screenshots** — upload the 10 captured shots (6.9"). Section 3
 
 ### Optional (If Changed)
 
@@ -385,10 +391,10 @@ Recommended: release to all users at once — *not* phased. v1.4.1 shows a blank
 
 ### Testing
 
-- [ ] **Log Food / Scan Menu tabs** — tap each ~5× on iOS 27. Sheet opens, previous tab stays selected, no blank-screen flash.
-- [ ] **Food scan (production)** — real Gemini result via App Attest (Release build has no legacy key, so this proves attestation works).
+- [x] **Log Food / Scan Menu tabs** — tap each ~5× on iOS 27. Sheet opens, previous tab stays selected, no blank-screen flash. *(Confirmed on device, 2026-10-25.)*
+- [x] **Food scan (production)** — real Gemini result via App Attest (Release build has no legacy key, so this proves attestation works). *(iPhone 16 Pro, 2026-10-25, after the backend fix.)*
 - [ ] **History trend** — chart + chips match logged data; 7D ↔ 30D switch; delete an entry and confirm the chips update; VoiceOver reads the chart summary.
-- [ ] **Choose from Library** — one food photo, one menu photo.
+- [ ] **Choose from Library** — one food photo, one menu photo; also check **Cancel** on the photo review returns to the app (new in this build).
 - [ ] **Scan Menu** — with location allowed and denied.
 - [ ] **Dashboard** — HealthKit allowed (burned calories raise the goal) and denied.
 - [ ] **Light and dark mode** — Dashboard, History, scan results.
