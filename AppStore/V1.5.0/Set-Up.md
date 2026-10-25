@@ -168,7 +168,7 @@ Captured manually on the **iPhone 18 Pro Max simulator (iOS 27)** at 1320 × 286
 
 - [x] All 10 captured on the iPhone 18 Pro Max simulator (iOS 27), 1320 × 2868, test-ad banners kept as in v1.4.1 (2026-10-25)
 - [x] Resized to the required 6.3" size, 1206 × 2622, RGB (no alpha)
-- [ ] Upload `Screenshots/*.png` to the **6.3" Display** slot; delete the old 1.4.1 shots in **6.5"**
+- [x] Upload `Screenshots/*.png` to the **6.3" Display** slot; delete the old 1.4.1 shots in **6.5"** *(Accepted by App Store Connect, 2026-10-25.)*
 
 *Reference: [Apple Screenshot Specifications](https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/)*
 
@@ -378,7 +378,7 @@ Complete these items before clicking **Submit for Review**:
 - [ ] **TestFlight smoke test** of the processed build
 - [ ] **Select Build** — 1.5.0 (11)
 - [ ] **App Review Notes** — updated History step. Section 5
-- [ ] **Screenshots** — upload `Screenshots/*.png` to the required 6.3" slot. Section 3
+- [x] **Screenshots** — upload `Screenshots/*.png` to the required 6.3" slot. Section 3 *(Accepted by App Store Connect, 2026-10-25.)*
 
 ### Optional (If Changed)
 
