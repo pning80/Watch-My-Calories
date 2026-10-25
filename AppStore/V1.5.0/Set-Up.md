@@ -110,7 +110,7 @@ The v1.5.0 screenshot folder is at `AppStore/V1.5.0/Screenshots/`.
 
 > **Every screen changed in the v1.5.0 design overhaul — all 10 screenshots must be replaced.**
 >
-> **Requirement change (as of Oct 2026):** App Store Connect now **requires the iPhone 6.3" display** set — 1206 × 2622 (or 1179 × 2556). The 6.9" and 6.5" sets are optional. Upload `Screenshots/6.3-inch/` (1206 × 2622, resized from the 6.9" captures) to the **6.3" Display** slot; optionally also upload `Screenshots/*.png` (1320 × 2868) to **6.9" Display**. Delete the old 1.4.1 shots from the 6.5" slot so no size shows the old design.
+> **Requirement change (as of Oct 2026):** App Store Connect now **requires the iPhone 6.3" display** set — 1206 × 2622 (or 1179 × 2556). The 6.9" and 6.5" sets are optional. The files in `Screenshots/` are the 6.3" set (1206 × 2622, resized from 1320 × 2868 iPhone 18 Pro Max captures, alpha removed). Upload them to the **6.3" Display** slot and delete the old 1.4.1 shots from the 6.5" slot so no size shows the old design.
 
 ### Format & Limits
 
@@ -126,10 +126,11 @@ You only need to provide screenshots for the **largest device size** per device 
 
 | Display | Devices | Portrait (px) | Landscape (px) |
 |---------|---------|---------------|-----------------|
-| **6.9"** | iPhone 16/17/18 Pro Max | 1320 × 2868 | 2868 × 1320 |
+| **6.3"** (required) | iPhone 16/17/18 Pro | 1206 × 2622 (or 1179 × 2556) | 2622 × 1206 |
+| **6.9"** (optional) | iPhone 16/17/18 Pro Max | 1320 × 2868 | 2868 × 1320 |
 | **6.5"** | iPhone XS Max, 11 Pro Max | 1242 × 2688 | 2688 × 1242 |
 
-> Either 6.9" or 6.5" is required. Apple auto-scales for 6.7", 6.1", 5.8", 5.5", and smaller.
+> As of Oct 2026 the 6.3" set is required; Apple scales it for other iPhone sizes that have no screenshots of their own.
 
 #### iPhone (optional — only if you want device-specific screenshots)
 
@@ -144,7 +145,7 @@ You only need to provide screenshots for the **largest device size** per device 
 
 ### Suggested Screenshots
 
-Capture all 10 manually on the **iPhone 18 Pro Max simulator (iOS 27)**, which renders at exactly 1320 × 2868 (6.9"). Save them to `AppStore/V1.5.0/Screenshots/`.
+Captured manually on the **iPhone 18 Pro Max simulator (iOS 27)** at 1320 × 2868, then resized to the required 6.3" size (1206 × 2622). Files: `AppStore/V1.5.0/Screenshots/`.
 
 | Screenshot | Notes |
 |------------|-------|
@@ -166,8 +167,8 @@ Capture all 10 manually on the **iPhone 18 Pro Max simulator (iOS 27)**, which r
 - Known cosmetic issue in SS-6: on the black photo-library screen the status-bar time and signal render black-on-black. Accepted for v1.5.0; fix in a later version.
 
 - [x] All 10 captured on the iPhone 18 Pro Max simulator (iOS 27), 1320 × 2868, test-ad banners kept as in v1.4.1 (2026-10-25)
-- [x] 6.3" set created: `Screenshots/6.3-inch/` (1206 × 2622)
-- [ ] Upload `6.3-inch/` to the **6.3" Display** slot (required); optionally the 1320 × 2868 set to **6.9"**; delete the old 1.4.1 shots in **6.5"**
+- [x] Resized to the required 6.3" size, 1206 × 2622, RGB (no alpha)
+- [ ] Upload `Screenshots/*.png` to the **6.3" Display** slot; delete the old 1.4.1 shots in **6.5"**
 
 *Reference: [Apple Screenshot Specifications](https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/)*
 
@@ -367,7 +368,7 @@ Complete these items before clicking **Submit for Review**:
 - [x] Production backend healthy; Firestore `(default)` DB present
 - [x] Support and Privacy Policy gists in sync with the repo; Marketing URL now serves a landing page (`app-ads.txt` unaffected)
 - [x] Listing text within App Store limits (subtitle 29/30, promotional text 170/170, keywords 91/100)
-- [x] 10 screenshots captured at 1320 × 2868
+- [x] 10 screenshots at the required 6.3" size (1206 × 2622)
 
 ### Must Do (Blockers)
 
@@ -377,7 +378,7 @@ Complete these items before clicking **Submit for Review**:
 - [ ] **TestFlight smoke test** of the processed build
 - [ ] **Select Build** — 1.5.0 (11)
 - [ ] **App Review Notes** — updated History step. Section 5
-- [ ] **Screenshots** — upload `Screenshots/6.3-inch/` to the required 6.3" slot. Section 3
+- [ ] **Screenshots** — upload `Screenshots/*.png` to the required 6.3" slot. Section 3
 
 ### Optional (If Changed)
 
