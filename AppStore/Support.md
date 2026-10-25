@@ -27,7 +27,7 @@ Tap the **Scan Menu** tab to analyze a restaurant menu:
 The AI identifies menu items and estimates calories and macronutrients for each. Tap any item to expand its nutritional breakdown. Successfully analyzed menus are saved automatically and can be accessed later via **Stored Menus**.
 
 ### History & Trends
-The **History** tab opens with a trend card showing your daily calories for the last **7D** or **30D** (tap to switch). Bars that go over your calorie goal are highlighted, and the dashed line marks the goal. Below the chart:
+*Version 1.5 and later.* The **History** tab opens with a trend card showing your daily calories for the last **7D** or **30D** (tap to switch). Bars that go over your calorie goal are highlighted, and the dashed line marks the goal. Below the chart:
 
 - **Avg / day** — average calories across the days you logged food in that range (days with no entries are not counted).
 - **On target** — how many of your logged days stayed at or under your goal.
