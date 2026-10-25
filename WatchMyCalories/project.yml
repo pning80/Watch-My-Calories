@@ -25,7 +25,11 @@ targets:
     type: application
     platform: iOS
     sources:
-      - WatchMyCalories
+      - path: WatchMyCalories
+        # Internal design notes live beside the sources; keep them out of the app bundle.
+        excludes:
+          - "*.md"
+          - "**/*.md"
       - path: ImageStorage.swift
         type: file
     dependencies:
@@ -56,6 +60,8 @@ targets:
       configs:
         Release:
           EXCLUDED_SOURCE_FILE_NAMES: DevelopmentAssets.xcassets
+          # The dev-only legacy key must never ship; production uses App Attest.
+          APP_BACKEND_API_KEY: ""
     entitlements:
       path: WatchMyCalories/WatchMyCalories.entitlements
       properties:
