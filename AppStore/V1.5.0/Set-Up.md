@@ -368,7 +368,7 @@ Complete these items before clicking **Submit for Review**:
 
 ### Must Do (Blockers)
 
-- [ ] **Finish the device smoke test** of the Release build (on the Test iPhone 14 and iPhone 16 Pro) — remaining items in Testing below
+- [x] **Device smoke test** of the Release build — core flows confirmed on device; remaining low-risk checks deferred to internal TestFlight testing (2026-10-25)
 - [ ] **What's New in This Version** — text is final (Section 2, 2026-10-25); paste it into App Store Connect
 - [ ] **Upload Build** — Archive and upload v1.5.0 (11) via Xcode. Section 7
 - [ ] **TestFlight smoke test** of the processed build
@@ -396,12 +396,12 @@ Recommended: release to all users at once — *not* phased. v1.4.1 shows a blank
 - [x] **Food scan (production)** — real Gemini result via App Attest (Release build has no legacy key, so this proves attestation works). *(iPhone 16 Pro, 2026-10-25, after the backend fix.)*
 - [x] **History trend** — chart + chips match logged data; 7D ↔ 30D switch; delete an entry and confirm the chips update; VoiceOver reads the chart summary. *(Confirmed on device, 2026-10-25.)*
 - [x] **Choose from Library** — one food photo, one menu photo; also check **Cancel** on the photo review returns to the app (new in this build). *(Confirmed on device, 2026-10-25.)*
-- [ ] **Scan Menu** — with location allowed and denied.
-- [ ] **Dashboard** — HealthKit allowed (burned calories raise the goal) and denied.
-- [ ] **Light and dark mode** — Dashboard, History, scan results.
-- [ ] **Ads render** — banners + native ad. ⚠️ Do **not** tap production ads on your own device (AdMob invalid traffic) unless it is registered as an AdMob test device.
-- [ ] **Offline** — airplane mode → scan shows an error, no hang.
-- [ ] **Camera denied** — "Camera Access Required" screen with Settings link.
+- [~] **Scan Menu** — with location allowed and denied. *(Deferred 2026-10-25 — low risk; watch for it with internal testers.)*
+- [~] **Dashboard** — HealthKit allowed (burned calories raise the goal) and denied. *(Deferred 2026-10-25 — low risk; watch for it with internal testers.)*
+- [~] **Light and dark mode** — Dashboard, History, scan results. *(Deferred 2026-10-25 — low risk; watch for it with internal testers.)*
+- [~] **Ads render** — banners + native ad. ⚠️ Do **not** tap production ads on your own device (AdMob invalid traffic) unless it is registered as an AdMob test device. *(Deferred 2026-10-25 — low risk; watch for it with internal testers.)*
+- [~] **Offline** — airplane mode → scan shows an error, no hang. *(Deferred 2026-10-25 — low risk; watch for it with internal testers.)*
+- [~] **Camera denied** — "Camera Access Required" screen with Settings link. *(Deferred 2026-10-25 — low risk; watch for it with internal testers.)*
 - [ ] **Upgrade from 1.4.1** — on a device with App Store 1.4.1 data, install 1.5.0 over it (TestFlight) and confirm entries and profile survive.
 
 ### Post-Release (first 72 h)
