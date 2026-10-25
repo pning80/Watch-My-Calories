@@ -26,7 +26,9 @@ struct ContentView: View {
     }
 
     /// Log Food and Scan Menu are action tabs: selecting one opens its sheet and the
-    /// current tab stays selected, so their placeholder views are never shown.
+    /// current tab stays selected. `TabBarInterceptor` vetoes the selection in UIKit
+    /// before the placeholder is drawn; this binding is the fallback if it ever
+    /// isn't installed (the placeholder would then flash for one frame).
     private var tabSelection: Binding<Tab> {
         Binding(
             get: { selectedTab },
@@ -43,6 +45,12 @@ struct ContentView: View {
     var body: some View {
         TabView(selection: tabSelection) {
             DashboardView(onLogFood: { showLogFoodSheet = true }, scrollToMeal: $scrollToMeal)
+                .background(
+                    TabBarInterceptor(
+                        onLogFood: { showLogFoodSheet = true },
+                        onScanMenu: { showScanMenuSheet = true }
+                    )
+                )
                 .tabItem {
                     Label("Today", systemImage: "flame.fill")
                 }
@@ -273,6 +281,67 @@ struct ManualEntryRootView: View {
                 modelContext.insert(entry)
                 onDone()
             })
+        }
+    }
+}
+
+// MARK: - Action-tab interception
+
+/// Vetoes selection of the Log Food / Scan Menu tabs at the UIKit level and opens
+/// their sheets instead, so the placeholder tab is never drawn. Installs itself as
+/// the tab bar controller's delegate and forwards everything else to SwiftUI's
+/// original delegate.
+private struct TabBarInterceptor: UIViewControllerRepresentable {
+    var onLogFood: () -> Void
+    var onScanMenu: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeUIViewController(context: Context) -> UIViewController { UIViewController() }
+
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        context.coordinator.onLogFood = onLogFood
+        context.coordinator.onScanMenu = onScanMenu
+        DispatchQueue.main.async {
+            guard let tabBarController = uiViewController.tabBarController,
+                  tabBarController.delegate !== context.coordinator else { return }
+            context.coordinator.originalDelegate = tabBarController.delegate
+            tabBarController.delegate = context.coordinator
+        }
+    }
+
+    final class Coordinator: NSObject, UITabBarControllerDelegate {
+        var onLogFood: (() -> Void)?
+        var onScanMenu: (() -> Void)?
+        weak var originalDelegate: UITabBarControllerDelegate?
+
+        /// Tab order matches `ContentView.Tab`: 1 = Log Food, 2 = Scan Menu.
+        private func allowSelection(at index: Int?) -> Bool {
+            switch index {
+            case 1: onLogFood?(); return false
+            case 2: onScanMenu?(); return false
+            default: return true
+            }
+        }
+
+        // iOS 18+ with UITab-based tab bars (SwiftUI TabView on iOS 26+).
+        func tabBarController(_ tabBarController: UITabBarController, shouldSelectTab tab: UITab) -> Bool {
+            guard allowSelection(at: tabBarController.tabs.firstIndex(of: tab)) else { return false }
+            return originalDelegate?.tabBarController?(tabBarController, shouldSelectTab: tab) ?? true
+        }
+
+        // View-controller-based tab bars (SwiftUI TabView on iOS 18).
+        func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
+            guard allowSelection(at: tabBarController.viewControllers?.firstIndex(of: viewController)) else { return false }
+            return originalDelegate?.tabBarController?(tabBarController, shouldSelect: viewController) ?? true
+        }
+
+        override func responds(to aSelector: Selector!) -> Bool {
+            super.responds(to: aSelector) || (originalDelegate?.responds(to: aSelector) ?? false)
+        }
+
+        override func forwardingTarget(for aSelector: Selector!) -> Any? {
+            originalDelegate?.responds(to: aSelector) == true ? originalDelegate : super.forwardingTarget(for: aSelector)
         }
     }
 }
