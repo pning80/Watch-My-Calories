@@ -2,6 +2,7 @@ import { describe, it, before, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'crypto';
 import request from 'supertest';
+import { encode } from 'cbor-x';
 import { app, attestedKeys, challenges, setAppleRootCa, setDb, setHmacSecret, globalLimiter, attestLimiter, keyIdToDocId } from '../dist/server';
 import {
     getTestRootCaPem,
@@ -74,6 +75,41 @@ describe('POST /attest/verify', () => {
         assert.ok(res.body.success);
         assert.ok(attestedKeys.has(keyID));
         assert.equal(attestedKeys.get(keyID).counter, 0);
+    });
+
+    it('accepts authData with an extensions map after the credential key (ED flag)', async () => {
+        // iOS 27 devices produced attestations the strict decoder rejected with
+        // "Data read, but end of buffer not reached" (2026-10-25, prod).
+        const chalRes = await request(app).get('/attest/challenge').expect(200);
+        const challenge = chalRes.body.challenge;
+        const keyPair = generateP256KeyPair();
+        const keyID = crypto.randomBytes(32).toString('base64');
+        const baseAuthData = buildAuthData(computeRpIdHash(TEST_TEAM_ID), buildCoseKey(keyPair.x, keyPair.y), {
+            credId: Buffer.from(keyID, 'base64'),
+            flags: 0xC1, // UP + AT + ED
+        });
+        const authData = Buffer.concat([baseAuthData, encode(new Map([['appattest', true]]))]);
+        const attest = await buildAttestationObject(authData, challenge);
+
+        const res = await request(app)
+            .post('/attest/verify')
+            .send({ keyID, attestation: attest.base64, challenge })
+            .expect(200);
+
+        assert.ok(res.body.success);
+        assert.ok(attestedKeys.has(keyID));
+    });
+
+    it('accepts an attestation object followed by trailing bytes', async () => {
+        const { keyID, attestation, challenge } = await validAttestation();
+        const padded = Buffer.concat([Buffer.from(attestation, 'base64'), Buffer.from([0x00, 0x00])]).toString('base64');
+
+        const res = await request(app)
+            .post('/attest/verify')
+            .send({ keyID, attestation: padded, challenge })
+            .expect(200);
+
+        assert.ok(res.body.success);
     });
 
     // --- Missing fields ---

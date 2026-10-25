@@ -1,6 +1,6 @@
 import crypto, { X509Certificate } from 'crypto';
 import express, { Express } from 'express';
-import { decode, Decoder } from 'cbor-x';
+import { decodeMultiple, Decoder } from 'cbor-x';
 import { getAppleRootCa } from './apple-root-ca';
 import { challenges } from './challenge';
 import { extractNonceFromCert } from './cert-utils';
@@ -13,6 +13,21 @@ import { counters } from './metrics';
 import { keyIdToDocId } from './firestore-key';
 import { resolvePlatform } from './platform';
 import { verifyPlayIntegrityToken, DecoderFn } from './play-integrity';
+
+/**
+ * Decode only the first CBOR item in `data`, ignoring any bytes after it.
+ *
+ * The credential public key in authData may be followed by an extensions map
+ * (WebAuthn ED flag, 0x80), so a strict whole-buffer decode rejects valid
+ * attestations ("Data read, but end of buffer not reached").
+ */
+function decodeFirstItem(data: Buffer, decoder?: Decoder): any {
+    let first: any;
+    const onItem = (value: any) => { first = value; return false; };
+    if (decoder) decoder.decodeMultiple(data, onItem);
+    else decodeMultiple(data, onItem);
+    return first;
+}
 
 /**
  * Optional override for the Play Integrity decoder, used by tests to stub the
@@ -28,6 +43,8 @@ const log = createLogger('attestation');
 export function registerRoutes(app: Express, attestLimiter: any): void {
     // POST /attest/verify — verifies attestation and stores the public key
     app.post('/attest/verify', attestLimiter, express.json({ limit: '1mb' }), async (req, res) => {
+        let stage = 'validate-request';
+        let authFlags: number | undefined;
         try {
             // Platform dispatch (PORTING_CRITERIA.md T1.9.a, T1.10.b).
             // Missing/unknown X-App-Platform → 'ios', preserving in-field iOS client behavior.
@@ -64,8 +81,9 @@ export function registerRoutes(app: Express, attestLimiter: any): void {
             challenges.delete(challenge); // One-time use
 
             // Decode CBOR attestation
+            stage = 'decode-attestation';
             const attestationBuffer = Buffer.from(attestation, 'base64');
-            const attestObj = decode(attestationBuffer);
+            const attestObj = decodeFirstItem(attestationBuffer);
 
             const fmt = attestObj.fmt;
             if (fmt !== 'apple-appattest') {
@@ -129,6 +147,7 @@ export function registerRoutes(app: Express, attestLimiter: any): void {
             // Extract credential public key from authData
             // authData format: rpIdHash(32) + flags(1) + counter(4) + aaguid(16) + credIdLen(2) + credId(credIdLen) + credentialPublicKey(CBOR)
             const authDataBuf = Buffer.from(authData);
+            authFlags = authDataBuf.length > 32 ? authDataBuf[32] : undefined;
             if (authDataBuf.length < 55) {
                 return res.status(400).json({ error: 'authData too short.' });
             }
@@ -137,8 +156,10 @@ export function registerRoutes(app: Express, attestLimiter: any): void {
             const coseKeyData = authDataBuf.subarray(coseKeyOffset);
             // COSE keys use negative integer map keys (-1, -2, -3) which cbor-x
             // can only represent as a Map, not a plain object.
+            stage = 'decode-cose-key';
             const coseDecoder = new Decoder({ mapsAsObjects: false });
-            const coseKey = coseDecoder.decode(coseKeyData);
+            const coseKey = decodeFirstItem(coseKeyData, coseDecoder);
+            stage = 'verify-key';
 
             // COSE EC2 key: -1 = curve (1 = P-256), -2 = x, -3 = y
             const x = coseKey.get(-2) as Buffer | undefined;
@@ -195,12 +216,12 @@ export function registerRoutes(app: Express, attestLimiter: any): void {
             }
 
             counters.increment('attestation_total', { result: 'success' });
-            log.info({ keyId: keyID.substring(0, 8) }, 'Key attested successfully');
+            log.info({ keyId: keyID.substring(0, 8), authFlags }, 'Key attested successfully');
             res.json({ success: true });
 
         } catch (err: any) {
             counters.increment('attestation_total', { result: 'error' });
-            log.error({ error: err.message }, 'Attestation verification error');
+            log.error({ error: err.message, stage, authFlags }, 'Attestation verification error');
             res.status(400).json({ error: 'Attestation verification failed.' });
         }
     });
