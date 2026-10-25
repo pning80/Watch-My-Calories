@@ -68,7 +68,7 @@ struct AboutView: View {
                     if let scene = UIApplication.shared.connectedScenes
                         .compactMap({ $0 as? UIWindowScene })
                         .first {
-                        SKStoreReviewController.requestReview(in: scene)
+                        AppStore.requestReview(in: scene)
                     }
                 } label: {
                     Label("Rate on App Store", systemImage: "star")

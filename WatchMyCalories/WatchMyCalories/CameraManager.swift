@@ -44,18 +44,11 @@ class CameraManager: NSObject, ObservableObject {
     override init() {
         super.init()
 
-        // Handle Runtime Errors (iOS 18+ and legacy support)
-        let notificationName: NSNotification.Name
-        if #available(iOS 18.0, *) {
-            notificationName = AVCaptureSession.runtimeErrorNotification
-        } else {
-            notificationName = .AVCaptureSessionRuntimeError
-        }
-
+        // Handle Runtime Errors
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(sessionRuntimeError),
-            name: notificationName,
+            name: AVCaptureSession.runtimeErrorNotification,
             object: nil
         )
 

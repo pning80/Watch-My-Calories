@@ -63,7 +63,7 @@ The iOS app has all the features I need at the moment. I don't plan to add any m
 
 | Path | What it is |
 |------|------------|
-| `WatchMyCalories/` | iOS app — SwiftUI + SwiftData (iOS 17+), Apple frameworks only |
+| `WatchMyCalories/` | iOS app — SwiftUI + SwiftData (iOS 18+), Apple frameworks only |
 | `WatchMyCaloriesAndroid/` | Android app — Jetpack Compose + Room (API 26+) |
 | `Backend/` | Node.js + TypeScript proxy on Google Cloud Run that protects the Gemini API key |
 | `shared-fixtures/` | Cross-platform numeric test fixtures consumed by both app test suites |

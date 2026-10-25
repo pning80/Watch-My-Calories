@@ -61,7 +61,7 @@ npm run dev                      # Start with --watch for development
 
 ## Architecture
 
-### iOS — SwiftUI + SwiftData (iOS 17+)
+### iOS — SwiftUI + SwiftData (iOS 18+)
 - **Persistence**: SwiftData `@Model` classes (`UserProfile`, `FoodEntry` in `DataModels.swift`). Views query via `@Query` and `@Environment(\.modelContext)`.
 - **Singletons**: `AppEnvironment` (holds `EstimationService` protocol, injectable for testing via `MockEstimationService`), `SettingsStore` (app theme, unit system, AI consent in UserDefaults), `BackendConfig` (Cloud Run URL + dev-only legacy key read from `Info.plist`; `#if DEBUG` switches between dev and prod backends).
 - **Camera flow**: `CameraManager` (AVFoundation, `@MainActor`) → `CameraView` → `EstimationReviewView` (calls Gemini, saves to SwiftData). One photo per capture session, persisted as JPEG in Documents.

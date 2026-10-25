@@ -354,7 +354,7 @@ Complete these items before clicking **Submit for Review**:
 ### Done (pre-submission engineering, 2026-10-25)
 
 - [x] Version bumped to 1.5.0 (build 11)
-- [x] Release build verified: production AdMob IDs, empty legacy backend key, no internal `.md` notes in the bundle, `ITSAppUsesNonExemptEncryption = NO`, MinimumOSVersion 17.0
+- [x] Release build verified: production AdMob IDs, empty legacy backend key, no internal `.md` notes in the bundle, `ITSAppUsesNonExemptEncryption = NO`, MinimumOSVersion 18.0 (raised from 17.0 in this release)
 - [x] Full UI suite green on Test iPhone 14 (iOS 27.0.1) and iOS 18.5 simulator; unit tests green
 - [x] Parity gates + CI green
 - [x] Production backend healthy; Firestore `(default)` DB present
@@ -374,6 +374,10 @@ Complete these items before clicking **Submit for Review**:
 - [ ] **Description** — Meal History line now mentions trends. Section 2
 - [ ] **Promotional Text** — Section 2
 - [ ] **Keywords** — `camera` → `trend`. Section 2
+
+### Minimum iOS Version
+
+v1.5.0 raises the minimum from **iOS 17.0 to iOS 18.0**. Nothing to configure in App Store Connect — it reads `MinimumOSVersion` from the build. Users on iOS 17 keep v1.4.1; anyone who downloaded the app before can reinstall v1.4.1 as the "last compatible version", but iOS 17 users who never had the app can no longer get it. (Xcode 27 can no longer download an iOS 17 simulator, so iOS 17 could not be tested.)
 
 ### Release Option
 
