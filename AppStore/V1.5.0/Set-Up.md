@@ -17,7 +17,7 @@ All the content you need to fill in App Store Connect for your version update.
 | **Primary Category** | Health & Fitness |
 | **Secondary Category** | Food & Drink |
 | **Primary Language** | English (U.S.) |
-| **Copyright** | © 2026 Peng Ning |
+| **Copyright** | © 2026 pning80 |
 
 ### Content Rights
 
@@ -371,6 +371,7 @@ Complete these items before clicking **Submit for Review**:
 
 ### Optional (If Changed)
 
+- [ ] **Copyright** — change from "© 2026 Peng Ning" to "© 2026 pning80" (version page, General App Information). Section 1
 - [ ] **Description** — Meal History line now mentions trends. Section 2
 - [ ] **Promotional Text** — Section 2
 - [ ] **Keywords** — `camera` → `trend`. Section 2
